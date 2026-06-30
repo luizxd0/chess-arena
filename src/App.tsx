@@ -1,0 +1,218 @@
+import React, { useState, useEffect } from 'react';
+import { UserStats, ChessMode, RatingTier } from './types';
+import { MatchmakingTab } from './components/MatchmakingTab';
+import { OpeningsTab } from './components/OpeningsTab';
+import { BotsTab } from './components/BotsTab';
+import { StatsTab } from './components/StatsTab';
+import { BoardTheme } from './components/ChessBoard';
+import { Trophy, Cpu, BookOpen, User, Flame, Palette, Zap } from 'lucide-react';
+
+const LOCAL_STORAGE_KEY = 'chess_applet_user_stats_v1';
+const LOCAL_STORAGE_USERNAME_KEY = 'chess_applet_username_v1';
+
+const INITIAL_STATS: UserStats = {
+  elo: {
+    bullet: 800,
+    blitz: 800,
+    rapid: 800
+  },
+  botRating: 400,
+  wins: 0,
+  losses: 0,
+  draws: 0,
+  completedOpenings: [],
+  unlockedBots: ['martin', 'elspeth'],
+  gameHistory: []
+};
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState<'matchmaking' | 'openings' | 'bots' | 'stats'>('matchmaking');
+  const [boardTheme, setBoardTheme] = useState<BoardTheme>('elegant');
+  const [username, setUsername] = useState('NewPlayer');
+  const [stats, setStats] = useState<UserStats>(INITIAL_STATS);
+
+  // Load state from localStorage on init
+  useEffect(() => {
+    try {
+      const storedStats = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (storedStats) {
+        setStats(JSON.parse(storedStats));
+      }
+
+      const storedUsername = localStorage.getItem(LOCAL_STORAGE_USERNAME_KEY);
+      if (storedUsername) {
+        setUsername(storedUsername);
+      } else {
+        // Assign a fun chess-themed username by default
+        const randomID = Math.floor(Math.random() * 900) + 100;
+        setUsername(`PawnPusher#${randomID}`);
+      }
+    } catch (e) {
+      console.warn("Could not read local storage: ", e);
+    }
+  }, []);
+
+  // Update stats wrapper that also writes to localStorage
+  const handleUpdateStats = (updater: (prev: UserStats) => UserStats) => {
+    setStats(prev => {
+      const next = updater(prev);
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(next));
+      } catch (e) {
+        console.warn("Could not write to local storage: ", e);
+      }
+      return next;
+    });
+  };
+
+  const handleUpdateUsername = (newName: string) => {
+    setUsername(newName);
+    try {
+      localStorage.setItem(LOCAL_STORAGE_USERNAME_KEY, newName);
+    } catch (e) {
+      console.warn("Could not write username to local storage: ", e);
+    }
+  };
+
+  const getRatingTier = (elo: number): RatingTier => {
+    if (elo < 800) return 'Beginner';
+    if (elo < 1200) return 'Intermediate';
+    if (elo < 1600) return 'Advanced';
+    if (elo < 2000) return 'Expert';
+    if (elo < 2400) return 'Master';
+    return 'Grandmaster';
+  };
+
+  const getTierColor = (tier: RatingTier) => {
+    switch (tier) {
+      case 'Beginner': return 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40';
+      case 'Intermediate': return 'text-blue-400 bg-blue-950/30 border-blue-800/40';
+      case 'Advanced': return 'text-purple-400 bg-purple-950/30 border-purple-800/40';
+      case 'Expert': return 'text-pink-400 bg-pink-950/30 border-pink-800/40';
+      case 'Master': return 'text-amber-400 bg-amber-950/30 border-amber-800/40';
+      case 'Grandmaster': return 'text-[#4CAF50] bg-[#4CAF50]/10 border-[#388E3C]/40';
+    }
+  };
+
+  const activeElo = stats.elo.blitz; // default show blitz ELO in header
+  const activeTier = getRatingTier(activeElo);
+
+  return (
+    <div className="min-h-screen bg-[#121212] text-[#E0E0E0] flex flex-col font-sans antialiased selection:bg-[#4CAF50]/30">
+      
+      {/* Top Premium Navbar */}
+      <header className="border-b border-[#2A2A2A] bg-[#1A1A1A] sticky top-0 z-40 px-4 py-3 shadow-md">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+          
+          {/* Logo brand */}
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-[#388E3C] via-[#4CAF50] to-[#81C784] flex items-center justify-center text-2xl shadow-md rotate-3 hover:rotate-0 transition-transform">
+              👑
+            </div>
+            <div>
+              <h1 className="font-sans font-black text-lg tracking-tight leading-none bg-linear-to-r from-white via-slate-100 to-[#81C784] bg-clip-text text-transparent">
+                GrandMaster Arena
+              </h1>
+              <span className="text-[10px] text-[#888888] font-mono tracking-widest uppercase mt-0.5 block">Chess Hub</span>
+            </div>
+          </div>
+
+          {/* User ratings preview bar */}
+          <div className="hidden md:flex items-center gap-5 bg-[#121212] border border-[#2A2A2A] py-1.5 px-4 rounded-2xl text-xs font-medium">
+            <div className="flex items-center gap-2">
+              <span className="text-[#E0E0E0] font-semibold">{username}</span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-sm border ${getTierColor(activeTier)}`}>
+                {activeTier}
+              </span>
+            </div>
+            <div className="h-4 w-[1px] bg-[#2A2A2A]" />
+            <div className="flex items-center gap-4 font-mono">
+              <span className="text-[#888888] text-[11px]"><Zap className="inline-block w-3 h-3 text-[#4CAF50] mr-1 align-middle" />Blitz: <strong className="text-white">{stats.elo.blitz}</strong></span>
+              <span className="text-[#888888] text-[11px]"><Trophy className="inline-block w-3.5 h-3.5 text-amber-500 mr-1 align-middle" />Bot: <strong className="text-white">{stats.botRating}</strong></span>
+            </div>
+          </div>
+
+          {/* Theme custom picker */}
+          <div className="flex items-center gap-2">
+            <Palette className="w-4 h-4 text-[#888888] shrink-0" />
+            <select
+              id="global-board-theme-select"
+              value={boardTheme}
+              onChange={(e) => setBoardTheme(e.target.value as BoardTheme)}
+              className="bg-[#121212] border border-[#2A2A2A] rounded-xl px-2.5 py-1.5 text-xs text-[#E0E0E0] font-bold focus:outline-hidden cursor-pointer"
+            >
+              <option value="elegant">Elegant Dark</option>
+              <option value="emerald">Emerald Wood</option>
+              <option value="wood">Lichess Maple</option>
+              <option value="cyber">Cyber Midnight</option>
+              <option value="royal">Royal Gold</option>
+            </select>
+          </div>
+
+        </div>
+      </header>
+
+      {/* Main Workspace Frame */}
+      <main className="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 flex flex-col gap-6">
+        
+        {/* Navigation Selector Tabs */}
+        <div className="bg-[#1A1A1A] border border-[#2A2A2A] p-2 rounded-2xl flex flex-wrap gap-1.5 shadow-md">
+          {[
+            { id: 'matchmaking', label: '1v1 Arena', icon: Trophy, desc: 'Play online' },
+            { id: 'openings', label: 'Learn Openings', icon: BookOpen, desc: 'Opening theory' },
+            { id: 'bots', label: 'Play vs Bots', icon: Cpu, desc: 'Challenge computer' },
+            { id: 'stats', label: 'Stats & Rank', icon: User, desc: 'Climb ladder' }
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                id={`tab-${tab.id}`}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex-1 min-w-[120px] py-2.5 px-3.5 rounded-xl flex items-center justify-center gap-2.5 font-sans font-extrabold text-sm transition cursor-pointer ${isActive ? 'bg-[#2A2A2A] text-[#4CAF50] border border-[#4CAF50]/20 shadow-md' : 'text-[#888] hover:text-[#E0E0E0] hover:bg-[#2A2A2A]/40'}`}
+              >
+                <Icon className={`w-4 h-4 ${isActive ? 'text-[#4CAF50]' : 'text-[#888]'}`} />
+                <div className="text-left">
+                  <span className="block leading-none">{tab.label}</span>
+                  <span className={`block text-[9px] font-medium leading-none mt-1 opacity-75 ${isActive ? 'text-[#4CAF50]/80' : 'text-[#666]'}`}>{tab.desc}</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Tab Panel View */}
+        <div className="flex-1 bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl p-4 md:p-6 shadow-md flex flex-col">
+          {activeTab === 'matchmaking' && (
+            <MatchmakingTab stats={stats} onUpdateStats={handleUpdateStats} boardTheme={boardTheme} />
+          )}
+          {activeTab === 'openings' && (
+            <OpeningsTab stats={stats} onUpdateStats={handleUpdateStats} boardTheme={boardTheme} />
+          )}
+          {activeTab === 'bots' && (
+            <BotsTab stats={stats} onUpdateStats={handleUpdateStats} boardTheme={boardTheme} />
+          )}
+          {activeTab === 'stats' && (
+            <StatsTab
+              stats={stats}
+              onUpdateStats={handleUpdateStats}
+              username={username}
+              onUpdateUsername={handleUpdateUsername}
+            />
+          )}
+        </div>
+
+      </main>
+
+      {/* Global aesthetic footer info lines */}
+      <footer className="border-t border-[#2A2A2A] py-5 px-4 bg-[#121212] text-center text-xs text-[#888888]">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 font-medium">
+          <span>♟ "Chess is a struggle against your own errors." — Johannes Zukertort</span>
+          <span className="text-[10px] font-mono text-[#666666]">GrandMaster Arena • v1.0.2 Stable</span>
+        </div>
+      </footer>
+
+    </div>
+  );
+}

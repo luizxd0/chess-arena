@@ -1,0 +1,6 @@
+{
+  "name": "Chess Arena",
+  "description": "A beautiful, fully responsive chess web application featuring 1v1 arena matchmaking, interactive opening theory training, progressive single-player bots, and robust player statistic dashboards.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
