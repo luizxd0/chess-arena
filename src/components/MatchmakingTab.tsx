@@ -766,6 +766,8 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
               preMove={preMove}
               onPremove={(from, to) => setPreMove({from, to})}
               onClearPremove={() => setPreMove(null)}
+              gameResult={gameResult}
+              resultReason={resultReason}
             />
 
             {/* Bottom Player (Self) Info */}

@@ -18,6 +18,8 @@ interface ChessBoardProps {
   preMove?: { from: string; to: string } | null;
   onPremove?: (from: string, to: string) => void;
   onClearPremove?: () => void;
+  gameResult?: 'win' | 'loss' | 'draw' | null;
+  resultReason?: string;
 }
 
 export const ChessBoard: React.FC<ChessBoardProps> = ({
@@ -31,7 +33,9 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
   lastMove = null,
   preMove = null,
   onPremove,
-  onClearPremove
+  onClearPremove,
+  gameResult = null,
+  resultReason = ''
 }) => {
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [possibleMoves, setPossibleMoves] = useState<string[]>([]);
@@ -106,16 +110,26 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
 
   const hintArrow = getArrowPath();
 
-  // Find King in check or checkmate for special visual indicators
+  // Find King in check or checkmate/loss for special visual indicators
   let kingInCheckSquare: string | null = null;
   let matedKingSquare: string | null = null;
   let winningKingSquare: string | null = null;
 
   const isCheckmate = chess.isCheckmate();
+  let explicitWinningColor: 'w' | 'b' | null = null;
+  let explicitLosingColor: 'w' | 'b' | null = null;
 
-  if (isCheckmate) {
-    const matedColor = turn; // 'w' or 'b' is whose turn it is to move but in checkmate
-    const winningColor = turn === 'w' ? 'b' : 'w';
+  if (gameResult === 'win') {
+    explicitWinningColor = playerColor;
+    explicitLosingColor = playerColor === 'w' ? 'b' : 'w';
+  } else if (gameResult === 'loss') {
+    explicitWinningColor = playerColor === 'w' ? 'b' : 'w';
+    explicitLosingColor = playerColor;
+  }
+
+  if (isCheckmate || explicitWinningColor || explicitLosingColor) {
+    const matedColor = isCheckmate ? turn : explicitLosingColor;
+    const winningColor = isCheckmate ? (turn === 'w' ? 'b' : 'w') : explicitWinningColor;
     
     for (let r = 0; r < 8; r++) {
       for (let c = 0; c < 8; c++) {
@@ -618,8 +632,19 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
                     >
                       <RenderPiece type={piece.type} color={piece.color} />
                       {isWinningKing && (
-                        <div className="absolute -top-4 w-8 h-8 flex items-center justify-center z-20 animate-crown-float pointer-events-none select-none">
+                        <div className="absolute -top-6 flex flex-col items-center justify-center z-20 animate-crown-float pointer-events-none select-none">
                           <span className="text-2xl filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]">👑</span>
+                          <span className="text-[10px] font-black text-green-500 bg-black/50 px-1 rounded uppercase mt-0.5 tracking-wider border border-green-500/50">Winner</span>
+                        </div>
+                      )}
+                      {isMatedKing && (
+                        <div className="absolute -top-5 flex flex-col items-center justify-center z-20 pointer-events-none select-none">
+                          <span className="text-xl filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]">🏳️</span>
+                          {chess.isCheckmate() ? (
+                            <span className="text-[10px] font-black text-red-500 bg-black/60 px-1.5 py-0.5 rounded uppercase mt-0.5 tracking-wider border border-red-500/50 animate-pulse whitespace-nowrap">Checkmate!!!</span>
+                          ) : (
+                            <span className="text-[10px] font-black text-red-400 bg-black/60 px-1.5 py-0.5 rounded uppercase mt-0.5 tracking-wider border border-red-500/50 whitespace-nowrap">{resultReason || 'Resigned'}</span>
+                          )}
                         </div>
                       )}
                     </div>

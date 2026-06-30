@@ -144,19 +144,16 @@ export const GameReview: React.FC<GameReviewProps> = ({
       }
       
       const analysisList: MoveAnalysis[] = [];
-      let lastEval = getDeepEval(chess, 2).evalScore;
+      let lastEval = getDeepEval(chess, 1).evalScore; // reduced depth for speed
 
       for (let i = 0; i < moves.length; i++) {
         if (isCancelled) return;
 
         // Yield to main thread every move so UI doesn't freeze and progress updates smoothly
-        await new Promise(r => setTimeout(r, 10));
+        await new Promise(r => setTimeout(r, 0)); // fast yield
 
         const san = moves[i];
         const turn = chess.turn(); // 'w' or 'b'
-        
-        // Compute best move evaluation before making the move
-        const { evalScore: bestEval, bestMoveObj } = getDeepEval(chess, 2);
         
         // Find from & to square by dry-running move
         const verboseMoves = chess.moves({ verbose: true });
@@ -166,6 +163,11 @@ export const GameReview: React.FC<GameReviewProps> = ({
         const captured = matched ? matched.captured : undefined;
         const pieceType = matched ? matched.piece : '';
 
+        // We already have lastEval representing the evaluation before this move is played.
+        const bestEval = lastEval;
+        // Get the best move object
+        const bestMoveObj = getDeepEval(chess, 1).bestMoveObj;
+
         // Execute move
         try {
           chess.move(san);
@@ -174,8 +176,9 @@ export const GameReview: React.FC<GameReviewProps> = ({
           continue;
         }
 
-        const currentEval = getDeepEval(chess, 2).evalScore;
-        
+        const currentEval = getDeepEval(chess, 1).evalScore;
+        lastEval = currentEval;
+
         // Loss of evaluation (centipawn loss, always >= 0)
         let evalLoss = turn === 'w' ? (bestEval - currentEval) : (currentEval - bestEval);
         
@@ -542,7 +545,7 @@ export const GameReview: React.FC<GameReviewProps> = ({
               
               {/* Complete Moves List Scroll Feed */}
               <div className="p-1 flex-1 min-h-0 flex flex-col overflow-y-auto bg-[#1A1A1A]">
-                <div className="grid grid-cols-2 gap-x-1 gap-y-0 text-xs font-semibold flex-1">
+                <div className="flex flex-col gap-0 text-xs font-semibold flex-1">
                     {Array.from({ length: Math.ceil(analyzedMoves.length / 2) }).map((_, idx) => {
                       const wIdx = idx * 2;
                       const bIdx = idx * 2 + 1;
