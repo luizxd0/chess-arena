@@ -9,7 +9,7 @@ import { BoardTheme } from './components/ChessBoard';
 import { AuthPage } from './components/AuthPage';
 import { ProfileSettingsModal } from './components/ProfileSettingsModal';
 import { isFirebaseAvailable, auth, db } from './lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { Trophy, Cpu, BookOpen, User, Flame, Palette, Zap, LogOut, Sparkles, Settings as SettingsIcon } from 'lucide-react';
 
 const LOCAL_STORAGE_KEY = 'chess_applet_user_stats_v1';
@@ -118,6 +118,22 @@ export default function App() {
     };
   }, []);
 
+  // Online users ping
+  React.useEffect(() => {
+    if (!isAuthenticated || !auth?.currentUser || !db) return;
+    const uid = auth.currentUser.uid;
+    const pingRef = doc(db, 'onlineUsers', uid);
+    
+    const ping = () => {
+      setDoc(pingRef, { lastPing: Date.now() }).catch(() => {});
+    };
+    
+    ping();
+    const interval = setInterval(ping, 60000); // every 1 min
+    
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
+
   const handleAuthSuccess = (name: string, userStats: UserStats, guestStatus: boolean) => {
     setUsername(name);
     setStats(userStats);
@@ -134,6 +150,9 @@ export default function App() {
   const handleSignOut = async () => {
     try {
       if (isFirebaseAvailable && auth) {
+        if (auth.currentUser && db) {
+          await deleteDoc(doc(db, 'onlineUsers', auth.currentUser.uid)).catch(() => {});
+        }
         await auth.signOut();
       }
     } catch (e) {
@@ -152,6 +171,8 @@ export default function App() {
 
   // Update stats wrapper that also writes to localStorage & Firestore
   const handleUpdateStats = (updater: (prev: UserStats) => UserStats) => {
+    if (isGuest) return;
+    
     setStats(prev => {
       const next = updater(prev);
       try {
@@ -162,7 +183,7 @@ export default function App() {
           const uid = auth.currentUser.uid;
           setDoc(doc(db, 'users', uid), { stats: next }, { merge: true })
             .catch(e => console.warn("Firestore stats sync failed:", e));
-        } else if (!isGuest) {
+        } else {
           // Update in local mock db
           const email = localStorage.getItem('chess_arena_logged_in_email');
           if (email) {
@@ -261,9 +282,14 @@ export default function App() {
     { id: 'matchmaking', label: '1v1 Arena', short: 'Play', icon: Trophy },
     { id: 'openings', label: 'Openings', short: 'Learn', icon: BookOpen },
     { id: 'bots', label: 'Play vs Bots', short: 'Bots', icon: Cpu },
-    { id: 'stats', label: 'Stats & Rank', short: 'Stats', icon: User },
-    { id: 'review', label: 'AI Review', short: 'Review', icon: Sparkles }
   ];
+
+  if (!isGuest) {
+    navItems.push(
+      { id: 'stats', label: 'Stats & Rank', short: 'Stats', icon: User },
+      { id: 'review', label: 'AI Review', short: 'Review', icon: Sparkles }
+    );
+  }
 
   return (
     <div className="h-[100dvh] w-full fixed inset-0 overflow-hidden bg-[#121212] text-[#E0E0E0] flex flex-col md:flex-row font-sans antialiased selection:bg-[#4CAF50]/30">
@@ -302,7 +328,9 @@ export default function App() {
             <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-[#388E3C] via-[#4CAF50] to-[#81C784] flex items-center justify-center text-2xl shadow-md rotate-3 shrink-0">👑</div>
             <div className="min-w-0">
               <h1 className="font-sans font-black text-base lg:text-lg tracking-tight leading-none bg-linear-to-r from-white via-slate-100 to-[#81C784] bg-clip-text text-transparent truncate">{displayUsername}</h1>
-              <span className="text-[10px] text-[#888] font-mono tracking-widest uppercase mt-1 block truncate">{activeTier} • {stats.elo.blitz} Elo</span>
+              <span className="text-[10px] text-[#888] font-mono tracking-widest uppercase mt-1 block truncate">
+                {isGuest ? 'Guest Player' : `${activeTier} • ${stats.elo.blitz} Elo`}
+              </span>
             </div>
           </div>
         </div>
@@ -364,6 +392,7 @@ export default function App() {
                 }}
                 onGameActiveChange={setIsGameplayActive}
                 username={displayUsername}
+                isGuest={isGuest}
               />
             )}
             {activeTab === 'openings' && (

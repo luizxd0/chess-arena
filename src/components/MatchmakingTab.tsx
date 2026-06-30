@@ -15,6 +15,7 @@ interface MatchmakingTabProps {
   onReviewGame?: (game: GameRecord) => void;
   onGameActiveChange?: (active: boolean) => void;
   username: string;
+  isGuest: boolean;
 }
 
 interface ChatMessage {
@@ -23,7 +24,7 @@ interface ChatMessage {
   time: string;
 }
 
-export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateStats, boardTheme, onReviewGame, onGameActiveChange, username }) => {
+export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateStats, boardTheme, onReviewGame, onGameActiveChange, username, isGuest }) => {
   const [mode, setMode] = useState<ChessMode>('blitz');
   const [isSearching, setIsSearching] = useState(false);
   const [searchTime, setSearchTime] = useState(0);
@@ -119,7 +120,12 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
     if (isSearching && !matchId && auth.currentUser) {
       const findMatch = async () => {
         try {
-          const q = query(collection(db, 'matches'), where('status', '==', 'waiting'), where('mode', '==', mode));
+          const q = query(
+            collection(db, 'matches'), 
+            where('status', '==', 'waiting'), 
+            where('mode', '==', mode),
+            where('isGuestMatch', '==', isGuest)
+          );
           const querySnapshot = await getDocs(q);
           
           if (!querySnapshot.empty) {
@@ -149,6 +155,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
           const newMatch = await addDoc(collection(db, 'matches'), {
             status: 'waiting',
             mode,
+            isGuestMatch: isGuest,
             createdAt: serverTimestamp(),
             player1: {
               uid: auth.currentUser?.uid,
@@ -536,37 +543,41 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
       {/* 1. LOBBY VIEW */}
       {!game && (
         <div className="flex-1 flex flex-col min-h-0 overflow-y-auto pb-2">
-          <div className="flex flex-col lg:flex-row gap-4 mb-4 shrink-0">
+          <div className="flex flex-col lg:flex-row gap-2 lg:gap-4 mb-2 shrink-0">
             {/* Header Hero */}
-            <div className="relative text-center py-4 px-4 rounded-3xl bg-[#1A1A1A] border border-[#2A2A2A] text-[#E0E0E0] shadow-md overflow-hidden flex-1">
+            <div className="relative text-center py-3 px-3 lg:py-4 lg:px-4 rounded-3xl bg-[#1A1A1A] border border-[#2A2A2A] text-[#E0E0E0] shadow-md overflow-hidden flex-1">
               <div className="absolute top-0 right-0 w-48 h-48 bg-[#4CAF50]/5 rounded-full blur-3xl" />
               <div className="absolute bottom-0 left-0 w-36 h-36 bg-[#4CAF50]/5 rounded-full blur-2xl" />
               
-              <div className="flex items-center justify-center gap-4">
-                <Trophy className="w-8 h-8 text-amber-500 animate-bounce" />
+              <div className="flex items-center justify-center gap-3 lg:gap-4">
+                <Trophy className="w-6 h-6 lg:w-8 lg:h-8 text-amber-500 animate-bounce" />
                 <div className="text-left">
-                  <h2 className="font-sans font-bold text-2xl tracking-tight text-white leading-none">1v1 Arena</h2>
-                  <p className="text-[#888888] text-xs mt-1">
+                  <h2 className="font-sans font-bold text-xl lg:text-2xl tracking-tight text-white leading-none">1v1 Arena</h2>
+                  <p className="text-[#888888] text-[10px] lg:text-xs mt-1">
                     Match with players around your rating tier, climb the global divisions.
                   </p>
                 </div>
               </div>
 
               {/* Quick stats row */}
-              <div className="flex justify-center gap-6 mt-4 pt-3 border-t border-[#2A2A2A] text-xs">
+              <div className="flex justify-center gap-4 lg:gap-6 mt-3 pt-2 border-t border-[#2A2A2A] text-xs">
+                {!isGuest && (
+                  <>
+                    <div className="text-center">
+                      <span className="block text-[#888888] font-medium text-[9px] lg:text-[10px]">Your Elo</span>
+                      <span className="block font-mono font-bold text-sm lg:text-base text-amber-500">{stats.elo[mode]}</span>
+                    </div>
+                    <div className="border-r border-[#2A2A2A]" />
+                    <div className="text-center">
+                      <span className="block text-[#888888] font-medium text-[9px] lg:text-[10px]">Win/Loss</span>
+                      <span className="block font-mono font-bold text-sm lg:text-base text-[#4CAF50]">{stats.wins}W / {stats.losses}L</span>
+                    </div>
+                    <div className="border-r border-[#2A2A2A]" />
+                  </>
+                )}
                 <div className="text-center">
-                  <span className="block text-[#888888] font-medium text-[10px]">Your Elo</span>
-                  <span className="block font-mono font-bold text-base text-amber-500">{stats.elo[mode]}</span>
-                </div>
-                <div className="border-r border-[#2A2A2A]" />
-                <div className="text-center">
-                  <span className="block text-[#888888] font-medium text-[10px]">Win/Loss</span>
-                  <span className="block font-mono font-bold text-base text-[#4CAF50]">{stats.wins}W / {stats.losses}L</span>
-                </div>
-                <div className="border-r border-[#2A2A2A]" />
-                <div className="text-center">
-                  <span className="block text-[#888888] font-medium text-[10px]">Active Online</span>
-                  <span className="block font-mono font-bold text-base text-[#4CAF50] flex items-center justify-center gap-1">
+                  <span className="block text-[#888888] font-medium text-[9px] lg:text-[10px]">Active Online</span>
+                  <span className="block font-mono font-bold text-sm lg:text-base text-[#4CAF50] flex items-center justify-center gap-1">
                     <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#4CAF50] animate-ping" />
                     {onlineCount}
                   </span>
@@ -575,13 +586,13 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
             </div>
 
             {/* Mode Selector */}
-            <div className="flex-1 bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl p-4 shadow-md">
-              <h3 className="text-xs font-bold text-[#E0E0E0] mb-2 flex items-center gap-1.5 px-1">
+            <div className="flex-1 bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl p-3 lg:p-4 shadow-md">
+              <h3 className="text-[10px] lg:text-xs font-bold text-[#E0E0E0] mb-2 flex items-center gap-1.5 px-1">
                 <Clock className="w-3.5 h-3.5 text-[#4CAF50]" />
                 Select Time Control
               </h3>
 
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-1.5 lg:gap-2">
                 {[
                   { id: 'bullet', label: 'Bullet', time: '1 + 0', icon: Zap, bg: 'from-amber-500 to-yellow-500' },
                   { id: 'blitz', label: 'Blitz', time: '3 + 2', icon: Zap, bg: 'from-red-500 to-pink-500' },
@@ -593,16 +604,18 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
                       key={m.id}
                       id={`mode-${m.id}`}
                       onClick={() => setMode(m.id as ChessMode)}
-                      className={`relative p-3 rounded-2xl border text-left transition duration-200 overflow-hidden group ${isActive ? 'bg-[#2A2A2A] border-[#4CAF50]/40 text-white shadow-md' : 'bg-[#121212] hover:bg-[#2A2A2A]/40 border-[#2A2A2A] text-[#888888] hover:text-[#E0E0E0]'}`}
+                      className={`relative p-2 lg:p-3 rounded-2xl border text-left transition duration-200 overflow-hidden group ${isActive ? 'bg-[#2A2A2A] border-[#4CAF50]/40 text-white shadow-md' : 'bg-[#121212] hover:bg-[#2A2A2A]/40 border-[#2A2A2A] text-[#888888] hover:text-[#E0E0E0]'}`}
                     >
                       <div className="flex justify-between items-start mb-1">
-                        <m.icon className={`w-4 h-4 ${isActive ? 'text-[#4CAF50]' : 'text-[#666666]'}`} />
-                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${isActive ? 'bg-[#4CAF50]/20 text-[#4CAF50]' : 'bg-[#1A1A1A] text-[#888888] border border-[#2A2A2A]'}`}>
+                        <m.icon className={`w-3.5 h-3.5 lg:w-4 lg:h-4 ${isActive ? 'text-[#4CAF50]' : 'text-[#666666]'}`} />
+                        <span className={`text-[8px] lg:text-[9px] font-bold px-1 lg:px-1.5 py-0.5 rounded-md ${isActive ? 'bg-[#4CAF50]/20 text-[#4CAF50]' : 'bg-[#1A1A1A] text-[#888888] border border-[#2A2A2A]'}`}>
                           {m.time}
                         </span>
                       </div>
-                      <span className="block font-bold text-xs tracking-tight">{m.label}</span>
-                      <span className="block text-[9px] opacity-70 mt-0.5 font-mono">Elo: {stats.elo[m.id as ChessMode]}</span>
+                      <span className="block font-bold text-[10px] lg:text-xs tracking-tight">{m.label}</span>
+                      {!isGuest && (
+                        <span className="block text-[8px] lg:text-[9px] opacity-70 mt-0.5 font-mono">Elo: {stats.elo[m.id as ChessMode]}</span>
+                      )}
                       
                       {/* Hover Glow Accent */}
                       <div className={`absolute bottom-0 left-0 right-0 h-1 bg-[#4CAF50] opacity-0 group-hover:opacity-100 transition-opacity`} />
@@ -614,7 +627,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
           </div>
 
           {/* Action Button */}
-          <div className="flex-1 flex flex-col justify-center items-center py-4">
+          <div className="flex-1 flex flex-col justify-center items-center py-2 shrink-0">
             {!isSearching ? (
               <button
                 id="search-match-btn"
