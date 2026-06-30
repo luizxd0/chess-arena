@@ -44,17 +44,6 @@ export default function App() {
 
   // Check active session on mount
   useEffect(() => {
-    // Preload chess pieces assets to guarantee instant mobile rendering and no network delays
-    const pieceTypes = ['p', 'n', 'b', 'r', 'q', 'k'];
-    const colors = ['w', 'b'];
-    colors.forEach(color => {
-      pieceTypes.forEach(type => {
-        const pieceCode = `${color}${type.toUpperCase()}`;
-        const img = new Image();
-        img.src = `https://unpkg.com/chessground/assets/pieces/cburnett/${pieceCode}.svg`;
-      });
-    });
-
     let unsubscribe: any = null;
 
     if (isFirebaseAvailable && auth) {
@@ -261,58 +250,57 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#121212] text-[#E0E0E0] flex flex-col font-sans antialiased selection:bg-[#4CAF50]/30">
+    <div className={`min-h-screen bg-[#121212] text-[#E0E0E0] flex flex-col font-sans antialiased selection:bg-[#4CAF50]/30 ${isMenuHidden ? 'lg:h-screen lg:h-[100dvh] lg:overflow-hidden' : ''}`}>
       
       {/* Top Premium Navbar */}
       <header className={`border-b border-[#2A2A2A] bg-[#1A1A1A] sticky top-0 z-40 px-4 py-3 shadow-md ${isMenuHidden ? 'hidden' : ''}`}>
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
           
-          {/* Logo brand */}
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-[#388E3C] via-[#4CAF50] to-[#81C784] flex items-center justify-center text-2xl shadow-md rotate-3 hover:rotate-0 transition-transform">
+          {/* Logo brand / Profile Name Left */}
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-[#388E3C] via-[#4CAF50] to-[#81C784] flex items-center justify-center text-2xl shadow-md rotate-3 hover:rotate-0 transition-transform shrink-0">
               👑
             </div>
-            <div>
-              <h1 className="font-sans font-black text-lg tracking-tight leading-none bg-linear-to-r from-white via-slate-100 to-[#81C784] bg-clip-text text-transparent">
-                GrandMaster Arena
+            <div className="min-w-0">
+              <h1 className="font-sans font-black text-sm md:text-lg tracking-tight leading-none bg-linear-to-r from-white via-slate-100 to-[#81C784] bg-clip-text text-transparent truncate">
+                {username}
               </h1>
-              <span className="text-[10px] text-[#888888] font-mono tracking-widest uppercase mt-0.5 block">Chess Hub</span>
+              <span className="text-[9px] md:text-[10px] text-[#888888] font-mono tracking-widest uppercase mt-0.5 block truncate">
+                {activeTier} • {stats.elo.blitz} Elo
+              </span>
             </div>
           </div>
 
-          {/* User ratings preview bar */}
-          <div className="flex items-center gap-3 md:gap-5 bg-[#121212] border border-[#2A2A2A] py-1.5 px-3 md:px-4 rounded-2xl text-xs font-medium">
-            <div className="flex items-center gap-1.5 md:gap-2">
-              <span className="text-[#E0E0E0] font-semibold truncate max-w-[80px] md:max-w-none">{username}</span>
-              <span className={`text-[9px] md:text-[10px] font-bold px-1.5 py-0.5 rounded-sm border ${getTierColor(activeTier)}`}>
-                {activeTier}
-              </span>
-              {isGuest && (
-                <span className="hidden sm:inline text-[9px] font-black text-cyan-400 bg-cyan-950/40 px-1.5 py-0.5 rounded border border-cyan-500/10 uppercase tracking-wider">Guest</span>
-              )}
-            </div>
-            <div className="h-4 w-[1px] bg-[#2A2A2A]" />
+          {/* User ratings preview bar (Simplified & Desktop/Tablet only) */}
+          <div className="hidden sm:flex items-center gap-3 md:gap-5 bg-[#121212] border border-[#2A2A2A] py-1.5 px-3 md:px-4 rounded-2xl text-xs font-medium">
             <div className="flex items-center gap-2 md:gap-4 font-mono text-[10px] md:text-[11px]">
-              <span className="text-[#888888]"><Zap className="inline-block w-3 h-3 text-[#4CAF50] mr-0.5 md:mr-1 align-middle" /><span className="hidden sm:inline">Blitz: </span><strong className="text-white">{stats.elo.blitz}</strong></span>
-              <span className="text-[#888888]"><Trophy className="inline-block w-3.5 h-3.5 text-amber-500 mr-0.5 md:mr-1 align-middle" /><span className="hidden sm:inline">Bot: </span><strong className="text-white">{stats.botRating}</strong></span>
+              <span className="text-[#888888]"><Zap className="inline-block w-3 h-3 text-[#4CAF50] mr-0.5 md:mr-1 align-middle" />Blitz: <strong className="text-white">{stats.elo.blitz}</strong></span>
+              <div className="h-4 w-[1px] bg-[#2A2A2A]" />
+              <span className="text-[#888888]"><Trophy className="inline-block w-3.5 h-3.5 text-amber-500 mr-0.5 md:mr-1 align-middle" />Bot: <strong className="text-white">{stats.botRating}</strong></span>
+              {isGuest && (
+                <>
+                  <div className="h-4 w-[1px] bg-[#2A2A2A]" />
+                  <span className="text-[9px] font-black text-cyan-400 bg-cyan-950/40 px-1.5 py-0.5 rounded border border-cyan-500/10 uppercase tracking-wider">Guest</span>
+                </>
+              )}
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             {/* Theme custom picker */}
-            <div className="flex items-center gap-2">
-              <Palette className="w-4 h-4 text-[#888888] shrink-0" />
+            <div className="flex items-center gap-1.5">
+              <Palette className="w-3.5 h-3.5 text-[#888888] shrink-0" />
               <select
                 id="global-board-theme-select"
                 value={boardTheme}
                 onChange={(e) => setBoardTheme(e.target.value as BoardTheme)}
-                className="bg-[#121212] border border-[#2A2A2A] rounded-xl px-2.5 py-1.5 text-xs text-[#E0E0E0] font-bold focus:outline-hidden cursor-pointer"
+                className="bg-[#121212] border border-[#2A2A2A] rounded-xl px-2 py-1 text-[11px] text-[#E0E0E0] font-bold focus:outline-hidden cursor-pointer max-w-[80px] sm:max-w-none truncate"
               >
-                <option value="elegant">Elegant Dark</option>
-                <option value="emerald">Emerald Wood</option>
-                <option value="wood">Lichess Maple</option>
-                <option value="cyber">Cyber Midnight</option>
-                <option value="royal">Royal Gold</option>
+                <option value="elegant">Elegant</option>
+                <option value="emerald">Emerald</option>
+                <option value="wood">Maple</option>
+                <option value="cyber">Cyber</option>
+                <option value="royal">Royal</option>
               </select>
             </div>
 
@@ -321,7 +309,7 @@ export default function App() {
               id="global-signout-btn"
               onClick={handleSignOut}
               title="Sign Out"
-              className="p-2 rounded-xl border border-[#2A2A2A] hover:border-red-500/30 hover:bg-red-950/15 hover:text-red-400 text-gray-500 transition cursor-pointer"
+              className="p-2 rounded-xl border border-[#2A2A2A] hover:border-red-500/30 hover:bg-red-950/15 hover:text-red-400 text-gray-500 transition cursor-pointer shrink-0"
             >
               <LogOut className="w-4 h-4" />
             </button>

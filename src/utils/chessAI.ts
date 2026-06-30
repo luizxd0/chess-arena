@@ -73,7 +73,7 @@ const kingTableMiddle = [
 export const botsList: Bot[] = [
   {
     id: 'martin',
-    name: 'Martin (Lvl 1)',
+    name: 'Martin',
     avatar: '👴',
     rating: 250,
     tier: 'Beginner',
@@ -86,7 +86,7 @@ export const botsList: Bot[] = [
   },
   {
     id: 'elspeth',
-    name: 'Elspeth (Lvl 2)',
+    name: 'Elspeth',
     avatar: '👩‍🎤',
     rating: 400,
     tier: 'Beginner',
@@ -99,7 +99,7 @@ export const botsList: Bot[] = [
   },
   {
     id: 'sven',
-    name: 'Sven (Lvl 3)',
+    name: 'Sven',
     avatar: '🧔',
     rating: 600,
     tier: 'Beginner',
@@ -112,7 +112,7 @@ export const botsList: Bot[] = [
   },
   {
     id: 'anya',
-    name: 'Anya (Lvl 4)',
+    name: 'Anya',
     avatar: '👩‍🎨',
     rating: 800,
     tier: 'Beginner',
@@ -125,7 +125,7 @@ export const botsList: Bot[] = [
   },
   {
     id: 'nelson',
-    name: 'Nelson (Lvl 5)',
+    name: 'Nelson',
     avatar: '🕺',
     rating: 1000,
     tier: 'Beginner',
@@ -138,7 +138,7 @@ export const botsList: Bot[] = [
   },
   {
     id: 'emir',
-    name: 'Emir (Lvl 6)',
+    name: 'Emir',
     avatar: '👳',
     rating: 1100,
     tier: 'Intermediate',
@@ -151,7 +151,7 @@ export const botsList: Bot[] = [
   },
   {
     id: 'isabella',
-    name: 'Isabella (Lvl 7)',
+    name: 'Isabella',
     avatar: '👸',
     rating: 1200,
     tier: 'Intermediate',
@@ -164,7 +164,7 @@ export const botsList: Bot[] = [
   },
   {
     id: 'david',
-    name: 'David (Lvl 8)',
+    name: 'David',
     avatar: '👨‍⚕️',
     rating: 1300,
     tier: 'Intermediate',
@@ -177,7 +177,7 @@ export const botsList: Bot[] = [
   },
   {
     id: 'beth',
-    name: 'Beth (Lvl 9)',
+    name: 'Beth',
     avatar: '👩‍💼',
     rating: 1450,
     tier: 'Intermediate',
@@ -190,7 +190,7 @@ export const botsList: Bot[] = [
   },
   {
     id: 'zara',
-    name: 'Zara (Lvl 10)',
+    name: 'Zara',
     avatar: '👩‍🚀',
     rating: 1600,
     tier: 'Intermediate',
@@ -203,7 +203,7 @@ export const botsList: Bot[] = [
   },
   {
     id: 'kenzo',
-    name: 'Kenzo (Lvl 11)',
+    name: 'Kenzo',
     avatar: '🥋',
     rating: 1700,
     tier: 'Intermediate',
@@ -216,7 +216,7 @@ export const botsList: Bot[] = [
   },
   {
     id: 'levy',
-    name: 'Levy (Lvl 12)',
+    name: 'Levy',
     avatar: '🎙️',
     rating: 1850,
     tier: 'Advanced',
@@ -229,7 +229,7 @@ export const botsList: Bot[] = [
   },
   {
     id: 'sofia',
-    name: 'Sofia (Lvl 13)',
+    name: 'Sofia',
     avatar: '👩‍💻',
     rating: 2000,
     tier: 'Advanced',
@@ -242,7 +242,7 @@ export const botsList: Bot[] = [
   },
   {
     id: 'alexandra',
-    name: 'Alexandra (Lvl 14)',
+    name: 'Alexandra',
     avatar: '👩‍🎓',
     rating: 2150,
     tier: 'Advanced',
@@ -255,7 +255,7 @@ export const botsList: Bot[] = [
   },
   {
     id: 'hikaru',
-    name: 'Hikaru (Lvl 15)',
+    name: 'Hikaru',
     avatar: '😎',
     rating: 2300,
     tier: 'Advanced',
@@ -268,7 +268,7 @@ export const botsList: Bot[] = [
   },
   {
     id: 'elena',
-    name: 'Elena (Lvl 16)',
+    name: 'Elena',
     avatar: '👩‍💼',
     rating: 2450,
     tier: 'Advanced',
@@ -281,7 +281,7 @@ export const botsList: Bot[] = [
   },
   {
     id: 'vishy',
-    name: 'Vishy (Lvl 17)',
+    name: 'Vishy',
     avatar: '🧠',
     rating: 2600,
     tier: 'Master',
@@ -294,7 +294,7 @@ export const botsList: Bot[] = [
   },
   {
     id: 'magnus',
-    name: 'Magnus (Lvl 18)',
+    name: 'Magnus',
     avatar: '👑',
     rating: 2800,
     tier: 'Master',
@@ -307,7 +307,7 @@ export const botsList: Bot[] = [
   },
   {
     id: 'garry',
-    name: 'Garry (Lvl 19)',
+    name: 'Garry',
     avatar: '🌋',
     rating: 2950,
     tier: 'Master',
@@ -320,14 +320,14 @@ export const botsList: Bot[] = [
   },
   {
     id: 'stockfish_bot',
-    name: 'Stockfish Supreme (Lvl 20)',
+    name: 'Stockfish Supreme',
     avatar: '🐟',
     rating: 3200,
     tier: 'Master',
     personality: 'The ultimate, unbeatable open-source titan. Searches 15 plies deep using pure computer evaluation.',
     blunderRate: 0.00,
     depth: 15,
-    greeting: "Hello. I am Stockfish. Operating at maximum strength Level 20. Good luck surviving.",
+    greeting: "Hello. I am Stockfish. Operating at maximum strength. Good luck surviving.",
     winPhrase: "Calculation complete: mate. Victory is mine.",
     lossPhrase: "Analysis complete. You have played a brilliant game and defeated my network. Congratulations!"
   }

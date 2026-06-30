@@ -16,6 +16,7 @@ interface OpeningsTabProps {
 export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, boardTheme, onGameActiveChange }) => {
   const [selectedOpening, setSelectedOpening] = useState<Opening | null>(null);
   const [selectedVariation, setSelectedVariation] = useState<OpeningVariation | null>(null);
+  const [showMobileChecklist, setShowMobileChecklist] = useState(false);
   
   // Trainer gameplay state
   const [game, setGame] = useState<Chess | null>(null);
@@ -40,6 +41,7 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
     setCurrentStep(0);
     setIsCompleted(false);
     setShowHint(false);
+    setShowMobileChecklist(false);
     setFeedback({ type: 'info', text: "Let's begin! Make the first move of the variation." });
 
     // Set first move coach tip
@@ -187,6 +189,7 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
   const handleExitTrainer = () => {
     setGame(null);
     setSelectedVariation(null);
+    setShowMobileChecklist(false);
   };
 
   const getHintSquares = (): { from: string; to: string } | null => {
@@ -340,10 +343,34 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
               theme={boardTheme}
               hintMove={hintMove}
             />
+
+            {/* Live Buttons - Desktop & Mobile version */}
+            <div className="w-full max-w-md grid grid-cols-3 gap-2 mt-3">
+              <button
+                onClick={handleShowHint}
+                disabled={isCompleted}
+                className="py-2 rounded-xl border border-[#2A2A2A] hover:bg-[#2A2A2A] text-xs font-bold text-[#888888] hover:text-white flex items-center justify-center gap-1.5 transition cursor-pointer disabled:opacity-40"
+              >
+                <Lightbulb className="w-4 h-4 text-amber-500" /> Hint
+              </button>
+              <button
+                onClick={handleResetTrainer}
+                className="py-2 rounded-xl border border-[#2A2A2A] hover:bg-[#2A2A2A] text-xs font-bold text-[#888888] hover:text-white flex items-center justify-center gap-1.5 transition cursor-pointer"
+              >
+                <RefreshCw className="w-4 h-4" /> Restart
+              </button>
+              <button
+                onClick={() => setShowMobileChecklist(true)}
+                className="py-2 lg:hidden rounded-xl border border-[#4CAF50]/30 bg-[#4CAF50]/5 hover:bg-[#4CAF50]/10 text-xs font-bold text-[#4CAF50] flex items-center justify-center gap-1.5 transition cursor-pointer"
+              >
+                <BookOpen className="w-3.5 h-3.5 animate-pulse" />
+                Theory
+              </button>
+            </div>
           </div>
 
-          {/* Right Side: Theoretical Moves List & Control Buttons */}
-          <div className="w-full lg:w-80 flex flex-col justify-between bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-4 shadow-md h-auto max-h-[460px] lg:max-h-none">
+          {/* Right Side: Theoretical Moves List & Control Buttons (Desktop Only) */}
+          <div className="hidden lg:flex w-full lg:w-80 flex-col justify-between bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-4 shadow-md h-auto">
             <div className="space-y-4">
               {/* Header */}
               <div className="border-b border-[#2A2A2A] pb-3">
@@ -355,7 +382,7 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
               {/* Theoretical moves checklist */}
               <div className="space-y-1.5">
                 <span className="block text-[10px] font-bold text-[#888888] uppercase tracking-wider">Theoretical Moves</span>
-                <div className="max-h-48 overflow-y-auto border border-[#2A2A2A] rounded-xl p-2.5 space-y-1 bg-[#121212]">
+                <div className="max-h-60 overflow-y-auto border border-[#2A2A2A] rounded-xl p-2.5 space-y-1 bg-[#121212]">
                   {selectedVariation.moves.map((move, idx) => {
                     const isPlayed = idx < currentStep;
                     const isActive = idx === currentStep;
@@ -405,6 +432,62 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
               </button>
             </div>
           </div>
+
+          {/* Mobile Overlay for Moves Checklist */}
+          {showMobileChecklist && (
+            <div className="fixed inset-0 z-50 bg-[#121212]/95 backdrop-blur-md flex flex-col p-4 animate-fade-in lg:hidden">
+              <div className="flex justify-between items-center border-b border-[#2A2A2A] pb-3 mb-4">
+                <span className="font-sans font-bold text-sm text-white flex items-center gap-1.5">
+                  <BookOpen className="w-4 h-4 text-[#4CAF50]" />
+                  Theoretical Moves Checklist
+                </span>
+                <button
+                  onClick={() => setShowMobileChecklist(false)}
+                  className="px-3 py-1 text-xs font-bold bg-[#2A2A2A] border border-[#2A2A2A] text-white rounded-lg hover:bg-[#333] transition"
+                >
+                  Back to Board
+                </button>
+              </div>
+
+              <div className="flex-1 bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-4 overflow-y-auto">
+                <div className="border-b border-[#2A2A2A] pb-3 mb-4">
+                  <span className="block text-[9px] font-bold text-[#4CAF50] uppercase tracking-wider">Opening Line</span>
+                  <h4 className="font-sans font-extrabold text-sm text-white">{selectedOpening.name}</h4>
+                  <p className="text-[10px] text-[#888888] italic truncate">{selectedVariation.name}</p>
+                </div>
+
+                <span className="block text-[10px] font-bold text-[#888888] uppercase tracking-wider mb-2">Theoretical Moves</span>
+                <div className="space-y-1 bg-[#121212] p-2.5 border border-[#2A2A2A] rounded-xl">
+                  {selectedVariation.moves.map((move, idx) => {
+                    const isPlayed = idx < currentStep;
+                    const isActive = idx === currentStep;
+                    const isWhiteMove = idx % 2 === 0;
+                    
+                    return (
+                      <div
+                        key={idx}
+                        className={`flex items-center justify-between text-xs px-2.5 py-2 rounded-lg transition-colors ${isActive ? 'bg-[#2A2A2A] text-[#4CAF50] border border-[#4CAF50]/35 font-extrabold shadow-sm' : isPlayed ? 'text-[#666]' : 'text-[#888]'}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[9px] opacity-60">
+                            {isWhiteMove ? `${Math.floor(idx / 2) + 1}.W` : `${Math.floor(idx / 2) + 1}.B`}
+                          </span>
+                          <span>{move}</span>
+                        </div>
+                        {isPlayed ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#4CAF50]" />
+                        ) : isActive ? (
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#4CAF50] animate-ping" />
+                        ) : (
+                          <HelpCircle className="w-3.5 h-3.5 opacity-30" />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>
       )}

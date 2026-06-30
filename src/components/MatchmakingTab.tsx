@@ -69,6 +69,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
   // Chat
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
+  const [showMobileChat, setShowMobileChat] = useState(false);
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
   // Fluctuating online counter
@@ -145,6 +146,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
 
   const triggerMatchFound = () => {
     setIsSearching(false);
+    setShowMobileChat(false);
     
     // Choose opponent with similar rating
     const pRating = stats.elo[mode];
@@ -472,6 +474,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
     setGame(null);
     setMatchedOpponent(null);
     setGameResult(null);
+    setShowMobileChat(false);
   };
 
   return (
@@ -663,29 +666,78 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
               </div>
             </div>
 
-            {/* Live Buttons */}
+            {/* Live Buttons - Desktop & Mobile version */}
             {!gameResult && (
-              <div className="w-full max-w-md grid grid-cols-2 gap-3 mt-4">
+              <div className="w-full max-w-md grid grid-cols-3 gap-2 mt-3">
                 <button
                   id="offer-draw-btn"
                   onClick={handleOfferDraw}
-                  className="py-2.5 rounded-xl border border-[#2A2A2A] hover:bg-[#2A2A2A] text-xs font-bold text-[#888888] hover:text-white flex items-center justify-center gap-2 transition cursor-pointer"
+                  className="py-2 rounded-xl border border-[#2A2A2A] hover:bg-[#2A2A2A] text-xs font-bold text-[#888888] hover:text-white flex items-center justify-center gap-1.5 transition cursor-pointer"
                 >
                   Offer Draw
                 </button>
                 <button
                   id="resign-btn"
                   onClick={handleResign}
-                  className="py-2.5 rounded-xl border border-red-900/30 hover:bg-red-950/20 text-xs font-bold text-red-400 flex items-center justify-center gap-2 transition cursor-pointer"
+                  className="py-2 rounded-xl border border-red-900/30 hover:bg-red-950/20 text-xs font-bold text-red-400 flex items-center justify-center gap-1.5 transition cursor-pointer"
                 >
                   Resign
                 </button>
+                <button
+                  onClick={() => setShowMobileChat(true)}
+                  className="py-2 lg:hidden rounded-xl border border-[#4CAF50]/30 bg-[#4CAF50]/5 hover:bg-[#4CAF50]/10 text-xs font-bold text-[#4CAF50] flex items-center justify-center gap-1.5 transition cursor-pointer"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  Chat / Moves
+                </button>
+              </div>
+            )}
+
+            {/* Mobile/Compact Game Result Panel */}
+            {gameResult && (
+              <div className="lg:hidden w-full max-w-md mt-4 bg-[#1A1A1A] border border-[#2A2A2A] p-4 rounded-xl text-center animate-fade-in space-y-3 shadow-md">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-[#888888]">Game Over</span>
+                  <button
+                    onClick={handleExitGame}
+                    className="text-xs font-bold bg-[#2A2A2A] text-[#E0E0E0] border border-[#2A2A2A] px-2.5 py-1 rounded-lg hover:bg-[#333]"
+                  >
+                    Lobby
+                  </button>
+                </div>
+                <div className="h-px bg-[#2A2A2A]" />
+                <Award className="w-8 h-8 text-amber-500 mx-auto" />
+                <h4 className="font-sans font-extrabold text-base text-white">
+                  {gameResult === 'win' ? 'You Won!' : gameResult === 'loss' ? 'Opponent Won' : "It's a Draw"}
+                </h4>
+                <p className="text-xs text-[#888888]">By {resultReason}</p>
+                <div className="text-xs font-mono font-bold text-[#4CAF50]">
+                  {gameResult === 'win' ? 'Rating: +15 Elo' : gameResult === 'loss' ? 'Rating: -12 Elo' : 'Rating: Unchanged'}
+                </div>
+                {onReviewGame && (
+                  <button
+                    onClick={() => onReviewGame({
+                      id: Math.random().toString(36).substr(2, 9),
+                      opponentName: matchedOpponent ? matchedOpponent.name : "Opponent",
+                      opponentRating: matchedOpponent ? matchedOpponent.rating : 1200,
+                      mode,
+                      playerColor,
+                      result: gameResult,
+                      date: new Date().toLocaleDateString(),
+                      movesCount: Math.ceil(moveHistory.length / 2),
+                      moves: moveHistory
+                    })}
+                    className="w-full py-2 rounded-lg bg-[#4CAF50]/15 hover:bg-[#4CAF50]/35 border border-[#388E3C]/30 text-[#4CAF50] font-bold text-xs uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" /> AI Move Review
+                  </button>
+                )}
               </div>
             )}
           </div>
 
-          {/* Right Column: Chat & Moves Log */}
-          <div className="w-full lg:w-80 flex flex-col h-[460px] lg:h-auto bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl overflow-hidden shadow-md">
+          {/* Right Column: Chat & Moves Log (Desktop Only) */}
+          <div className="hidden lg:flex w-full lg:w-80 flex-col h-[460px] lg:h-auto bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl overflow-hidden shadow-md">
             
             {/* Top Tabs: Chats / Moves */}
             <div className="bg-[#121212] border-b border-[#2A2A2A] px-4 py-3 flex items-center justify-between">
@@ -743,7 +795,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
               <div className="space-y-3">
                 {chatMessages.map((msg, idx) => {
                   if (msg.sender === 'system') {
-                    return (
+                     return (
                       <div key={idx} className="text-center">
                         <span className="inline-block text-[10px] font-medium text-[#888888] bg-[#121212] px-2.5 py-0.5 rounded-full border border-[#2A2A2A]">
                           {msg.text}
@@ -803,6 +855,86 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
               </div>
             </div>
           </div>
+
+          {/* Mobile Overlay for Chat & PGN */}
+          {showMobileChat && (
+            <div className="fixed inset-0 z-50 bg-[#121212]/95 backdrop-blur-md flex flex-col p-4 animate-fade-in lg:hidden">
+              <div className="flex justify-between items-center border-b border-[#2A2A2A] pb-3 mb-4">
+                <span className="font-sans font-bold text-sm text-white flex items-center gap-1.5">
+                  <MessageSquare className="w-4 h-4 text-[#4CAF50]" />
+                  Live Match Feed & Moves
+                </span>
+                <button
+                  onClick={() => setShowMobileChat(false)}
+                  className="px-3 py-1 text-xs font-bold bg-[#2A2A2A] border border-[#2A2A2A] text-white rounded-lg hover:bg-[#333] transition"
+                >
+                  Back to Board
+                </button>
+              </div>
+
+              {/* Chat Log Inside Overlay */}
+              <div className="flex-1 overflow-y-auto p-2 mb-3 space-y-3 flex flex-col justify-end bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl">
+                <div className="space-y-3">
+                  {chatMessages.map((msg, idx) => {
+                    if (msg.sender === 'system') {
+                      return (
+                        <div key={idx} className="text-center">
+                          <span className="inline-block text-[10px] font-medium text-[#888888] bg-[#121212] px-2.5 py-0.5 rounded-full border border-[#2A2A2A]">
+                            {msg.text}
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    const isPlayer = msg.sender === 'player';
+                    return (
+                      <div key={idx} className={`flex flex-col ${isPlayer ? 'items-end' : 'items-start'} max-w-[85%] ${isPlayer ? 'ml-auto' : 'mr-auto'}`}>
+                        <div className={`p-2.5 rounded-2xl text-xs leading-relaxed ${isPlayer ? 'bg-[#4CAF50] text-white rounded-br-none shadow-sm' : 'bg-[#121212] text-[#E0E0E0] border border-[#2A2A2A] rounded-bl-none'}`}>
+                          {msg.text}
+                        </div>
+                        <span className="text-[9px] text-[#666666] mt-1 px-1">{isPlayer ? 'You' : matchedOpponent.name} • {msg.time}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Chat Input form Inside Overlay */}
+              {!gameResult && (
+                <form onSubmit={handleSendMessage} className="flex gap-2 mb-3 bg-[#121212]">
+                  <input
+                    type="text"
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    placeholder="Type a message to opponent..."
+                    className="flex-1 px-3 py-2 rounded-xl text-xs bg-[#1A1A1A] border border-[#2A2A2A] focus:outline-hidden focus:ring-1 focus:ring-[#4CAF50] text-white"
+                  />
+                  <button
+                    type="submit"
+                    className="p-2 rounded-xl bg-[#4CAF50] hover:bg-[#388E3C] text-white transition flex items-center justify-center cursor-pointer"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </form>
+              )}
+
+              {/* PGN Moves inside Overlay */}
+              <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-3 h-32 overflow-y-auto">
+                <span className="block text-[10px] font-bold text-[#888888] uppercase tracking-wider mb-1">PGN Move Logs</span>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 font-mono text-xs text-[#888888]">
+                  {Array.from({ length: Math.ceil(moveHistory.length / 2) }).map((_, idx) => (
+                    <div key={idx} className="flex gap-2">
+                      <span className="text-[#666666] w-5">{idx + 1}.</span>
+                      <span className="font-semibold text-[#E0E0E0]">{moveHistory[idx * 2]}</span>
+                      {moveHistory[idx * 2 + 1] && (
+                        <span className="text-[#666666]">{moveHistory[idx * 2 + 1]}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>
       )}

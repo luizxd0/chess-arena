@@ -92,9 +92,31 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
 
   const hintArrow = getArrowPath();
 
-  // Find King in check for red highlighting
+  // Find King in check or checkmate for special visual indicators
   let kingInCheckSquare: string | null = null;
-  if (chess.inCheck()) {
+  let matedKingSquare: string | null = null;
+  let winningKingSquare: string | null = null;
+
+  const isCheckmate = chess.isCheckmate();
+
+  if (isCheckmate) {
+    const matedColor = turn; // 'w' or 'b' is whose turn it is to move but in checkmate
+    const winningColor = turn === 'w' ? 'b' : 'w';
+    
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        const sq = board[r][c];
+        if (sq && sq.type === 'k') {
+          const sqName = `${String.fromCharCode(97 + c)}${8 - r}`;
+          if (sq.color === matedColor) {
+            matedKingSquare = sqName;
+          } else if (sq.color === winningColor) {
+            winningKingSquare = sqName;
+          }
+        }
+      }
+    }
+  } else if (chess.inCheck()) {
     for (let r = 0; r < 8; r++) {
       for (let c = 0; c < 8; c++) {
         const sq = board[r][c];
@@ -299,7 +321,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
   };
 
   return (
-    <div id="chess-board-wrapper" className="flex flex-col w-full max-w-md mx-auto select-none">
+    <div id="chess-board-wrapper" className="flex flex-col w-full max-w-[min(100vw-24px,100vh-220px)] lg:max-w-md mx-auto select-none">
       
       {/* Top Captured Bar: Pieces captured by Opponent */}
       <div className="flex items-center justify-between px-3 py-1.5 mb-2 bg-[#121212]/60 border border-[#2A2A2A] rounded-xl text-xs">
@@ -334,6 +356,8 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
               const isLastMoveSrc = lastFrom === squareName;
               const isLastMoveDst = lastTo === squareName;
               const isKingInCheck = kingInCheckSquare === squareName;
+              const isMatedKing = matedKingSquare === squareName;
+              const isWinningKing = winningKingSquare === squareName;
 
               // Grid styling logic
               let squareBg = isDark ? currentTheme.dark : currentTheme.light;
@@ -344,6 +368,11 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
               }
               if (isSelected) {
                 squareBg = 'bg-[#60a5fa]/50 border-2 border-blue-500';
+              }
+              if (isMatedKing) {
+                squareBg = 'animate-mate-pulse';
+              } else if (isWinningKing) {
+                squareBg = 'animate-victory-glow';
               }
 
               return (
@@ -370,9 +399,14 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
                       id={`piece-${squareName}`}
                       draggable={isInteractive && chess.turn() === playerColor && piece.color === playerColor}
                       onDragStart={(e) => handleDragStart(e, squareName)}
-                      className={`w-[85%] h-[85%] flex items-center justify-center transition-transform hover:scale-105 active:scale-95 z-10 drop-shadow-[0_3px_3px_rgba(0,0,0,0.5)]`}
+                      className={`w-[85%] h-[85%] flex items-center justify-center transition-transform hover:scale-105 active:scale-95 z-10 drop-shadow-[0_3px_3px_rgba(0,0,0,0.5)] ${isMatedKing ? 'animate-piece-shudder' : ''}`}
                     >
                       <RenderPiece type={piece.type} color={piece.color} />
+                      {isWinningKing && (
+                        <div className="absolute -top-4 w-8 h-8 flex items-center justify-center z-20 animate-crown-float pointer-events-none select-none">
+                          <span className="text-2xl filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]">👑</span>
+                        </div>
+                      )}
                     </div>
                   )}
 

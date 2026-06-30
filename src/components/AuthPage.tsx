@@ -167,31 +167,31 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialStats 
   };
 
   return (
-    <div className="min-h-screen bg-[#121212] flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#121212] flex items-center justify-center p-3 md:p-4 relative overflow-hidden">
       {/* Visual Ambient Background Orbs */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="w-full max-w-md bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl shadow-2xl p-6 md:p-8 relative z-10 transition-all duration-300">
+      <div className="w-full max-w-md bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl shadow-2xl p-4 md:p-8 relative z-10 transition-all duration-300">
         
         {/* Title Brand */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-linear-to-tr from-[#388E3C] via-[#4CAF50] to-[#81C784] flex items-center justify-center text-4xl shadow-lg rotate-3 mb-3 hover:rotate-0 transition-transform duration-300">
+        <div className="flex flex-col items-center mb-4 md:mb-8">
+          <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-linear-to-tr from-[#388E3C] via-[#4CAF50] to-[#81C784] flex items-center justify-center text-2xl md:text-4xl shadow-lg rotate-3 mb-2 md:mb-3 hover:rotate-0 transition-transform duration-300">
             👑
           </div>
-          <h1 className="font-sans font-black text-2xl tracking-tight leading-none bg-linear-to-r from-white via-slate-100 to-[#81C784] bg-clip-text text-transparent">
+          <h1 className="font-sans font-black text-xl md:text-2xl tracking-tight leading-none bg-linear-to-r from-white via-slate-100 to-[#81C784] bg-clip-text text-transparent">
             Chess Arena
           </h1>
-          <p className="text-[#888888] text-xs font-mono tracking-widest uppercase mt-1.5">
+          <p className="text-[#888888] text-[10px] md:text-xs font-mono tracking-widest uppercase mt-1">
             1v1 Arena & Engine Training
           </p>
         </div>
 
         {/* Tab Toggle */}
-        <div className="grid grid-cols-2 bg-[#121212] p-1.5 rounded-2xl border border-[#2A2A2A] mb-6">
+        <div className="grid grid-cols-2 bg-[#121212] p-1 rounded-2xl border border-[#2A2A2A] mb-4">
           <button
             onClick={() => { setIsLogin(true); setError(null); }}
-            className={`py-2 rounded-xl text-xs font-black transition cursor-pointer ${
+            className={`py-1.5 md:py-2 rounded-xl text-[11px] md:text-xs font-black transition cursor-pointer ${
               isLogin ? 'bg-[#2A2A2A] text-[#4CAF50] border border-[#4CAF50]/10 shadow-sm' : 'text-gray-500 hover:text-gray-300'
             }`}
           >
@@ -199,7 +199,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialStats 
           </button>
           <button
             onClick={() => { setIsLogin(false); setError(null); }}
-            className={`py-2 rounded-xl text-xs font-black transition cursor-pointer ${
+            className={`py-1.5 md:py-2 rounded-xl text-[11px] md:text-xs font-black transition cursor-pointer ${
               !isLogin ? 'bg-[#2A2A2A] text-[#4CAF50] border border-[#4CAF50]/10 shadow-sm' : 'text-gray-500 hover:text-gray-300'
             }`}
           >
@@ -209,39 +209,39 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialStats 
 
         {/* Status indicator for database availability (fully transparent and honest) */}
         {!isFirebaseAvailable && (
-          <div className="mb-6 p-3 rounded-xl bg-cyan-950/20 border border-cyan-800/30 flex items-start gap-2.5 text-[11px] leading-relaxed text-cyan-400">
-            <Sparkles className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+          <div className="mb-4 p-2.5 rounded-xl bg-cyan-950/20 border border-cyan-800/30 flex items-start gap-2 text-[10px] md:text-[11px] leading-relaxed text-cyan-400">
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
             <div>
-              <span className="font-bold block">Sandbox Demo Mode Active</span>
-              Your account details and statistics will be saved securely in your local browser storage.
+              <span className="font-bold block">Sandbox Demo Active</span>
+              Stats save securely in your local browser storage.
             </div>
           </div>
         )}
 
         {/* Error Messages */}
         {error && (
-          <div className="mb-6 p-3.5 rounded-xl bg-red-950/30 border border-red-800/30 flex items-start gap-2.5 text-xs text-red-400 animate-pulse">
-            <ShieldAlert className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+          <div className="mb-4 p-2.5 rounded-xl bg-red-950/30 border border-red-800/30 flex items-start gap-2 text-[11px] text-red-400 animate-pulse">
+            <ShieldAlert className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
             <div>{error}</div>
           </div>
         )}
 
         {/* Form */}
-        <form onSubmit={handleAuth} className="flex flex-col gap-4">
+        <form onSubmit={handleAuth} className="flex flex-col gap-3 md:gap-4">
           
           {/* Pick Username (Only on Register) */}
           {!isLogin && (
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Choose Username</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-[9px] md:text-[10px] font-bold text-gray-400 uppercase tracking-wider">Choose Username</label>
               <div className="relative">
-                <User className="absolute left-3.5 top-3 w-4 h-4 text-gray-500" />
+                <User className="absolute left-3 top-2.5 w-3.5 h-3.5 text-gray-500" />
                 <input
                   id="auth-username-input"
                   type="text"
                   placeholder="e.g. PawnPusher"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full bg-[#121212] border border-[#2A2A2A] focus:border-[#4CAF50] rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium text-white placeholder-gray-600 outline-hidden transition"
+                  className="w-full bg-[#121212] border border-[#2A2A2A] focus:border-[#4CAF50] rounded-xl py-2 pl-9 pr-3 text-[11px] md:text-xs font-medium text-white placeholder-gray-600 outline-hidden transition"
                   required={!isLogin}
                 />
               </div>
@@ -249,34 +249,34 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialStats 
           )}
 
           {/* Email */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Email Address</label>
+          <div className="flex flex-col gap-1">
+            <label className="text-[9px] md:text-[10px] font-bold text-gray-400 uppercase tracking-wider">Email Address</label>
             <div className="relative">
-              <Mail className="absolute left-3.5 top-3 w-4 h-4 text-gray-500" />
+              <Mail className="absolute left-3 top-2.5 w-3.5 h-3.5 text-gray-500" />
               <input
                 id="auth-email-input"
                 type="email"
                 placeholder="your@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-[#121212] border border-[#2A2A2A] focus:border-[#4CAF50] rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium text-white placeholder-gray-600 outline-hidden transition"
+                className="w-full bg-[#121212] border border-[#2A2A2A] focus:border-[#4CAF50] rounded-xl py-2 pl-9 pr-3 text-[11px] md:text-xs font-medium text-white placeholder-gray-600 outline-hidden transition"
                 required
               />
             </div>
           </div>
 
           {/* Password */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Password</label>
+          <div className="flex flex-col gap-1">
+            <label className="text-[9px] md:text-[10px] font-bold text-gray-400 uppercase tracking-wider">Password</label>
             <div className="relative">
-              <Lock className="absolute left-3.5 top-3 w-4 h-4 text-gray-500" />
+              <Lock className="absolute left-3 top-2.5 w-3.5 h-3.5 text-gray-500" />
               <input
                 id="auth-password-input"
                 type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-[#121212] border border-[#2A2A2A] focus:border-[#4CAF50] rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium text-white placeholder-gray-600 outline-hidden transition"
+                className="w-full bg-[#121212] border border-[#2A2A2A] focus:border-[#4CAF50] rounded-xl py-2 pl-9 pr-3 text-[11px] md:text-xs font-medium text-white placeholder-gray-600 outline-hidden transition"
                 required
               />
             </div>
@@ -287,10 +287,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialStats 
             id="auth-submit-btn"
             type="submit"
             disabled={isLoading}
-            className="w-full mt-2 py-3 rounded-xl bg-linear-to-r from-[#388E3C] to-[#4CAF50] hover:from-[#4CAF50] hover:to-[#4CAF50] disabled:from-gray-700 disabled:to-gray-700 text-white font-extrabold text-xs tracking-wider uppercase shadow-md hover:shadow-lg transition cursor-pointer flex items-center justify-center gap-2"
+            className="w-full mt-1.5 py-2.5 rounded-xl bg-linear-to-r from-[#388E3C] to-[#4CAF50] hover:from-[#4CAF50] hover:to-[#4CAF50] disabled:from-gray-700 disabled:to-gray-700 text-white font-extrabold text-[11px] md:text-xs tracking-wider uppercase shadow-md hover:shadow-lg transition cursor-pointer flex items-center justify-center gap-2"
           >
             {isLoading ? (
-              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
               <>
                 <span>{isLogin ? 'Sign In' : 'Create Account'}</span>
@@ -300,9 +300,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialStats 
           </button>
         </form>
 
-        <div className="relative flex py-3 items-center mt-4">
+        <div className="relative flex py-2 items-center mt-2.5">
           <div className="flex-grow border-t border-[#2A2A2A]"></div>
-          <span className="flex-shrink mx-4 text-[9px] font-bold text-gray-600 uppercase tracking-widest">or</span>
+          <span className="flex-shrink mx-3 text-[8px] md:text-[9px] font-bold text-gray-600 uppercase tracking-widest">or</span>
           <div className="flex-grow border-t border-[#2A2A2A]"></div>
         </div>
 
@@ -310,9 +310,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialStats 
         <button
           id="auth-guest-btn"
           onClick={handleGuestPlay}
-          className="w-full py-2.5 rounded-xl border border-[#2A2A2A] hover:bg-[#2A2A2A]/40 text-gray-400 hover:text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2"
+          className="w-full py-2 rounded-xl border border-[#2A2A2A] hover:bg-[#2A2A2A]/40 text-gray-400 hover:text-white font-bold text-[11px] md:text-xs transition cursor-pointer flex items-center justify-center gap-2"
         >
-          <Play className="w-3 h-3 fill-gray-500 stroke-none" />
+          <Play className="w-2.5 h-2.5 fill-gray-500 stroke-none" />
           <span>Continue as Guest</span>
         </button>
 

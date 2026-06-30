@@ -67,3 +67,48 @@ body {
   animation: brilliantHalo 1.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
 
+/* Checkmate & Victory animations like Chess.com/Lichess */
+@keyframes mateRedPulse {
+  0% { box-shadow: inset 0 0 10px #ef4444, 0 0 10px #ef4444; background-color: rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: inset 0 0 25px #b91c1c, 0 0 25px #b91c1c; background-color: rgba(185, 28, 28, 0.65); }
+  100% { box-shadow: inset 0 0 10px #ef4444, 0 0 10px #ef4444; background-color: rgba(239, 68, 68, 0.4); }
+}
+
+@keyframes victoryGoldGlow {
+  0% { box-shadow: inset 0 0 8px #f59e0b, 0 0 8px #f59e0b; background-color: rgba(245, 158, 11, 0.25); }
+  50% { box-shadow: inset 0 0 20px #d97706, 0 0 20px #d97706; background-color: rgba(217, 119, 6, 0.45); }
+  100% { box-shadow: inset 0 0 8px #f59e0b, 0 0 8px #f59e0b; background-color: rgba(245, 158, 11, 0.25); }
+}
+
+@keyframes victoryCrownFloat {
+  0% { transform: translateY(0) scale(1); filter: drop-shadow(0 2px 4px rgba(245, 158, 11, 0.5)); }
+  50% { transform: translateY(-7px) scale(1.15); filter: drop-shadow(0 8px 12px rgba(245, 158, 11, 0.85)); }
+  100% { transform: translateY(0) scale(1); filter: drop-shadow(0 2px 4px rgba(245, 158, 11, 0.5)); }
+}
+
+@keyframes pieceShudder {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  15% { transform: translate(-1.5px, -1px) rotate(-1deg); }
+  30% { transform: translate(1px, 1.5px) rotate(1deg); }
+  45% { transform: translate(-1px, -1px) rotate(-0.5deg); }
+  60% { transform: translate(1.5px, 1px) rotate(1deg); }
+  75% { transform: translate(-1.5px, 1.5px) rotate(-1deg); }
+  90% { transform: translate(1px, -1.5px) rotate(0.5deg); }
+}
+
+.animate-mate-pulse {
+  animation: mateRedPulse 1.6s infinite ease-in-out;
+}
+
+.animate-victory-glow {
+  animation: victoryGoldGlow 1.6s infinite ease-in-out;
+}
+
+.animate-crown-float {
+  animation: victoryCrownFloat 2s infinite ease-in-out;
+}
+
+.animate-piece-shudder {
+  animation: pieceShudder 0.8s infinite ease-in-out;
+}
+

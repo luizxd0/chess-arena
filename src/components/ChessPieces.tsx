@@ -116,52 +116,22 @@ export const King: React.FC<PieceProps> = ({ color, className = 'w-full h-full' 
 };
 
 export const RenderPiece: React.FC<{ type: string; color: 'w' | 'b'; className?: string }> = React.memo(({ type, color, className }) => {
-  const [urlIndex, setUrlIndex] = React.useState(0);
-  const pieceCode = `${color}${type.toUpperCase()}`; // e.g., wP, bN, wQ
-
-  const candidateUrls = [
-    // 1. Unpkg Chessground CDN (Extremely reliable, permissive headers, exact vector Lichess cburnett pieces)
-    `https://unpkg.com/chessground/assets/pieces/cburnett/${pieceCode}.svg`,
-    // 2. jsDelivr Chessground CDN (Fast fallback CDN)
-    `https://cdn.jsdelivr.net/npm/chessground/assets/pieces/cburnett/${pieceCode}.svg`,
-    // 3. Lichess official CDN
-    `https://lichess1.org/assets/piece/cburnett/${pieceCode}.svg`,
-    // 4. Chess.com Neo pieces (polished PNGs)
-    `https://images.chesscomfiles.com/chess-themes/pieces/neo/150/${color}${type.toLowerCase()}.png`
-  ];
-
-  if (urlIndex >= candidateUrls.length) {
-    switch (type.toLowerCase()) {
-      case 'p':
-        return <Pawn color={color} className={className} />;
-      case 'n':
-        return <Knight color={color} className={className} />;
-      case 'b':
-        return <Bishop color={color} className={className} />;
-      case 'r':
-        return <Rook color={color} className={className} />;
-      case 'q':
-        return <Queen color={color} className={className} />;
-      case 'k':
-        return <King color={color} className={className} />;
-      default:
-        return null;
-    }
+  switch (type.toLowerCase()) {
+    case 'p':
+      return <Pawn color={color} className={className} />;
+    case 'n':
+      return <Knight color={color} className={className} />;
+    case 'b':
+      return <Bishop color={color} className={className} />;
+    case 'r':
+      return <Rook color={color} className={className} />;
+    case 'q':
+      return <Queen color={color} className={className} />;
+    case 'k':
+      return <King color={color} className={className} />;
+    default:
+      return null;
   }
-
-  return (
-    <img
-      src={candidateUrls[urlIndex]}
-      alt={pieceCode}
-      className={className}
-      referrerPolicy="no-referrer"
-      onError={() => {
-        // Try the next candidate URL on load failure
-        setUrlIndex(prev => prev + 1);
-      }}
-      draggable={false}
-    />
-  );
 });
 
 RenderPiece.displayName = 'RenderPiece';

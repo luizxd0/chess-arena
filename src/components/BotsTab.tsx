@@ -19,6 +19,7 @@ interface BotsTabProps {
 export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardTheme, onReviewGame, onGameActiveChange, username }) => {
   const [selectedBot, setSelectedBot] = useState<Bot | null>(null);
   const [game, setGame] = useState<Chess | null>(null);
+  const [showMobileMoves, setShowMobileMoves] = useState(false);
 
   useEffect(() => {
     onGameActiveChange?.(game !== null);
@@ -57,6 +58,7 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
   // Setup standard or opening game
   const handleStartGame = (bot: Bot) => {
     const chess = new Chess();
+    setShowMobileMoves(false);
     
     let openingMoves: string[] = [];
     let isOpPractice = false;
@@ -323,6 +325,7 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
     setGame(null);
     setSelectedBot(null);
     setGameResult(null);
+    setShowMobileMoves(false);
   };
 
   // Start selected opening variation indices mapping
@@ -434,42 +437,7 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
             )}
           </div>
 
-          {/* Stockfish Engine Arena Informational Header */}
-          <div className="relative p-6 rounded-3xl bg-radial from-slate-900 via-[#121212] to-[#121212] border border-[#2A2A2A] text-[#E0E0E0] shadow-xl overflow-hidden mb-6">
-            <div className="absolute top-0 right-0 w-80 h-80 bg-[#4CAF50]/5 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-2xl pointer-events-none" />
-            
-            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-6 relative z-10">
-              <div className="flex items-center gap-4 flex-1">
-                <div className="w-14 h-14 rounded-2xl bg-[#1A1A1A] border border-[#2A2A2A] flex items-center justify-center text-3xl shadow-inner shrink-0">
-                  🐟
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[9px] font-black text-[#4CAF50] uppercase tracking-widest bg-[#4CAF50]/10 px-2 py-0.5 rounded-md border border-[#4CAF50]/20">Stockfish Engine Core</span>
-                    <span className="text-[9px] font-mono font-bold text-cyan-400 bg-cyan-950/40 px-2 py-0.5 rounded-md border border-cyan-500/20">Skill Levels 1-20</span>
-                  </div>
-                  <h3 className="font-sans font-black text-xl text-white mt-1">Stockfish Bot Arena</h3>
-                  <p className="text-gray-400 text-xs mt-1 max-w-2xl leading-relaxed">
-                    Improve gradually with Chess.com-style bots! Every opponent here is powered in the background by the **Stockfish Engine**, configured with realistic blunder rates and depth profiles. Defeat bots to increase your rating and unlock the ultimate **Level 20 Stockfish Supreme**!
-                  </p>
-                </div>
-              </div>
 
-              {/* Quick Arena Stats Badge */}
-              <div className="flex items-center gap-3 bg-[#1A1A1A] border border-[#2B2B2B] p-4 rounded-2xl shrink-0">
-                <div className="text-center px-2">
-                  <span className="block text-[8px] text-gray-500 uppercase font-bold tracking-wider">Your Rating</span>
-                  <span className="text-[#4CAF50] font-black text-lg font-mono">{stats.botRating} ELO</span>
-                </div>
-                <div className="h-8 w-px bg-[#2B2B2B]" />
-                <div className="text-center px-2">
-                  <span className="block text-[8px] text-gray-500 uppercase font-bold tracking-wider">Opponents</span>
-                  <span className="text-white font-black text-lg font-mono">20 Bots</span>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Bots Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 flex-1">
@@ -594,10 +562,77 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
                 <span className="block text-[10px] font-mono text-[#4CAF50] font-bold mt-1">Rating: {stats.botRating} ELO</span>
               </div>
             </div>
+
+            {/* Live Buttons - Desktop & Mobile version */}
+            {!gameResult && (
+              <div className="w-full max-w-md grid grid-cols-3 gap-2 mt-3">
+                <button
+                  onClick={handleExitGame}
+                  className="py-2 rounded-xl border border-[#2A2A2A] hover:bg-[#2A2A2A] text-xs font-bold text-[#888888] hover:text-white flex items-center justify-center gap-1.5 transition cursor-pointer"
+                >
+                  Exit Game
+                </button>
+                <button
+                  onClick={() => handleStartGame(selectedBot)}
+                  className="py-2 rounded-xl border border-[#2A2A2A] hover:bg-[#2A2A2A] text-xs font-bold text-[#888888] hover:text-white flex items-center justify-center gap-1.5 transition cursor-pointer"
+                >
+                  Restart
+                </button>
+                <button
+                  onClick={() => setShowMobileMoves(true)}
+                  className="py-2 lg:hidden rounded-xl border border-[#4CAF50]/30 bg-[#4CAF50]/5 hover:bg-[#4CAF50]/10 text-xs font-bold text-[#4CAF50] flex items-center justify-center gap-1.5 transition cursor-pointer"
+                >
+                  <Cpu className="w-3.5 h-3.5 animate-pulse" />
+                  PGN Moves
+                </button>
+              </div>
+            )}
+
+            {/* Mobile/Compact Game Result Panel */}
+            {gameResult && (
+              <div className="lg:hidden w-full max-w-md mt-4 bg-[#1A1A1A] border border-[#2A2A2A] p-4 rounded-xl text-center animate-fade-in space-y-3 shadow-md">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-[#888888]">Game Over</span>
+                  <button
+                    onClick={handleExitGame}
+                    className="text-xs font-bold bg-[#2A2A2A] text-[#E0E0E0] border border-[#2A2A2A] px-2.5 py-1 rounded-lg hover:bg-[#333]"
+                  >
+                    Lobby
+                  </button>
+                </div>
+                <div className="h-px bg-[#2A2A2A]" />
+                <Award className="w-8 h-8 text-amber-500 mx-auto" />
+                <h4 className="font-sans font-extrabold text-base text-white">
+                  {gameResult === 'win' ? 'Victory!' : gameResult === 'loss' ? 'Defeat' : "Draw Game"}
+                </h4>
+                <p className="text-xs text-[#888888]">Reason: {resultReason}</p>
+                <div className="text-xs font-mono font-bold text-[#4CAF50]">
+                  {gameResult === 'win' ? 'Your Rating: +18 Elo' : gameResult === 'loss' ? 'Your Rating: -10 Elo' : 'No change'}
+                </div>
+                {onReviewGame && (
+                  <button
+                    onClick={() => onReviewGame({
+                      id: Math.random().toString(36).substr(2, 9),
+                      opponentName: selectedBot ? `${selectedBot.name} (Bot)` : "Bot AI",
+                      opponentRating: selectedBot ? selectedBot.rating : 1200,
+                      mode: 'bot',
+                      playerColor,
+                      result: gameResult,
+                      date: new Date().toLocaleDateString(),
+                      movesCount: Math.ceil(moveHistory.length / 2),
+                      moves: moveHistory
+                    })}
+                    className="w-full py-2 rounded-lg bg-[#4CAF50]/15 hover:bg-[#4CAF50]/35 border border-[#388E3C]/30 text-[#4CAF50] font-bold text-xs uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" /> AI Move Review
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Right Column: Dialogue, evaluation & log */}
-          <div className="w-full lg:w-80 flex flex-col justify-between bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-4 shadow-md h-auto">
+          {/* Right Column: Dialogue, evaluation & log (Desktop Only) */}
+          <div className="hidden lg:flex w-full lg:w-80 flex-col justify-between bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-4 shadow-md h-auto">
             
             <div className="space-y-4">
               {/* Bot Personality Header */}
@@ -669,6 +704,39 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
             </button>
 
           </div>
+
+          {/* Mobile Overlay for PGN Moves */}
+          {showMobileMoves && (
+            <div className="fixed inset-0 z-50 bg-[#121212]/95 backdrop-blur-md flex flex-col p-4 animate-fade-in lg:hidden">
+              <div className="flex justify-between items-center border-b border-[#2A2A2A] pb-3 mb-4">
+                <span className="font-sans font-bold text-sm text-white flex items-center gap-1.5">
+                  <Cpu className="w-4 h-4 text-[#4CAF50]" />
+                  PGN Move Logs ({selectedBot.name})
+                </span>
+                <button
+                  onClick={() => setShowMobileMoves(false)}
+                  className="px-3 py-1 text-xs font-bold bg-[#2A2A2A] border border-[#2A2A2A] text-white rounded-lg hover:bg-[#333] transition"
+                >
+                  Back to Board
+                </button>
+              </div>
+
+              <div className="flex-1 bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-4 overflow-y-auto">
+                <span className="block text-[10px] font-bold text-[#888888] uppercase tracking-wider mb-2">PGN Move Logs</span>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 font-mono text-xs text-[#888888]">
+                  {Array.from({ length: Math.ceil(moveHistory.length / 2) }).map((_, idx) => (
+                    <div key={idx} className="flex gap-2">
+                      <span className="text-[#666666] w-5">{idx + 1}.</span>
+                      <span className="font-semibold text-[#E0E0E0]">{moveHistory[idx * 2]}</span>
+                      {moveHistory[idx * 2 + 1] && (
+                        <span className="text-[#666666]">{moveHistory[idx * 2 + 1]}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>
       )}
