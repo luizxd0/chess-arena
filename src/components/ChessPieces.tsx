@@ -27,26 +27,30 @@ const piecesSVG: Record<string, Record<string, string>> = {
 
 export const RenderPiece: React.FC<PieceProps> = React.memo(({ type, color, className }) => {
   const char = type.toLowerCase();
-  const isWhite = color === 'w';
   
-  // Use wikipedia chess style pieces
-  const getIconSvg = () => {
-    switch (char) {
-      case 'p': return `https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_p${isWhite ? 'l' : 'd'}45.svg`;
-      case 'n': return `https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_n${isWhite ? 'l' : 'd'}45.svg`;
-      case 'b': return `https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_b${isWhite ? 'l' : 'd'}45.svg`;
-      case 'r': return `https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_r${isWhite ? 'l' : 'd'}45.svg`;
-      case 'q': return `https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_q${isWhite ? 'l' : 'd'}45.svg`;
-      case 'k': return `https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_k${isWhite ? 'l' : 'd'}45.svg`;
-      default: return '';
-    }
-  };
+  // Use inline SVGs from piecesSVG
+  const svgPath = piecesSVG[color]?.[char];
 
-  const svgSrc = getIconSvg();
+  if (!svgPath) {
+    return null;
+  }
 
   return (
     <div className={`w-full h-full flex items-center justify-center select-none pointer-events-none drop-shadow-md ${className || ''}`}>
-      <img src={svgSrc} alt={`${color}${type}`} className="w-[85%] h-[85%] object-contain select-none pointer-events-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" draggable="false" />
+      <svg 
+        viewBox="0 0 45 45" 
+        className="w-[85%] h-[85%] object-contain select-none pointer-events-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
+        preserveAspectRatio="xMidYMid meet"
+      >
+        <path
+          d={svgPath}
+          fill={color === 'w' ? '#ffffff' : '#000000'}
+          stroke={color === 'w' ? '#000000' : '#ffffff'}
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
     </div>
   );
 });

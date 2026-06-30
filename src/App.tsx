@@ -256,178 +256,192 @@ export default function App() {
     return <AuthPage onAuthSuccess={handleAuthSuccess} initialStats={INITIAL_STATS} />;
   }
 
+  const navItems = [
+    { id: 'matchmaking', label: '1v1 Arena', short: 'Play', icon: Trophy },
+    { id: 'openings', label: 'Openings', short: 'Learn', icon: BookOpen },
+    { id: 'bots', label: 'Play vs Bots', short: 'Bots', icon: Cpu },
+    { id: 'stats', label: 'Stats & Rank', short: 'Stats', icon: User },
+    { id: 'review', label: 'AI Review', short: 'Review', icon: Sparkles }
+  ];
+
   return (
-    <div className="h-[100dvh] w-full fixed inset-0 overflow-hidden bg-[#121212] text-[#E0E0E0] flex flex-col font-sans antialiased selection:bg-[#4CAF50]/30">
+    <div className="h-[100dvh] w-full fixed inset-0 overflow-hidden bg-[#121212] text-[#E0E0E0] flex flex-col md:flex-row font-sans antialiased selection:bg-[#4CAF50]/30">
       
-      {/* Top Premium Navbar */}
-      <header className={`shrink-0 border-b border-[#2A2A2A] bg-[#1A1A1A] sticky top-0 z-40 px-4 py-3 shadow-md ${isMenuHidden ? 'hidden' : ''}`}>
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
-          
-          {/* Logo brand / Profile Name Left */}
+      {/* Top Mobile Navbar */}
+      <header className={`md:hidden shrink-0 border-b border-[#2A2A2A] bg-[#1A1A1A] sticky top-0 z-40 px-4 py-3 shadow-md ${isMenuHidden ? 'hidden' : ''}`}>
+        <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-[#388E3C] via-[#4CAF50] to-[#81C784] flex items-center justify-center text-2xl shadow-md rotate-3 hover:rotate-0 transition-transform shrink-0">
-              👑
-            </div>
+            <div className="w-8 h-8 rounded-lg bg-linear-to-tr from-[#388E3C] via-[#4CAF50] to-[#81C784] flex items-center justify-center text-lg shadow-md shrink-0">👑</div>
             <div className="min-w-0">
-              <h1 className="font-sans font-black text-sm md:text-lg tracking-tight leading-none bg-linear-to-r from-white via-slate-100 to-[#81C784] bg-clip-text text-transparent truncate">
-                {displayUsername}
-              </h1>
-              <span className="text-[9px] md:text-[10px] text-[#888888] font-mono tracking-widest uppercase mt-0.5 block truncate">
-                {activeTier} • {stats.elo.blitz} Elo
-              </span>
+              <h1 className="font-sans font-black text-sm tracking-tight leading-none bg-linear-to-r from-white via-slate-100 to-[#81C784] bg-clip-text text-transparent truncate">{displayUsername}</h1>
             </div>
           </div>
-
-          {/* User ratings preview bar (Simplified & Desktop/Tablet only) */}
-          <div className="hidden sm:flex items-center gap-3 md:gap-5 bg-[#121212] border border-[#2A2A2A] py-1.5 px-3 md:px-4 rounded-2xl text-xs font-medium">
-            <div className="flex items-center gap-2 md:gap-4 font-mono text-[10px] md:text-[11px]">
-              <span className="text-[#888888]"><Zap className="inline-block w-3 h-3 text-[#4CAF50] mr-0.5 md:mr-1 align-middle" />Blitz: <strong className="text-white">{stats.elo.blitz}</strong></span>
-              <div className="h-4 w-[1px] bg-[#2A2A2A]" />
-              <span className="text-[#888888]"><Trophy className="inline-block w-3.5 h-3.5 text-amber-500 mr-0.5 md:mr-1 align-middle" />Bot: <strong className="text-white">{stats.botRating}</strong></span>
-              {isGuest && (
-                <>
-                  <div className="h-4 w-[1px] bg-[#2A2A2A]" />
-                  <span className="text-[9px] font-black text-cyan-400 bg-cyan-950/40 px-1.5 py-0.5 rounded border border-cyan-500/10 uppercase tracking-wider">Guest</span>
-                </>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Settings Button */}
+          <div className="flex items-center gap-2">
             <button
-              id="global-settings-btn"
               onClick={() => setIsSettingsOpen(true)}
-              title="Settings"
-              className="p-2 rounded-xl border border-[#2A2A2A] hover:bg-[#2A2A2A] text-gray-400 hover:text-white transition cursor-pointer shrink-0"
+              className="p-1.5 rounded-lg border border-[#2A2A2A] hover:bg-[#2A2A2A] text-gray-400 hover:text-white transition"
             >
               <SettingsIcon className="w-4 h-4" />
             </button>
-
-            {/* Logout Button */}
             <button
-              id="global-signout-btn"
               onClick={handleSignOut}
-              title="Sign Out"
-              className="p-2 rounded-xl border border-[#2A2A2A] hover:border-red-500/30 hover:bg-red-950/15 hover:text-red-400 text-gray-500 transition cursor-pointer shrink-0"
+              className="p-1.5 rounded-lg border border-[#2A2A2A] hover:bg-red-950/20 text-gray-500 hover:text-red-400 transition"
             >
               <LogOut className="w-4 h-4" />
             </button>
           </div>
-
         </div>
       </header>
 
-      {/* Main Workspace Frame */}
-      <main className={`flex-1 w-full mx-auto flex flex-col min-h-0 ${isMenuHidden ? 'p-1 md:p-2 max-w-5xl' : 'p-2 md:p-4 max-w-6xl gap-3'}`}>
-        
-        {/* Navigation Selector Tabs */}
-        <div className={`bg-[#1A1A1A] border border-[#2A2A2A] p-1.5 rounded-2xl flex flex-wrap gap-1 shadow-md shrink-0 ${isMenuHidden ? 'hidden' : ''}`}>
-          {[
-            { id: 'matchmaking', label: '1v1 Arena', icon: Trophy, desc: 'Play online' },
-            { id: 'openings', label: 'Learn Openings', icon: BookOpen, desc: 'Opening theory' },
-            { id: 'bots', label: 'Play vs Bots', icon: Cpu, desc: 'Challenge computer' },
-            { id: 'stats', label: 'Stats & Rank', icon: User, desc: 'Climb ladder' },
-            { id: 'review', label: 'AI Review', icon: Sparkles, desc: 'Analyze moves' }
-          ].map((tab) => {
+      {/* Sidebar for Desktop */}
+      <aside className={`hidden md:flex flex-col w-56 lg:w-64 shrink-0 border-r border-[#2A2A2A] bg-[#1A1A1A] shadow-xl z-40 ${isMenuHidden ? 'hidden' : ''}`}>
+        {/* Brand */}
+        <div className="p-5 border-b border-[#2A2A2A]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-[#388E3C] via-[#4CAF50] to-[#81C784] flex items-center justify-center text-2xl shadow-md rotate-3 shrink-0">👑</div>
+            <div className="min-w-0">
+              <h1 className="font-sans font-black text-base lg:text-lg tracking-tight leading-none bg-linear-to-r from-white via-slate-100 to-[#81C784] bg-clip-text text-transparent truncate">{displayUsername}</h1>
+              <span className="text-[10px] text-[#888] font-mono tracking-widest uppercase mt-1 block truncate">{activeTier} • {stats.elo.blitz} Elo</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop Nav Items */}
+        <div className="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-1.5">
+          {navItems.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
-                id={`tab-${tab.id}`}
                 onClick={() => {
                   if (tab.id === 'review' && !reviewGameRecord && stats.gameHistory.length > 0) {
-                    // Pre-select most recent game if none selected
                     setReviewGameRecord(stats.gameHistory[0]);
                   }
                   setActiveTab(tab.id as any);
                 }}
-                className={`flex-1 min-w-[110px] py-2.5 px-3.5 rounded-xl flex items-center justify-center gap-2.5 font-sans font-extrabold text-sm transition cursor-pointer ${isActive ? 'bg-[#2A2A2A] text-[#4CAF50] border border-[#4CAF50]/20 shadow-md' : 'text-[#888] hover:text-[#E0E0E0] hover:bg-[#2A2A2A]/40'}`}
+                className={`w-full flex items-center gap-3 py-3 px-4 rounded-xl font-sans font-bold text-sm transition cursor-pointer ${isActive ? 'bg-[#2A2A2A] text-[#4CAF50] border border-[#4CAF50]/20 shadow-md' : 'text-[#888] hover:text-[#E0E0E0] hover:bg-[#2A2A2A]/40 border border-transparent'}`}
               >
                 <Icon className={`w-4 h-4 ${isActive ? 'text-[#4CAF50]' : 'text-[#888]'}`} />
-                <div className="text-left">
-                  <span className="block leading-none">{tab.label}</span>
-                  <span className={`block text-[9px] font-medium leading-none mt-1 opacity-75 ${isActive ? 'text-[#4CAF50]/80' : 'text-[#666]'}`}>{tab.desc}</span>
-                </div>
+                <span>{tab.label}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Tab Panel View */}
-        <div className={`flex-1 flex flex-col min-h-0 overflow-hidden ${isMenuHidden ? 'p-0 md:p-2 bg-transparent border-none shadow-none' : 'bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-2 md:p-4 shadow-md'}`}>
-          {activeTab === 'matchmaking' && (
-            <MatchmakingTab 
-              stats={stats} 
-              onUpdateStats={handleUpdateStats} 
-              boardTheme={boardTheme} 
-              onReviewGame={(game) => {
-                setReviewGameRecord(game);
-                setActiveTab('review');
-              }}
-              onGameActiveChange={setIsGameplayActive}
-              username={displayUsername}
-            />
-          )}
-          {activeTab === 'openings' && (
-            <OpeningsTab 
-              stats={stats} 
-              onUpdateStats={handleUpdateStats} 
-              boardTheme={boardTheme} 
-              onGameActiveChange={setIsGameplayActive}
-            />
-          )}
-          {activeTab === 'bots' && (
-            <BotsTab 
-              stats={stats} 
-              onUpdateStats={handleUpdateStats} 
-              boardTheme={boardTheme} 
-              onReviewGame={(game) => {
-                setReviewGameRecord(game);
-                setActiveTab('review');
-              }}
-              onGameActiveChange={setIsGameplayActive}
-              username={displayUsername}
-            />
-          )}
-          {activeTab === 'stats' && (
-            <StatsTab
-              stats={stats}
-              onUpdateStats={handleUpdateStats}
-              username={username}
-              onUpdateUsername={handleUpdateUsername}
-              onSelectGameToReview={(game) => {
-                setReviewGameRecord(game);
-                setActiveTab('review');
-              }}
-            />
-          )}
-          {activeTab === 'review' && (
-            <GameReview
-              stats={stats}
-              selectedGame={reviewGameRecord}
-              boardTheme={boardTheme}
-              onBackToLobby={() => {
-                setReviewGameRecord(null);
-                setActiveTab('stats');
-              }}
-              onSelectGameToReview={(game) => {
-                setReviewGameRecord(game);
-              }}
-            />
-          )}
+        {/* Desktop Footer Actions */}
+        <div className="p-4 border-t border-[#2A2A2A] flex items-center gap-2">
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-xl border border-[#2A2A2A] hover:bg-[#2A2A2A] text-gray-400 hover:text-white text-xs font-bold transition"
+          >
+            <SettingsIcon className="w-3.5 h-3.5" /> Settings
+          </button>
+          <button
+            onClick={handleSignOut}
+            className="p-2.5 rounded-xl border border-[#2A2A2A] hover:bg-red-950/20 text-gray-500 hover:text-red-400 transition"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
         </div>
+      </aside>
 
+      {/* Main Workspace Frame */}
+      <main className="flex-1 flex flex-col min-h-0 w-full bg-[#121212] overflow-hidden relative">
+        <div className={`flex-1 flex flex-col min-h-0 ${isMenuHidden ? 'p-1' : 'p-2 md:p-6'} mx-auto w-full max-w-6xl`}>
+          
+          {/* Tab Panel View */}
+          <div className={`flex-1 flex flex-col min-h-0 overflow-hidden ${isMenuHidden ? 'p-0 bg-transparent border-none shadow-none' : 'bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl md:rounded-3xl p-2 md:p-6 shadow-md'}`}>
+            {activeTab === 'matchmaking' && (
+              <MatchmakingTab 
+                stats={stats} 
+                onUpdateStats={handleUpdateStats} 
+                boardTheme={boardTheme} 
+                onReviewGame={(game) => {
+                  setReviewGameRecord(game);
+                  setActiveTab('review');
+                }}
+                onGameActiveChange={setIsGameplayActive}
+                username={displayUsername}
+              />
+            )}
+            {activeTab === 'openings' && (
+              <OpeningsTab 
+                stats={stats} 
+                onUpdateStats={handleUpdateStats} 
+                boardTheme={boardTheme} 
+                onGameActiveChange={setIsGameplayActive}
+              />
+            )}
+            {activeTab === 'bots' && (
+              <BotsTab 
+                stats={stats} 
+                onUpdateStats={handleUpdateStats} 
+                boardTheme={boardTheme} 
+                onReviewGame={(game) => {
+                  setReviewGameRecord(game);
+                  setActiveTab('review');
+                }}
+                onGameActiveChange={setIsGameplayActive}
+                username={displayUsername}
+              />
+            )}
+            {activeTab === 'stats' && (
+              <StatsTab
+                stats={stats}
+                onUpdateStats={handleUpdateStats}
+                username={username}
+                onUpdateUsername={handleUpdateUsername}
+                onSelectGameToReview={(game) => {
+                  setReviewGameRecord(game);
+                  setActiveTab('review');
+                }}
+              />
+            )}
+            {activeTab === 'review' && (
+              <GameReview
+                stats={stats}
+                selectedGame={reviewGameRecord}
+                boardTheme={boardTheme}
+                onBackToLobby={() => {
+                  setReviewGameRecord(null);
+                  setActiveTab('stats');
+                }}
+                onSelectGameToReview={(game) => {
+                  setReviewGameRecord(game);
+                }}
+              />
+            )}
+          </div>
+        </div>
       </main>
 
-      {/* Global aesthetic footer info lines */}
-      <footer className={`shrink-0 border-t border-[#2A2A2A] py-3 md:py-5 px-4 bg-[#121212] text-center text-xs text-[#888888] ${isMenuHidden ? 'hidden' : ''}`}>
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 font-medium">
-          <span>♟ "Chess is a struggle against your own errors." — Johannes Zukertort</span>
-          <span className="text-[10px] font-mono text-[#666666]">GrandMaster Arena • v1.0.2 Stable</span>
+      {/* Bottom Nav for Mobile */}
+      <nav className={`md:hidden shrink-0 border-t border-[#2A2A2A] bg-[#1A1A1A] shadow-[0_-4px_10px_rgba(0,0,0,0.5)] z-40 pb-[env(safe-area-inset-bottom)] ${isMenuHidden ? 'hidden' : ''}`}>
+        <div className="flex items-center justify-around p-1.5">
+          {navItems.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  if (tab.id === 'review' && !reviewGameRecord && stats.gameHistory.length > 0) {
+                    setReviewGameRecord(stats.gameHistory[0]);
+                  }
+                  setActiveTab(tab.id as any);
+                }}
+                className={`flex-1 flex flex-col items-center justify-center p-1.5 rounded-lg transition-colors ${isActive ? 'text-[#4CAF50]' : 'text-[#888888] hover:text-[#E0E0E0]'}`}
+              >
+                <div className={`p-1 rounded-full mb-0.5 ${isActive ? 'bg-[#4CAF50]/10' : 'bg-transparent'}`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <span className="text-[9px] font-bold tracking-tight">{tab.short}</span>
+              </button>
+            );
+          })}
         </div>
-      </footer>
+      </nav>
 
       {isSettingsOpen && (
         <ProfileSettingsModal
