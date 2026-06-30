@@ -749,8 +749,8 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
               </div>
 
               {/* Opponent Clock */}
-              <div className={`flex items-center gap-1 px-2 py-1 md:px-3 md:py-1.5 rounded-lg border font-mono font-bold text-sm md:text-lg ${game.turn() !== playerColor && !gameResult ? 'bg-red-950/20 text-red-400 border-red-900/30 animate-pulse' : 'bg-[#121212] text-[#888888] border-[#2A2A2A]'}`}>
-                <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#666666]" />
+              <div className={`flex items-center gap-1.5 px-3 py-1 md:px-5 md:py-2 rounded-lg border font-mono font-bold text-lg md:text-2xl shadow-inner ${game.turn() !== playerColor && !gameResult ? 'bg-red-950/20 text-red-400 border-red-900/30 animate-pulse' : 'bg-[#121212] text-[#E0E0E0] border-[#2A2A2A]'}`}>
+                <Clock className="w-4 h-4 md:w-5 md:h-5 text-[#888888]" />
                 {formatClock(opponentTime)}
               </div>
             </div>
@@ -793,8 +793,8 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
               </div>
 
               {/* Player Clock */}
-              <div className={`flex items-center gap-1 px-2 py-1 md:px-3 md:py-1.5 rounded-lg border font-mono font-bold text-sm md:text-lg ${game.turn() === playerColor && !gameResult ? 'bg-[#4CAF50]/10 text-[#4CAF50] border-[#388E3C]/30' : 'bg-[#121212] text-[#888888] border-[#2A2A2A]'}`}>
-                <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#666666]" />
+              <div className={`flex items-center gap-1.5 px-3 py-1 md:px-5 md:py-2 rounded-lg border font-mono font-bold text-lg md:text-2xl shadow-inner ${game.turn() === playerColor && !gameResult ? 'bg-[#4CAF50]/10 text-[#4CAF50] border-[#388E3C]/30' : 'bg-[#121212] text-[#E0E0E0] border-[#2A2A2A]'}`}>
+                <Clock className="w-4 h-4 md:w-5 md:h-5 text-[#888888]" />
                 {formatClock(playerTime)}
               </div>
             </div>

@@ -40,6 +40,8 @@ export interface MoveAnalysis {
   type: 'brilliant' | 'best' | 'excellent' | 'good' | 'book' | 'inaccuracy' | 'mistake' | 'blunder';
   commentary: string;
   bestMove?: { from: string; to: string };
+  openingName?: string;
+  openingVariation?: string;
 }
 
 export const GameReview: React.FC<GameReviewProps> = ({
@@ -246,7 +248,9 @@ export const GameReview: React.FC<GameReviewProps> = ({
           evaluationAfter: currentEval,
           type,
           commentary: finalCommentary,
-          bestMove: bestMoveObj
+          bestMove: bestMoveObj,
+          openingName: (matchedOpening && i === maxDepthMatched - 1) ? matchedOpening.name : undefined,
+          openingVariation: (matchedOpening && i === maxDepthMatched - 1) ? matchedOpening.variation : undefined
         });
 
         lastEval = currentEval;
@@ -553,7 +557,8 @@ export const GameReview: React.FC<GameReviewProps> = ({
                       const bMove = analyzedMoves[bIdx];
 
                       return (
-                        <div key={idx} className={`flex items-center gap-1 ${idx % 2 === 0 ? 'bg-[#222222]' : 'bg-[#1A1A1A]'} px-1`}>
+                        <React.Fragment key={idx}>
+                        <div className={`flex items-center gap-1 ${idx % 2 === 0 ? 'bg-[#222222]' : 'bg-[#1A1A1A]'} px-1`}>
                           <span className="text-[#666666] w-5 text-right mr-0.5 text-[10px] font-mono">{idx + 1}.</span>
                           
                           {/* White move tag */}
@@ -610,6 +615,13 @@ export const GameReview: React.FC<GameReviewProps> = ({
                             </button>
                           )}
                         </div>
+                        {(wMove?.openingName || bMove?.openingName) && (
+                          <div className="flex items-center gap-1.5 px-2 py-1 text-[10px] text-gray-400 font-medium bg-[#1e2332] border-y border-[#2a3044]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+                            <span>{(wMove?.openingName || bMove?.openingName)} {(wMove?.openingVariation || bMove?.openingVariation) ? ` - ${(wMove?.openingVariation || bMove?.openingVariation)}` : ''}</span>
+                          </div>
+                        )}
+                        </React.Fragment>
                       );
                     })}
                   </div>

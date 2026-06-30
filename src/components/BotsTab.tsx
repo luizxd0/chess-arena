@@ -522,9 +522,9 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
                   </div>
                   <div className="flex items-center gap-2">
                     {/* Dummy Opponent Clock */}
-                    <div className="hidden md:flex items-center gap-1 px-2 py-0.5 rounded-md border font-mono font-bold text-xs bg-[#121212] text-[#888888] border-[#2A2A2A]">
-                      <Clock className="w-3 h-3 text-[#666666]" />
-                      ∞
+                    <div className="hidden md:flex items-center gap-1.5 px-3 py-1 md:px-5 md:py-2 rounded-lg border font-mono font-bold text-lg md:text-2xl bg-[#121212] text-[#E0E0E0] border-[#2A2A2A] shadow-inner">
+                      <Clock className="w-4 h-4 md:w-5 md:h-5 text-[#888888]" />
+                      <span>∞</span>
                     </div>
                     <button
                       onClick={handleExitGame}
@@ -569,9 +569,9 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
               </div>
 
               {/* Dummy Player Clock */}
-              <div className="flex items-center gap-1 px-2 py-1 md:px-3 md:py-1.5 rounded-lg border font-mono font-bold text-sm md:text-lg bg-[#121212] text-[#888888] border-[#2A2A2A]">
-                <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#666666]" />
-                ∞
+              <div className="flex items-center gap-1.5 px-3 py-1 md:px-5 md:py-2 rounded-lg border font-mono font-bold text-lg md:text-2xl bg-[#121212] text-[#E0E0E0] border-[#2A2A2A] shadow-inner">
+                <Clock className="w-4 h-4 md:w-5 md:h-5 text-[#888888]" />
+                <span>∞</span>
               </div>
             </div>
 
