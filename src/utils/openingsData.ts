@@ -10,6 +10,16 @@ export const openingsList: Opening[] = [
     description: 'One of the oldest and most popular openings in chess. It focuses on rapid development, controlling the center with the e4 pawn, and targeting Black\'s weakest point: the f7 pawn, which is guarded only by the King.',
     variations: [
       {
+        name: 'Main Line',
+        moves: ['e4', 'e5', 'Nf3', 'Nc6', 'Bc4'],
+        description: 'The standard starting position for the Italian Game, establishing early center control and piece development.',
+        tips: [
+          'Move 1: Control the center with your e-pawn.',
+          'Move 2: Develop your knight and attack the center.',
+          'Move 3: Bring out your bishop to an active square targeting f7.'
+        ]
+      },
+      {
         name: 'Giuoco Piano (The Quiet Game)',
         moves: ['e4', 'e5', 'Nf3', 'Nc6', 'Bc4', 'Bc5', 'c3', 'Nf6', 'd4'],
         description: 'Black mirrors White\'s bishop to challenge the diagonal. White responds by building a strong pawn center with c3 and d4.',
@@ -41,6 +51,91 @@ export const openingsList: Opening[] = [
           'Move 5 (b4): Offer the b4 pawn! Black almost must accept this sacrifice.',
           'Move 6 (Bxb4): Black takes. Now push c3 with tempo to kick the bishop and prepare a rapid d4 push.',
           'Move 7 (c3): Gain full speed and initiative in the center. Black\'s king will soon feel the heat!'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'ruy-lopez',
+    name: 'Ruy Lopez',
+    side: 'w',
+    difficulty: 'Advanced',
+    moves: ['e4', 'e5', 'Nf3', 'Nc6', 'Bb5'],
+    description: 'Also known as the Spanish Game, it is one of the most complex and heavily analyzed openings. White immediately puts pressure on the knight defending the e5 pawn.',
+    variations: [
+      {
+        name: 'Morphy Defense',
+        moves: ['e4', 'e5', 'Nf3', 'Nc6', 'Bb5', 'a6', 'Ba4', 'Nf6', 'O-O', 'Be7'],
+        description: 'Black immediately questions the bishop with a6. White typically retreats to a4 to maintain the pin.',
+        tips: [
+          'Move 3 (Bb5): Attack the defender of the e5 pawn.',
+          'Move 4 (a6): Black attacks your bishop.',
+          'Move 5 (Ba4): Retreat the bishop but keep the pressure along the diagonal.',
+          'Move 6 (O-O): Secure the king early.',
+          'Move 7 (Be7): Black prepares to castle.'
+        ]
+      },
+      {
+        name: 'Berlin Defense',
+        moves: ['e4', 'e5', 'Nf3', 'Nc6', 'Bb5', 'Nf6', 'O-O', 'Nxe4', 'd4', 'Nd6', 'Bxc6', 'dxc6', 'dxe5', 'Nf5', 'Qxd8+', 'Kxd8'],
+        description: 'Known as the "Berlin Wall", it leads to an early queen exchange and a very solid, hard-to-crack endgame for Black.',
+        tips: [
+          'Move 4 (Nf6): Black attacks the e4 pawn instead of playing a6.',
+          'Move 5 (O-O): Ignore the pawn and castle!',
+          'Move 6 (Nxe4): Black takes the pawn. Strike in the center with d4.'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'london-system',
+    name: 'London System',
+    side: 'w',
+    difficulty: 'Beginner',
+    moves: ['d4', 'd5', 'Bf4'],
+    description: 'A solid, universal system for White that can be played against almost anything Black does. It focuses on rapid development, a solid pawn structure, and avoiding sharp tactical pitfalls early on.',
+    variations: [
+      {
+        name: 'Main Line',
+        moves: ['d4', 'd5', 'Bf4', 'Nf6', 'e3', 'e6', 'Nf3', 'Bd6', 'Bg3', 'O-O', 'Bd3'],
+        description: 'The standard setup where White builds a pyramid pawn structure and develops comfortably.',
+        tips: [
+          'Move 1: Claim the center with d4.',
+          'Move 2: Bring the dark-squared bishop out early to f4 before playing e3.',
+          'Move 3 (e3): Solidify the center.',
+          'Move 4 (Nf3): Develop the knight.',
+          'Move 5 (Bg3): If Black challenges the bishop with Bd6, drop it back to g3 to open the h-file if captured.'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'french-defense',
+    name: 'French Defense',
+    side: 'b',
+    difficulty: 'Intermediate',
+    moves: ['e4', 'e6', 'd4', 'd5'],
+    description: 'A robust and counter-attacking defense. Black solidifies the center with e6 and challenges White immediately with d5, leading to closed and strategic positions.',
+    variations: [
+      {
+        name: 'Advance Variation',
+        moves: ['e4', 'e6', 'd4', 'd5', 'e5', 'c5', 'c3', 'Nc6', 'Nf3', 'Qb6'],
+        description: 'White closes the center with e5. Black immediately attacks the pawn chain base with c5.',
+        tips: [
+          'Move 1 (e6): Prepare to challenge the center safely.',
+          'Move 2 (d5): Strike at the center.',
+          'Move 3 (e5): White locks the structure.',
+          'Move 4 (c5): Attack the pawn chain base at d4 immediately!',
+          'Move 5 (Nc6) & Move 6 (Qb6): Pile up pressure on White\'s d4 pawn.'
+        ]
+      },
+      {
+        name: 'Exchange Variation',
+        moves: ['e4', 'e6', 'd4', 'd5', 'exd5', 'exd5', 'Nf3', 'Nf6', 'Bd3', 'Bd6'],
+        description: 'White resolves the tension by exchanging on d5, leading to a symmetrical and relatively quiet position.',
+        tips: [
+          'Move 3 (exd5): White exchanges, opening the e-file.',
+          'Develop your pieces symmetrically and maintain solid central control.'
         ]
       }
     ]
