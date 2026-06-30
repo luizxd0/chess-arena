@@ -427,6 +427,7 @@ export const GameReview: React.FC<GameReviewProps> = ({
             <div className="w-full aspect-square w-full shrink-0">
               <ChessBoard
                 fen={currentFen}
+                lastMove={activeMoveAnalysis ? { from: activeMoveAnalysis.from, to: activeMoveAnalysis.to } : null}
                 onMove={() => {}} // Readonly board during review replay
                 playerColor={playerPerspective}
                 isInteractive={false} // completely static board

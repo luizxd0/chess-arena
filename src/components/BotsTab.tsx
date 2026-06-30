@@ -40,6 +40,7 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
   const [resultReason, setResultReason] = useState('');
 
   const [moveHistory, setMoveHistory] = useState<string[]>([]);
+  const [lastMove, setLastMove] = useState<{from: string, to: string} | null>(null);
 
   // Check if a bot is locked based on player's Bot Elo
   const isBotLocked = (bot: Bot): boolean => {
@@ -83,7 +84,8 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
     setSelectedBot(bot);
     setGameResult(null);
     setMoveHistory(chess.history());
-    setBotPhrase(isOpPractice ? `Let's practice the opening! Make your first move.` : bot.greeting);
+    setLastMove(null);
+    setBotPhrase(isOpPractice ? `Let's practice the opening!` : bot.greeting);
 
     // If bot plays White, they make the move immediately
     if (playerColor === 'b' && chess.turn() === 'w') {
@@ -154,6 +156,7 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
             if (playedMove) {
               setFen(currentChess.fen());
               setMoveHistory(currentChess.history());
+              setLastMove({ from: nextMoveObj.from, to: nextMoveObj.to });
 
               // Play Sound
               if (playedMove.captured) {
@@ -195,6 +198,7 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
       if (playedMove) {
         setFen(game.fen());
         setMoveHistory(game.history());
+        setLastMove({ from, to });
 
         if (playedMove.captured) {
           chessAudio.playCapture();
@@ -325,6 +329,7 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
 
   const handleExitGame = () => {
     setGame(null);
+    setLastMove(null);
     setSelectedBot(null);
     setGameResult(null);
     setShowMobileMoves(false);
@@ -506,6 +511,7 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
             {/* Chessboard */}
             <ChessBoard
               fen={fen}
+              lastMove={lastMove}
               onMove={handlePlayerMove}
               playerColor={playerColor}
               isInteractive={!gameResult && game.turn() === playerColor}

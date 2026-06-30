@@ -14,6 +14,7 @@ interface ChessBoardProps {
   theme?: BoardTheme;
   hintMove?: { from: string; to: string } | null;
   reviewMoveEvaluation?: { square: string; type: string } | null;
+  lastMove?: { from: string; to: string } | null;
 }
 
 export const ChessBoard: React.FC<ChessBoardProps> = ({
@@ -23,7 +24,8 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
   isInteractive = true,
   theme = 'elegant',
   hintMove = null,
-  reviewMoveEvaluation = null
+  reviewMoveEvaluation = null,
+  lastMove = null
 }) => {
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [possibleMoves, setPossibleMoves] = useState<string[]>([]);
@@ -135,11 +137,12 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
     }
   }
 
-  // Get last move squares from chess history to highlight
+  // Get last move squares from chess history or prop to highlight
   const history = chess.history({ verbose: true });
-  const lastMove = history[history.length - 1];
-  const lastFrom = lastMove?.from;
-  const lastTo = lastMove?.to;
+  const localLastMove = history.length > 0 ? history[history.length - 1] : null;
+  const activeLastMove = lastMove || localLastMove;
+  const lastFrom = activeLastMove?.from;
+  const lastTo = activeLastMove?.to;
 
   // Material evaluation and captures
   const materialData = getMaterialDifference(fen);
@@ -479,7 +482,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
               let squareContentColor = isDark ? 'text-gray-200' : 'text-gray-800';
 
               if (isLastMoveSrc || isLastMoveDst) {
-                squareBg = theme === 'cyber' ? 'bg-[#0284c7]/40 border-2 border-[#38bdf8]/60' : 'bg-[#facc15]/30';
+                squareBg = theme === 'cyber' ? 'bg-[#0284c7]/40 border-2 border-[#38bdf8]/60' : 'bg-[#facc15]/50';
               }
               if (isSelected) {
                 squareBg = 'bg-[#60a5fa]/50 border-2 border-blue-500';

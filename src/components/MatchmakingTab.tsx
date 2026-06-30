@@ -44,6 +44,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
   const [gameResult, setGameResult] = useState<'win' | 'loss' | 'draw' | null>(null);
   const [resultReason, setResultReason] = useState<string>('');
   const [moveHistory, setMoveHistory] = useState<string[]>([]);
+  const [lastMove, setLastMove] = useState<{from: string, to: string} | null>(null);
   
   // Clocks
   const [playerTime, setPlayerTime] = useState(180); // seconds
@@ -223,6 +224,9 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
           game.load(data.fen);
           setFen(data.fen);
           setMoveHistory(data.history || []);
+          if (data.lastMoveData) {
+            setLastMove(data.lastMoveData);
+          }
           
           // Play audio
           chessAudio.playMove();
@@ -279,6 +283,9 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
     setGame(chessGame);
     setFen(chessGame.fen());
     setMoveHistory(existingHistory || []);
+    if (existingData?.lastMoveData) {
+      setLastMove(existingData.lastMoveData);
+    }
     setGameResult(null);
 
     const welcomeMsgs: ChatMessage[] = [
@@ -373,12 +380,14 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
         
         setFen(newFen);
         setMoveHistory(newHistory);
+        setLastMove({ from, to });
 
         // Sync to Firestore
         if (matchId) {
           updateDoc(doc(db, 'matches', matchId), {
             fen: newFen,
             history: newHistory,
+            lastMoveData: { from, to },
             lastMoveTime: Date.now()
           }).catch(e => console.error("Failed to sync move", e));
         }
@@ -544,6 +553,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
     setMatchedOpponent(null);
     setGameResult(null);
     setMatchId(null);
+    setLastMove(null);
     setShowMobileChat(false);
   };
 
@@ -714,6 +724,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
             {/* Chess Board */}
             <ChessBoard
               fen={fen}
+              lastMove={lastMove}
               onMove={handlePlayerMove}
               playerColor={playerColor}
               isInteractive={!gameResult && game.turn() === playerColor}

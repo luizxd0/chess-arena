@@ -25,6 +25,7 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
     onGameActiveChange?.(game !== null);
   }, [game, onGameActiveChange]);
   const [fen, setFen] = useState('');
+  const [lastMove, setLastMove] = useState<{from: string, to: string} | null>(null);
   const [currentStep, setCurrentStep] = useState(0); // active move index in variation.moves
   const [coachTip, setCoachTip] = useState('');
   const [showHint, setShowHint] = useState(false);
@@ -36,6 +37,7 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
     const chess = new Chess();
     setGame(chess);
     setFen(chess.fen());
+    setLastMove(null);
     setSelectedOpening(opening);
     setSelectedVariation(variation);
     setCurrentStep(0);
@@ -51,8 +53,9 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
     if (opening.side === 'b') {
       const firstMoveStr = variation.moves[0]; // e.g. "e4"
       setTimeout(() => {
-        chess.move(firstMoveStr);
+        const firstMoveObj = chess.move(firstMoveStr);
         setFen(chess.fen());
+        setLastMove({ from: firstMoveObj.from, to: firstMoveObj.to });
         setCurrentStep(1);
         chessAudio.playMove();
         setCoachTip(variation.tips[1] || 'Respond in the center!');
@@ -94,6 +97,7 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
     const nextStep = currentStep + 1;
     setCurrentStep(nextStep);
     setFen(game.fen());
+    setLastMove({ from, to });
     setShowHint(false);
 
     // Audio
@@ -127,6 +131,7 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
         const engineStep = nextStep + 1;
         setCurrentStep(engineStep);
         setFen(game.fen());
+        setLastMove({ from: engineMoveObj.from, to: engineMoveObj.to });
 
         if (engineMoveObj.captured) {
           chessAudio.playCapture();
@@ -188,6 +193,7 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
 
   const handleExitTrainer = () => {
     setGame(null);
+    setLastMove(null);
     setSelectedVariation(null);
     setShowMobileChecklist(false);
   };
@@ -343,6 +349,7 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
             {/* Chessboard (With green coaching arrow support) */}
             <ChessBoard
               fen={fen}
+              lastMove={lastMove}
               onMove={handleMoveAttempt}
               playerColor={selectedOpening.side}
               isInteractive={!isCompleted && game.turn() === selectedOpening.side}
