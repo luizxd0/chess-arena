@@ -433,7 +433,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
   };
 
   return (
-    <div id="chess-board-wrapper" style={{ touchAction: 'none' }} className="flex flex-col w-full max-w-[min(100vw-24px,100vh-220px)] lg:max-w-md mx-auto select-none">
+    <div id="chess-board-wrapper" style={{ touchAction: 'none' }} className="flex flex-col w-full max-w-[min(100vw-24px,100dvh-280px)] md:max-w-[min(100vw-24px,100dvh-240px)] lg:max-w-md mx-auto select-none">
       
       {/* Top Captured Bar: Pieces captured by Opponent */}
       <div className="flex items-center justify-between px-3 py-1.5 mb-2 bg-[#121212]/60 border border-[#2A2A2A] rounded-xl text-xs">

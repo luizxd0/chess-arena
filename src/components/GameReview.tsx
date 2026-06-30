@@ -3,6 +3,7 @@ import { Chess, Square } from 'chess.js';
 import { UserStats, GameRecord } from '../types';
 import { ChessBoard, BoardTheme } from './ChessBoard';
 import { evaluateBoard } from '../utils/chessAI';
+import { openingsList } from '../utils/openingsData';
 import { 
   Award, 
   ChevronLeft, 
@@ -54,6 +55,7 @@ export const GameReview: React.FC<GameReviewProps> = ({
   const [currentFen, setCurrentFen] = useState('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
   const [playerPerspective, setPlayerPerspective] = useState<'w' | 'b'>('w');
   const [showBestMove, setShowBestMove] = useState(false);
+  const [detectedOpening, setDetectedOpening] = useState<{name: string, variation?: string} | null>(null);
 
   // Auto-set perspective based on the selected game
   useEffect(() => {
@@ -76,9 +78,9 @@ export const GameReview: React.FC<GameReviewProps> = ({
 
     // Run in a slight timeout to simulate deep engine analysis & prevent UI freezing
     const timer = setTimeout(() => {
-      const getMoveEval = (chessInstance: Chess, turn: 'w' | 'b'): number => {
+      const getMoveEval = (chessInstance: Chess): number => {
         if (chessInstance.isCheckmate()) {
-          return turn === 'w' ? 1000.0 : -1000.0;
+          return chessInstance.turn() === 'w' ? -1000.0 : 1000.0;
         }
         if (chessInstance.isDraw()) {
           return 0.0;
@@ -88,17 +90,17 @@ export const GameReview: React.FC<GameReviewProps> = ({
 
       const getBestMoveEval = (chessInstance: Chess): number => {
         const movesList = chessInstance.moves({ verbose: true });
-        const side = chessInstance.turn();
         if (movesList.length === 0) {
-          return getMoveEval(chessInstance, side);
+          return getMoveEval(chessInstance);
         }
         
+        const side = chessInstance.turn();
         let bestEval = side === 'w' ? -Infinity : Infinity;
         
         for (const m of movesList) {
           try {
             chessInstance.move({ from: m.from, to: m.to, promotion: m.promotion || 'q' });
-            const ev = getMoveEval(chessInstance, side);
+            const ev = getMoveEval(chessInstance);
             chessInstance.undo();
             
             if (side === 'w') {
@@ -117,8 +119,48 @@ export const GameReview: React.FC<GameReviewProps> = ({
       const initialFen = selectedGame.initialFen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
       const chess = new Chess(initialFen);
       
+      // Detect Opening
+      let matchedOpening: {name: string, variation?: string} | null = null;
+      let maxDepthMatched = 0;
+
+      for (const op of openingsList) {
+        // match baseline
+        let baselineMatch = true;
+        for (let j = 0; j < op.moves.length; j++) {
+          if (moves[j] !== op.moves[j]) {
+            baselineMatch = false;
+            break;
+          }
+        }
+        
+        if (baselineMatch) {
+          if (op.moves.length > maxDepthMatched) {
+            maxDepthMatched = op.moves.length;
+            matchedOpening = { name: op.name };
+          }
+          
+          // match variations
+          if (op.variations) {
+            for (const v of op.variations) {
+              let vMatch = true;
+              for (let j = 0; j < v.moves.length; j++) {
+                if (moves[j] !== v.moves[j]) {
+                  vMatch = false;
+                  break;
+                }
+              }
+              if (vMatch && v.moves.length > maxDepthMatched) {
+                maxDepthMatched = v.moves.length;
+                matchedOpening = { name: op.name, variation: v.name };
+              }
+            }
+          }
+        }
+      }
+      setDetectedOpening(matchedOpening);
+      
       const analysisList: MoveAnalysis[] = [];
-      let lastEval = getMoveEval(chess, 'w');
+      let lastEval = getMoveEval(chess);
 
       for (let i = 0; i < moves.length; i++) {
         const san = moves[i];
@@ -143,10 +185,19 @@ export const GameReview: React.FC<GameReviewProps> = ({
           continue;
         }
 
-        const currentEval = getMoveEval(chess, turn);
+        const currentEval = getMoveEval(chess);
         
         // Loss of evaluation (centipawn loss, always >= 0)
-        const evalLoss = turn === 'w' ? (bestEval - currentEval) : (currentEval - bestEval);
+        let evalLoss = turn === 'w' ? (bestEval - currentEval) : (currentEval - bestEval);
+        
+        // If the player is already completely winning, losing some evaluation shouldn't be penalized as heavily
+        const isCompletelyWinning = (turn === 'w' && bestEval >= 5.0 && currentEval >= 3.0) ||
+                                    (turn === 'b' && bestEval <= -5.0 && currentEval <= -3.0);
+                                    
+        if (isCompletelyWinning && evalLoss > 0.5) {
+           evalLoss = 0.4; // Cap loss to "good" if still crushing
+        }
+
         const loss = Math.max(0, evalLoss);
 
         // Classification heuristics based on centipawn loss
@@ -324,6 +375,18 @@ export const GameReview: React.FC<GameReviewProps> = ({
             <h2 className="font-sans font-black text-2xl text-white mt-1">
               {selectedGame ? `Review vs ${selectedGame.opponentName}` : 'Game Review Lobby'}
             </h2>
+            {detectedOpening && (
+              <div className="flex items-center gap-1.5 mt-1.5 text-xs text-gray-400 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+                <span>Opening: <strong className="text-gray-200">{detectedOpening.name}</strong></span>
+                {detectedOpening.variation && (
+                  <>
+                    <span className="text-[#2A2A2A] mx-1">•</span>
+                    <span>Variation: <strong className="text-gray-300">{detectedOpening.variation}</strong></span>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
