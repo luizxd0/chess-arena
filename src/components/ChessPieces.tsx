@@ -120,12 +120,14 @@ export const RenderPiece: React.FC<{ type: string; color: 'w' | 'b'; className?:
   const pieceCode = `${color}${type.toUpperCase()}`; // e.g., wP, bN, wQ
 
   const candidateUrls = [
-    // 1. Lichess official CDN (fast, high-quality vector SVGs)
+    // 1. Unpkg Chessground CDN (Extremely reliable, permissive headers, exact vector Lichess cburnett pieces)
+    `https://unpkg.com/chessground/assets/pieces/cburnett/${pieceCode}.svg`,
+    // 2. jsDelivr Chessground CDN (Fast fallback CDN)
+    `https://cdn.jsdelivr.net/npm/chessground/assets/pieces/cburnett/${pieceCode}.svg`,
+    // 3. Lichess official CDN
     `https://lichess1.org/assets/piece/cburnett/${pieceCode}.svg`,
-    // 2. Chess.com Neo pieces (polished PNGs)
-    `https://images.chesscomfiles.com/chess-themes/pieces/neo/150/${color}${type.toLowerCase()}.png`,
-    // 3. CDN jsdelivr for lila
-    `https://cdn.jsdelivr.net/gh/lichess-org/lila@master/public/piece/cburnett/${pieceCode}.svg`
+    // 4. Chess.com Neo pieces (polished PNGs)
+    `https://images.chesscomfiles.com/chess-themes/pieces/neo/150/${color}${type.toLowerCase()}.png`
   ];
 
   if (urlIndex >= candidateUrls.length) {
