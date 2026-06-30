@@ -501,196 +501,178 @@ export const GameReview: React.FC<GameReviewProps> = ({
           {/* RIGHT: Game Statistics, Accuracy & Move classification list */}
           <div className="w-full md:w-80 lg:w-96 flex flex-col justify-start gap-2 h-full min-h-0">
             
-            {/* Replay Controls Row (Now on the right like chess.com) */}
-            <div className="w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl p-2 flex items-center justify-center gap-2 shadow-md shrink-0">
-              <button
-                id="review-ctrl-first"
-                onClick={handleFirst}
-                disabled={activeMoveIdx === -1}
-                className="p-2.5 rounded-xl bg-[#121212] hover:bg-[#222] border border-[#2A2A2A] disabled:opacity-30 disabled:hover:bg-[#121212] text-gray-300 transition cursor-pointer"
-                title="First Position"
-              >
-                <ChevronsLeft className="w-4 h-4" />
-              </button>
-              <button
-                id="review-ctrl-prev"
-                onClick={handlePrev}
-                disabled={activeMoveIdx === -1}
-                className="p-2.5 rounded-xl bg-[#121212] hover:bg-[#222] border border-[#2A2A2A] disabled:opacity-30 disabled:hover:bg-[#121212] text-gray-300 transition cursor-pointer"
-                title="Previous Move"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-
-              <div className="font-mono text-xs font-bold text-[#E0E0E0] min-w-[70px] text-center">
-                {activeMoveIdx === -1 ? (
-                  <span className="text-gray-500">Start</span>
-                ) : (
-                  <span>Move {activeMoveIdx + 1} / {analyzedMoves.length}</span>
-                )}
+            {/* ACCURACY GAUGE */}
+            <div className="grid grid-cols-2 gap-2 bg-[#1A1A1A] p-2.5 rounded-xl shadow-md border border-[#2A2A2A] shrink-0">
+              {/* White stats */}
+              <div className="text-center border-r border-[#2A2A2A] pr-2">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">White Accuracy</span>
+                <span className="text-2xl font-black font-mono text-[#4CAF50]">{whiteAccuracy}%</span>
               </div>
-
-              <button
-                id="review-ctrl-next"
-                onClick={handleNext}
-                disabled={analyzedMoves.length === 0 || activeMoveIdx === analyzedMoves.length - 1}
-                className="p-2.5 rounded-xl bg-[#121212] hover:bg-[#222] border border-[#2A2A2A] disabled:opacity-30 disabled:hover:bg-[#121212] text-gray-300 transition cursor-pointer"
-                title="Next Move"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-              <button
-                id="review-ctrl-last"
-                onClick={handleLast}
-                disabled={analyzedMoves.length === 0 || activeMoveIdx === analyzedMoves.length - 1}
-                className="p-2.5 rounded-xl bg-[#121212] hover:bg-[#222] border border-[#2A2A2A] disabled:opacity-30 disabled:hover:bg-[#121212] text-gray-300 transition cursor-pointer"
-                title="Last Position"
-              >
-                <ChevronsRight className="w-4 h-4" />
-              </button>
+              {/* Black stats */}
+              <div className="text-center">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Black Accuracy</span>
+                <span className="text-2xl font-black font-mono text-cyan-400">{blackAccuracy}%</span>
+              </div>
             </div>
 
-            <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-3 shadow-md flex-1 flex flex-col gap-2 min-h-0 overflow-y-auto">
-            
-            {/* Dynamic Analysis Commentary Box */}
-            <div className="bg-[#121212] border border-[#2A2A2A] rounded-xl p-3 shrink-0 flex flex-col">
-              <div>
-                <span className="block text-[8px] font-bold text-[#4CAF50] uppercase tracking-wider font-mono">Move Commentary</span>
+            <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl shadow-md flex-1 flex flex-col min-h-0">
+              
+              {/* Complete Moves List Scroll Feed */}
+              <div className="p-2 flex-1 min-h-0 flex flex-col overflow-y-auto">
+                <div className="grid grid-cols-2 gap-x-2 gap-y-1 font-mono text-sm flex-1">
+                    {Array.from({ length: Math.ceil(analyzedMoves.length / 2) }).map((_, idx) => {
+                      const wIdx = idx * 2;
+                      const bIdx = idx * 2 + 1;
+                      const wMove = analyzedMoves[wIdx];
+                      const bMove = analyzedMoves[bIdx];
+
+                      return (
+                        <div key={idx} className="flex items-center gap-1">
+                          <span className="text-[#555555] w-6 text-right mr-1 text-xs">{idx + 1}.</span>
+                          
+                          {/* White move tag */}
+                          {wMove && (
+                            <button
+                              onClick={() => handleStepTo(wIdx)}
+                              className={`flex-1 text-left px-2 py-1 rounded transition flex justify-between items-center ${activeMoveIdx === wIdx ? 'bg-[#4CAF50]/20 text-white font-bold border border-[#4CAF50]/30' : 'text-gray-300 hover:bg-[#2A2A2A]'}`}
+                            >
+                              <span>{wMove.san}</span>
+                              <span className={`text-[10px] font-bold ${
+                                wMove.type === 'brilliant' ? 'text-cyan-400' :
+                                wMove.type === 'best' ? 'text-emerald-400' :
+                                wMove.type === 'excellent' ? 'text-green-400' :
+                                wMove.type === 'book' ? 'text-amber-500' :
+                                wMove.type === 'inaccuracy' ? 'text-yellow-400' :
+                                wMove.type === 'mistake' ? 'text-orange-400' :
+                                wMove.type === 'blunder' ? 'text-red-400' : ''
+                              }`}>
+                                {wMove.type === 'brilliant' ? '!!' : 
+                                 wMove.type === 'best' ? '★' : 
+                                 wMove.type === 'excellent' ? '✓' : 
+                                 wMove.type === 'book' ? '📖' : 
+                                 wMove.type === 'inaccuracy' ? '?!' : 
+                                 wMove.type === 'mistake' ? '?' : 
+                                 wMove.type === 'blunder' ? '??' : ''}
+                              </span>
+                            </button>
+                          )}
+
+                          {/* Black move tag */}
+                          {bMove && (
+                            <button
+                              onClick={() => handleStepTo(bIdx)}
+                              className={`flex-1 text-left px-2 py-1 rounded transition flex justify-between items-center ${activeMoveIdx === bIdx ? 'bg-cyan-400/20 text-white font-bold border border-cyan-400/30' : 'text-gray-300 hover:bg-[#2A2A2A]'}`}
+                            >
+                              <span>{bMove.san}</span>
+                              <span className={`text-[10px] font-bold ${
+                                bMove.type === 'brilliant' ? 'text-cyan-400' :
+                                bMove.type === 'best' ? 'text-emerald-400' :
+                                bMove.type === 'excellent' ? 'text-green-400' :
+                                bMove.type === 'book' ? 'text-amber-500' :
+                                bMove.type === 'inaccuracy' ? 'text-yellow-400' :
+                                bMove.type === 'mistake' ? 'text-orange-400' :
+                                bMove.type === 'blunder' ? 'text-red-400' : ''
+                              }`}>
+                                {bMove.type === 'brilliant' ? '!!' : 
+                                 bMove.type === 'best' ? '★' : 
+                                 bMove.type === 'excellent' ? '✓' : 
+                                 bMove.type === 'book' ? '📖' : 
+                                 bMove.type === 'inaccuracy' ? '?!' : 
+                                 bMove.type === 'mistake' ? '?' : 
+                                 bMove.type === 'blunder' ? '??' : ''}
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+              </div>
+
+              {/* Dynamic Analysis Commentary Box */}
+              <div className="bg-[#121212] border-t border-[#2A2A2A] p-3 shrink-0 flex flex-col min-h-[90px]">
                 {activeMoveAnalysis ? (
-                  <div className="mt-2 flex items-start gap-2.5">
-                    <span className={`text-sm font-extrabold px-1.5 py-0.5 rounded font-mono ${
-                      activeMoveAnalysis.type === 'brilliant' ? 'bg-cyan-950/40 text-cyan-400 border border-cyan-800/30' :
-                      activeMoveAnalysis.type === 'best' ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-800/30' :
-                      activeMoveAnalysis.type === 'excellent' ? 'bg-green-950/40 text-green-400 border border-green-800/30' :
-                      activeMoveAnalysis.type === 'good' ? 'bg-slate-800 text-slate-300' :
-                      activeMoveAnalysis.type === 'book' ? 'bg-amber-950/40 text-amber-500 border border-amber-900/20' :
-                      activeMoveAnalysis.type === 'inaccuracy' ? 'bg-yellow-950/40 text-yellow-400 border border-yellow-800/30' :
-                      activeMoveAnalysis.type === 'mistake' ? 'bg-orange-950/40 text-orange-400 border border-orange-800/30' :
-                      'bg-red-950/40 text-red-400 border border-red-800/30 animate-shake'
-                    }`}>
-                      {activeMoveAnalysis.type.toUpperCase()}
-                    </span>
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded font-mono uppercase ${
+                        activeMoveAnalysis.type === 'brilliant' ? 'bg-cyan-950/40 text-cyan-400 border border-cyan-800/30' :
+                        activeMoveAnalysis.type === 'best' ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-800/30' :
+                        activeMoveAnalysis.type === 'excellent' ? 'bg-green-950/40 text-green-400 border border-green-800/30' :
+                        activeMoveAnalysis.type === 'good' ? 'bg-slate-800 text-slate-300' :
+                        activeMoveAnalysis.type === 'book' ? 'bg-amber-950/40 text-amber-500 border border-amber-900/20' :
+                        activeMoveAnalysis.type === 'inaccuracy' ? 'bg-yellow-950/40 text-yellow-400 border border-yellow-800/30' :
+                        activeMoveAnalysis.type === 'mistake' ? 'bg-orange-950/40 text-orange-400 border border-orange-800/30' :
+                        'bg-red-950/40 text-red-400 border border-red-800/30 animate-shake'
+                      }`}>
+                        {activeMoveAnalysis.type}
+                      </span>
+                      {activeMoveAnalysis.type !== 'book' && (
+                        <span className="text-[10px] text-gray-500 font-mono">
+                          Eval: {(activeMoveAnalysis.evaluationAfter >= 0 ? '+' : '')}{activeMoveAnalysis.evaluationAfter.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-200 leading-relaxed font-semibold">
                       "{activeMoveAnalysis.commentary}"
                     </p>
                   </div>
                 ) : (
-                  <p className="text-xs text-gray-400 italic mt-2">
-                    Step through the game moves using the controller to inspect detailed engine analysis for each placement.
+                  <p className="text-xs text-gray-400 italic mt-2 text-center">
+                    Select a move to view detailed engine analysis and commentary.
                   </p>
                 )}
               </div>
 
-              {activeMoveAnalysis && (
-                <div className="text-[10px] text-gray-500 font-mono text-right mt-2 border-t border-[#2A2A2A]/50 pt-2">
-                  Evaluation shift: {activeMoveAnalysis.evaluationBefore.toFixed(2)} → {activeMoveAnalysis.evaluationAfter.toFixed(2)}
-                </div>
-              )}
-            </div>
+              {/* Replay Controls Row */}
+              <div className="bg-[#1A1A1A] border-t border-[#2A2A2A] rounded-b-2xl p-2 flex items-center justify-center gap-2 shrink-0">
+                <button
+                  onClick={handleFirst}
+                  disabled={activeMoveIdx === -1}
+                  className="p-2 rounded-xl hover:bg-[#222] disabled:opacity-30 disabled:hover:bg-transparent text-gray-300 transition cursor-pointer"
+                >
+                  <ChevronsLeft className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={handlePrev}
+                  disabled={activeMoveIdx === -1}
+                  className="p-2 rounded-xl hover:bg-[#222] disabled:opacity-30 disabled:hover:bg-transparent text-gray-300 transition cursor-pointer"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
 
-            {/* ACCURACY GAUGE */}
-            <div className="grid grid-cols-2 gap-2 bg-[#121212]/50 p-2 rounded-xl border border-[#2A2A2A] shrink-0">
-              
-              {/* White stats */}
-              <div className="text-center border-r border-[#2A2A2A] pr-2">
-                <span className="text-[8px] font-bold text-gray-500 uppercase tracking-wider block">White Accuracy</span>
-                <span className="text-2xl font-black font-mono text-[#4CAF50]">{whiteAccuracy}%</span>
-                <span className="text-[8px] text-gray-400 block mt-0.5">
-                  {selectedGame.playerColor === 'w' ? 'You' : selectedGame.opponentName}
-                </span>
-              </div>
-
-              {/* Black stats */}
-              <div className="text-center">
-                <span className="text-[8px] font-bold text-gray-500 uppercase tracking-wider block">Black Accuracy</span>
-                <span className="text-2xl font-black font-mono text-cyan-400">{blackAccuracy}%</span>
-                <span className="text-[8px] text-gray-400 block mt-0.5">
-                  {selectedGame.playerColor === 'b' ? 'You' : selectedGame.opponentName}
-                </span>
-              </div>
-            </div>
-
-            {/* Move Evaluation Summary Lists */}
-            <div className="bg-[#121212] border border-[#2A2A2A] rounded-xl p-2 shrink-0">
-              <span className="block text-[9px] font-bold text-[#888888] uppercase tracking-wider mb-1 px-1">Move Breakdowns</span>
-              <div className="space-y-1 pr-1">
-                {[
-                  { name: 'Brilliant', key: 'brilliant', color: 'text-cyan-400', symbol: '!!' },
-                  { name: 'Best Move', key: 'best', color: 'text-emerald-400', symbol: '★' },
-                  { name: 'Excellent', key: 'excellent', color: 'text-green-400', symbol: '✓' },
-                  { name: 'Good', key: 'good', color: 'text-gray-400', symbol: '✓' },
-                  { name: 'Book', key: 'book', color: 'text-amber-500', symbol: '📖' },
-                  { name: 'Inaccuracy', key: 'inaccuracy', color: 'text-yellow-400', symbol: '?!' },
-                  { name: 'Mistake', key: 'mistake', color: 'text-orange-400', symbol: '?' },
-                  { name: 'Blunder', key: 'blunder', color: 'text-red-400', symbol: '??' }
-                ].map((item) => (
-                  <div key={item.key} className="flex justify-between items-center text-[11px] hover:bg-[#1A1A1A] p-1.5 rounded transition">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-5 text-center font-black ${item.color}`}>{item.symbol}</span>
-                      <span className="font-semibold text-gray-300">{item.name}</span>
-                    </div>
-                    <div className="flex items-center gap-3 font-mono text-[10px]">
-                      <span className="text-emerald-500 font-bold">W: {whiteCounts[item.key as keyof typeof whiteCounts]}</span>
-                      <span className="text-cyan-500 font-bold">B: {blackCounts[item.key as keyof typeof blackCounts]}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Complete Moves List Scroll Feed */}
-            <div className="bg-[#121212] border border-[#2A2A2A] rounded-xl p-2 flex-1 min-h-0 flex flex-col mt-2">
-              <span className="block text-[9px] font-bold text-[#888888] uppercase tracking-wider mb-1 shrink-0">Move List</span>
-              <div className="grid grid-cols-2 gap-x-2 gap-y-1 overflow-y-auto pr-1 font-mono text-[10px] flex-1 min-h-[80px]">
-                  {Array.from({ length: Math.ceil(analyzedMoves.length / 2) }).map((_, idx) => {
-                    const wIdx = idx * 2;
-                    const bIdx = idx * 2 + 1;
-                    const wMove = analyzedMoves[wIdx];
-                    const bMove = analyzedMoves[bIdx];
-
-                    return (
-                      <div key={idx} className="flex items-center gap-1">
-                        <span className="text-[#555555] w-6 text-right mr-1">{idx + 1}.</span>
-                        
-                        {/* White move tag */}
-                        {wMove && (
-                          <button
-                            onClick={() => handleStepTo(wIdx)}
-                            className={`flex-1 text-left px-1.5 py-0.5 rounded transition ${activeMoveIdx === wIdx ? 'bg-[#4CAF50]/20 text-white font-bold border border-[#4CAF50]/30' : 'text-gray-300 hover:bg-[#1A1A1A]'}`}
-                          >
-                            {wMove.san} <span className="text-[8px] opacity-70">
-                              {wMove.type === 'brilliant' ? '!!' : wMove.type === 'blunder' ? '??' : ''}
-                            </span>
-                          </button>
-                        )}
-
-                        {/* Black move tag */}
-                        {bMove && (
-                          <button
-                            onClick={() => handleStepTo(bIdx)}
-                            className={`flex-1 text-left px-1.5 py-0.5 rounded transition ${activeMoveIdx === bIdx ? 'bg-cyan-400/20 text-white font-bold border border-cyan-400/30' : 'text-gray-300 hover:bg-[#1A1A1A]'}`}
-                          >
-                            {bMove.san} <span className="text-[8px] opacity-70">
-                              {bMove.type === 'brilliant' ? '!!' : bMove.type === 'blunder' ? '??' : ''}
-                            </span>
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
+                <div className="font-mono text-xs font-bold text-[#E0E0E0] min-w-[70px] text-center">
+                  {activeMoveIdx === -1 ? (
+                    <span className="text-gray-500">Start</span>
+                  ) : (
+                    <span>Move {activeMoveIdx + 1}</span>
+                  )}
                 </div>
 
-              {/* Back to select match */}
-              <button
-                id="review-lobby-btn"
-                onClick={onBackToLobby}
-                className="w-full mt-2 py-1.5 rounded-lg bg-[#2A2A2A] hover:bg-[#333] text-white font-bold text-[10px] transition cursor-pointer shrink-0"
-              >
-                Back to Match List
-              </button>
+                <button
+                  onClick={handleNext}
+                  disabled={analyzedMoves.length === 0 || activeMoveIdx === analyzedMoves.length - 1}
+                  className="p-2 rounded-xl hover:bg-[#222] disabled:opacity-30 disabled:hover:bg-transparent text-gray-300 transition cursor-pointer"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={handleLast}
+                  disabled={analyzedMoves.length === 0 || activeMoveIdx === analyzedMoves.length - 1}
+                  className="p-2 rounded-xl hover:bg-[#222] disabled:opacity-30 disabled:hover:bg-transparent text-gray-300 transition cursor-pointer"
+                >
+                  <ChevronsRight className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
-          </div>
+            {/* Back to select match */}
+            <button
+              id="review-lobby-btn"
+              onClick={onBackToLobby}
+              className="w-full py-2 rounded-xl bg-[#2A2A2A] hover:bg-[#333] border border-[#2A2A2A] text-white font-bold text-xs transition cursor-pointer shrink-0 shadow-md"
+            >
+              Back to Match List
+            </button>
           </div>
 
         </div>

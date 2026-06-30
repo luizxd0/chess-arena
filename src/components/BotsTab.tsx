@@ -502,12 +502,19 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
                       {selectedBot.rating}
                     </span>
                   </div>
-                  <button
-                    onClick={handleExitGame}
-                    className="text-[9px] font-bold text-[#888888] hover:text-white border border-[#2A2A2A] bg-[#121212] hover:bg-[#2A2A2A] px-1.5 py-0.5 rounded transition cursor-pointer"
-                  >
-                    Exit
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {/* Dummy Opponent Clock */}
+                    <div className="hidden md:flex items-center gap-1 px-2 py-0.5 rounded-md border font-mono font-bold text-xs bg-[#121212] text-[#888888] border-[#2A2A2A]">
+                      <Clock className="w-3 h-3 text-[#666666]" />
+                      ∞
+                    </div>
+                    <button
+                      onClick={handleExitGame}
+                      className="text-[9px] font-bold text-[#888888] hover:text-white border border-[#2A2A2A] bg-[#121212] hover:bg-[#2A2A2A] px-1.5 py-0.5 rounded transition cursor-pointer"
+                    >
+                      Exit
+                    </button>
+                  </div>
                 </div>
                 <div className="relative bg-[#121212] border border-[#2A2A2A] rounded-lg p-1.5 md:p-2 text-[10px] md:text-[11px] text-[#E0E0E0] font-medium leading-tight">
                   <div className="absolute top-2 -left-1.5 w-2 h-2 bg-[#121212] border-l border-b border-[#2A2A2A] rotate-45" />
@@ -527,13 +534,21 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
             />
 
             {/* Bottom Self Panel */}
-            <div className="w-full max-w-md flex items-center bg-[#1A1A1A] max-md:bg-transparent max-md:border-none max-md:shadow-none max-md:p-1 p-2.5 rounded-xl shadow-md mt-1 md:mt-2 select-none">
-              <div className="w-8 h-8 rounded-full bg-[#121212] border border-[#2A2A2A] flex items-center justify-center text-base md:text-lg shadow-xs">
-                🏆
+            <div className="w-full max-w-md flex items-center justify-between bg-[#1A1A1A] max-md:bg-transparent max-md:border-none max-md:shadow-none max-md:p-1 p-2.5 rounded-xl shadow-md mt-1 md:mt-2 select-none">
+              <div className="flex items-center">
+                <div className="w-8 h-8 rounded-full bg-[#121212] border border-[#2A2A2A] flex items-center justify-center text-base md:text-lg shadow-xs">
+                  🏆
+                </div>
+                <div className="ml-2">
+                  <span className="block font-bold text-xs text-white leading-none">{username}</span>
+                  <span className="block text-[9px] font-mono text-[#4CAF50] font-bold mt-0.5 md:mt-1">Elo: {stats.botRating}</span>
+                </div>
               </div>
-              <div className="ml-2">
-                <span className="block font-bold text-xs text-white leading-none">{username}</span>
-                <span className="block text-[9px] font-mono text-[#4CAF50] font-bold mt-0.5 md:mt-1">Elo: {stats.botRating}</span>
+
+              {/* Dummy Player Clock */}
+              <div className="flex items-center gap-1 px-2 py-1 md:px-3 md:py-1.5 rounded-lg border font-mono font-bold text-sm md:text-lg bg-[#121212] text-[#888888] border-[#2A2A2A]">
+                <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#666666]" />
+                ∞
               </div>
             </div>
 

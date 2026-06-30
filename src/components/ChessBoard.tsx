@@ -15,6 +15,9 @@ interface ChessBoardProps {
   hintMove?: { from: string; to: string } | null;
   reviewMoveEvaluation?: { square: string; type: string } | null;
   lastMove?: { from: string; to: string } | null;
+  preMove?: { from: string; to: string } | null;
+  onPremove?: (from: string, to: string) => void;
+  onClearPremove?: () => void;
 }
 
 export const ChessBoard: React.FC<ChessBoardProps> = ({
@@ -25,7 +28,10 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
   theme = 'elegant',
   hintMove = null,
   reviewMoveEvaluation = null,
-  lastMove = null
+  lastMove = null,
+  preMove = null,
+  onPremove,
+  onClearPremove
 }) => {
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [possibleMoves, setPossibleMoves] = useState<string[]>([]);
@@ -194,8 +200,26 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
   const handleSquareClick = (squareName: string) => {
     if (!isInteractive) return;
 
+    const isPlayerTurn = chess.turn() === playerColor;
+
+    if (!isPlayerTurn) {
+      if (selectedSquare) {
+        if (onPremove) onPremove(selectedSquare, squareName);
+        clearSelection();
+      } else {
+        const piece = getSquareData(squareName);
+        if (piece && piece.color === playerColor) {
+          setSelectedSquare(squareName);
+          // Don't show regular green dots for premoves, let user click anywhere
+        } else if (onClearPremove) {
+          onClearPremove();
+        }
+      }
+      return;
+    }
+
     // Must match turn with player color if set
-    if (chess.turn() !== playerColor) return;
+    if (onClearPremove) onClearPremove(); // Clear premove if user clicks during their turn
 
     const piece = getSquareData(squareName);
 
@@ -264,10 +288,26 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
   };
 
   const handleTouchStart = (e: React.TouchEvent, squareName: string) => {
-    if (!isInteractive || chess.turn() !== playerColor) return;
+    if (!isInteractive) return;
+    
+    const isPlayerTurn = chess.turn() === playerColor;
+
+    if (!isPlayerTurn) {
+      if (onClearPremove) onClearPremove();
+      const piece = getSquareData(squareName);
+      if (!piece || piece.color !== playerColor) return;
+
+      setTouchStartSquare(squareName);
+      const touch = e.touches[0];
+      setTouchCurrentPos({ x: touch.clientX, y: touch.clientY });
+      setActiveTouchSquare(squareName);
+      return;
+    }
+
     const piece = getSquareData(squareName);
     if (!piece || piece.color !== playerColor) return;
 
+    if (onClearPremove) onClearPremove();
     setSelectedSquare(squareName);
     const moves = chess.moves({ square: squareName as Square, verbose: true });
     setPossibleMoves(moves.map(m => m.to));
@@ -282,7 +322,9 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
     startSquare: null as string | null,
     possibleMoves: [] as string[],
     playerColor,
-    isInteractive
+    isInteractive,
+    onPremove,
+    isPlayerTurn: true
   });
 
   useEffect(() => {
@@ -290,9 +332,11 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
       startSquare: touchStartSquare,
       possibleMoves,
       playerColor,
-      isInteractive
+      isInteractive,
+      onPremove,
+      isPlayerTurn: chess.turn() === playerColor
     };
-  }, [touchStartSquare, possibleMoves, playerColor, isInteractive]);
+  }, [touchStartSquare, possibleMoves, playerColor, isInteractive, onPremove, chess.turn()]);
 
   useEffect(() => {
     const gridEl = gridRef.current;
@@ -328,8 +372,14 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
         targetSquare = getSquareFromCoords(lastTouch.clientX, lastTouch.clientY, rect);
       }
 
-      if (targetSquare && state.possibleMoves.includes(targetSquare)) {
-        triggerMoveAttempt(state.startSquare, targetSquare);
+      if (targetSquare) {
+        if (!state.isPlayerTurn) {
+          if (state.onPremove && targetSquare !== state.startSquare) {
+            state.onPremove(state.startSquare, targetSquare);
+          }
+        } else if (state.possibleMoves.includes(targetSquare)) {
+          triggerMoveAttempt(state.startSquare, targetSquare);
+        }
       }
       
       setTouchStartSquare(null);
@@ -350,7 +400,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
 
   // Drag and drop handlers (for PC support)
   const handleDragStart = (e: React.DragEvent, squareName: string) => {
-    if (!isInteractive || chess.turn() !== playerColor) {
+    if (!isInteractive) {
       e.preventDefault();
       return;
     }
@@ -359,24 +409,47 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
       e.preventDefault();
       return;
     }
+
+    const isPlayerTurn = chess.turn() === playerColor;
+    if (!isPlayerTurn) {
+      if (onClearPremove) onClearPremove();
+      setDraggedSquare(squareName);
+      e.dataTransfer.setData('text/plain', squareName);
+      return;
+    }
+
+    if (onClearPremove) onClearPremove();
     setDraggedSquare(squareName);
     const moves = chess.moves({ square: squareName as Square, verbose: true });
     setPossibleMoves(moves.map(m => m.to));
     setSelectedSquare(squareName);
+    e.dataTransfer.setData('text/plain', squareName);
   };
 
   const handleDragOver = (e: React.DragEvent, squareName: string) => {
-    if (possibleMoves.includes(squareName)) {
-      e.preventDefault(); // allow drop
-    }
+    e.preventDefault(); // allow drop anywhere for premove
   };
 
   const handleDrop = (e: React.DragEvent, squareName: string) => {
     e.preventDefault();
-    if (draggedSquare && possibleMoves.includes(squareName)) {
-      triggerMoveAttempt(draggedSquare, squareName);
-    }
+    const sourceSquare = e.dataTransfer.getData('text/plain');
     setDraggedSquare(null);
+    
+    const isPlayerTurn = chess.turn() === playerColor;
+
+    if (!isPlayerTurn) {
+      if (sourceSquare && sourceSquare !== squareName && onPremove) {
+        onPremove(sourceSquare, squareName);
+      }
+      clearSelection();
+      return;
+    }
+
+    if (sourceSquare && possibleMoves.includes(squareName)) {
+      triggerMoveAttempt(sourceSquare, squareName);
+    } else {
+      clearSelection();
+    }
   };
 
   // Cancel promo when clicking backdrop
@@ -472,6 +545,8 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
               const isPossible = possibleMoves.includes(squareName);
               const isLastMoveSrc = lastFrom === squareName;
               const isLastMoveDst = lastTo === squareName;
+              const isPremoveSrc = preMove?.from === squareName;
+              const isPremoveDst = preMove?.to === squareName;
               const isKingInCheck = kingInCheckSquare === squareName;
               const isMatedKing = matedKingSquare === squareName;
               const isWinningKing = winningKingSquare === squareName;
@@ -481,7 +556,9 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
               let squareBg = isDark ? currentTheme.dark : currentTheme.light;
               let squareContentColor = isDark ? 'text-gray-200' : 'text-gray-800';
 
-              if (isLastMoveSrc || isLastMoveDst) {
+              if (isPremoveSrc || isPremoveDst) {
+                squareBg = 'bg-[#f44336]/60 border border-[#d32f2f]';
+              } else if (isLastMoveSrc || isLastMoveDst) {
                 squareBg = theme === 'cyber' ? 'bg-[#0284c7]/40 border-2 border-[#38bdf8]/60' : 'bg-[#facc15]/50';
               }
               if (isSelected) {
@@ -518,7 +595,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
                   {piece && (
                     <div
                       id={`piece-${squareName}`}
-                      draggable={isInteractive && chess.turn() === playerColor && piece.color === playerColor}
+                      draggable={isInteractive && piece.color === playerColor}
                       onDragStart={(e) => handleDragStart(e, squareName)}
                       onTouchStart={(e) => handleTouchStart(e, squareName)}
                       className={`w-[85%] h-[85%] flex items-center justify-center transition-transform hover:scale-105 active:scale-95 z-10 drop-shadow-[0_3px_3px_rgba(0,0,0,0.5)] ${isMatedKing ? 'animate-piece-shudder' : ''} ${

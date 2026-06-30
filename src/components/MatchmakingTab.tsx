@@ -45,6 +45,12 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
   const [resultReason, setResultReason] = useState<string>('');
   const [moveHistory, setMoveHistory] = useState<string[]>([]);
   const [lastMove, setLastMove] = useState<{from: string, to: string} | null>(null);
+  const [preMove, setPreMove] = useState<{from: string, to: string} | null>(null);
+  const preMoveRef = useRef<{from: string, to: string} | null>(null);
+
+  useEffect(() => {
+    preMoveRef.current = preMove;
+  }, [preMove]);
   
   // Clocks
   const [playerTime, setPlayerTime] = useState(180); // seconds
@@ -413,6 +419,25 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
     }
   };
 
+  // Execute preMove automatically if it's our turn
+  useEffect(() => {
+    if (game && !gameResult && game.turn() === playerColor && preMove) {
+      const pm = preMove;
+      setPreMove(null); // Clear it before executing to avoid loops
+      // Try to execute
+      try {
+        const tempChess = new Chess(game.fen());
+        const res = tempChess.move({ from: pm.from, to: pm.to, promotion: 'q' });
+        if (res) {
+          handlePlayerMove(pm.from, pm.to, 'q');
+        }
+      } catch (e) {
+        // Premove was invalid
+        console.log("Premove was invalid", pm);
+      }
+    }
+  }, [fen, game, gameResult, playerColor, preMove]);
+
   const checkGameStatus = (isLocalInitiator = false) => {
     if (!game) return;
 
@@ -736,8 +761,11 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
               lastMove={lastMove}
               onMove={handlePlayerMove}
               playerColor={playerColor}
-              isInteractive={!gameResult && game.turn() === playerColor}
+              isInteractive={!gameResult}
               theme={boardTheme}
+              preMove={preMove}
+              onPremove={(from, to) => setPreMove({from, to})}
+              onClearPremove={() => setPreMove(null)}
             />
 
             {/* Bottom Player (Self) Info */}
