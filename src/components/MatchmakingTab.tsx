@@ -56,16 +56,23 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
   const [showMobileChat, setShowMobileChat] = useState(false);
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
+  const getUserId = () => {
+    if (auth?.currentUser) return auth.currentUser.uid;
+    if (isGuest) return localStorage.getItem('chess_arena_guest_uid');
+    return null;
+  };
+
   // Fetch real user count
   useEffect(() => {
     const fetchCount = async () => {
       try {
         if (db) {
-          const coll = collection(db, 'users');
-          const snapshot = await getCountFromServer(coll);
-          // Just to make the app feel alive, we add a bit of noise to the registered user count
+          const twoMinsAgo = Date.now() - 120000;
+          const q = query(collection(db, 'onlineUsers'), where('lastPing', '>=', twoMinsAgo));
+          const snapshot = await getCountFromServer(q);
           const count = snapshot.data().count;
-          setOnlineCount(Math.max(1, count + Math.floor(Math.random() * 5)));
+          // Set to real count, fallback to 1 so it doesn't show 0
+          setOnlineCount(Math.max(1, count));
         }
       } catch (e) {
         console.log("Could not fetch user count", e);
@@ -79,7 +86,8 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
   // Reconnect logic
   useEffect(() => {
     const checkReconnect = async () => {
-      if (!auth.currentUser || matchId || !db) return;
+      const uid = getUserId();
+      if (!uid || matchId || !db) return;
       const savedMatchId = localStorage.getItem('chess_arena_active_match');
       const savedColor = localStorage.getItem('chess_arena_match_color') as ChessColor;
       if (savedMatchId && savedColor) {
@@ -117,7 +125,8 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
 
   // Online Multiplayer Matchmaking Logic
   useEffect(() => {
-    if (isSearching && !matchId && auth.currentUser) {
+    const uid = getUserId();
+    if (isSearching && !matchId && uid) {
       const findMatch = async () => {
         try {
           const q = query(
@@ -133,11 +142,11 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
             const matchDoc = querySnapshot.docs[0];
             const data = matchDoc.data();
             
-            if (data.player1.uid !== auth.currentUser?.uid) {
+            if (data.player1.uid !== uid) {
               await updateDoc(doc(db, 'matches', matchDoc.id), {
                 status: 'playing',
                 player2: {
-                  uid: auth.currentUser?.uid,
+                  uid: uid,
                   name: username,
                   rating: stats.elo[mode]
                 }
@@ -158,7 +167,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
             isGuestMatch: isGuest,
             createdAt: serverTimestamp(),
             player1: {
-              uid: auth.currentUser?.uid,
+              uid: uid,
               name: username,
               rating: stats.elo[mode]
             },
@@ -180,7 +189,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
       
       findMatch();
     }
-  }, [isSearching]);
+  }, [isSearching, matchId, mode, stats.elo, username, isGuest]);
 
   const oppPingRef = useRef<number>(Date.now());
 
@@ -226,7 +235,8 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
         
         // Handle opponent leaving or game over synced from DB
         if (data.status === 'finished' && !gameResult) {
-          if (data.winner === auth.currentUser?.uid) {
+          const uid = getUserId();
+          if (data.winner === uid) {
             triggerGameOver('win', data.reason || 'Opponent resigned');
           } else if (data.winner === 'draw') {
             triggerGameOver('draw', data.reason || 'Draw agreed');
@@ -419,8 +429,9 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
 
     chessAudio.playGameOver(result === 'win');
     
-    if (syncToDb && matchId && auth.currentUser) {
-      let winnerUid = result === 'draw' ? 'draw' : (result === 'win' ? auth.currentUser.uid : 'opponent');
+    const uid = getUserId();
+    if (syncToDb && matchId && uid) {
+      let winnerUid = result === 'draw' ? 'draw' : (result === 'win' ? uid : 'opponent');
       updateDoc(doc(db, 'matches', matchId), {
         status: 'finished',
         winner: winnerUid,
@@ -542,25 +553,25 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
       
       {/* 1. LOBBY VIEW */}
       {!game && (
-        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto pb-2">
-          <div className="flex flex-col lg:flex-row gap-2 lg:gap-4 mb-2 shrink-0">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div className="flex flex-col lg:flex-row gap-2 lg:gap-4 mb-2 shrink">
             {/* Header Hero */}
-            <div className="relative text-center py-3 px-3 lg:py-4 lg:px-4 rounded-3xl bg-[#1A1A1A] border border-[#2A2A2A] text-[#E0E0E0] shadow-md overflow-hidden flex-1">
+            <div className="relative text-center py-2 px-3 lg:py-4 lg:px-4 rounded-2xl lg:rounded-3xl bg-[#1A1A1A] border border-[#2A2A2A] text-[#E0E0E0] shadow-md overflow-hidden flex-1">
               <div className="absolute top-0 right-0 w-48 h-48 bg-[#4CAF50]/5 rounded-full blur-3xl" />
               <div className="absolute bottom-0 left-0 w-36 h-36 bg-[#4CAF50]/5 rounded-full blur-2xl" />
               
-              <div className="flex items-center justify-center gap-3 lg:gap-4">
-                <Trophy className="w-6 h-6 lg:w-8 lg:h-8 text-amber-500 animate-bounce" />
+              <div className="flex items-center justify-center gap-2 lg:gap-4">
+                <Trophy className="w-5 h-5 lg:w-8 lg:h-8 text-amber-500 animate-bounce" />
                 <div className="text-left">
-                  <h2 className="font-sans font-bold text-xl lg:text-2xl tracking-tight text-white leading-none">1v1 Arena</h2>
-                  <p className="text-[#888888] text-[10px] lg:text-xs mt-1">
+                  <h2 className="font-sans font-bold text-lg lg:text-2xl tracking-tight text-white leading-none">1v1 Arena</h2>
+                  <p className="text-[#888888] text-[9px] lg:text-xs mt-0.5 lg:mt-1">
                     Match with players around your rating tier, climb the global divisions.
                   </p>
                 </div>
               </div>
 
               {/* Quick stats row */}
-              <div className="flex justify-center gap-4 lg:gap-6 mt-3 pt-2 border-t border-[#2A2A2A] text-xs">
+              <div className="flex justify-center gap-4 lg:gap-6 mt-2 pt-2 border-t border-[#2A2A2A] text-xs">
                 {!isGuest && (
                   <>
                     <div className="text-center">
@@ -586,8 +597,8 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
             </div>
 
             {/* Mode Selector */}
-            <div className="flex-1 bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl p-3 lg:p-4 shadow-md">
-              <h3 className="text-[10px] lg:text-xs font-bold text-[#E0E0E0] mb-2 flex items-center gap-1.5 px-1">
+            <div className="flex-1 bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl lg:rounded-3xl p-2 lg:p-4 shadow-md">
+              <h3 className="text-[10px] lg:text-xs font-bold text-[#E0E0E0] mb-1.5 lg:mb-2 flex items-center gap-1.5 px-1">
                 <Clock className="w-3.5 h-3.5 text-[#4CAF50]" />
                 Select Time Control
               </h3>
@@ -604,9 +615,9 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
                       key={m.id}
                       id={`mode-${m.id}`}
                       onClick={() => setMode(m.id as ChessMode)}
-                      className={`relative p-2 lg:p-3 rounded-2xl border text-left transition duration-200 overflow-hidden group ${isActive ? 'bg-[#2A2A2A] border-[#4CAF50]/40 text-white shadow-md' : 'bg-[#121212] hover:bg-[#2A2A2A]/40 border-[#2A2A2A] text-[#888888] hover:text-[#E0E0E0]'}`}
+                      className={`relative p-1.5 lg:p-3 rounded-xl lg:rounded-2xl border text-left transition duration-200 overflow-hidden group ${isActive ? 'bg-[#2A2A2A] border-[#4CAF50]/40 text-white shadow-md' : 'bg-[#121212] hover:bg-[#2A2A2A]/40 border-[#2A2A2A] text-[#888888] hover:text-[#E0E0E0]'}`}
                     >
-                      <div className="flex justify-between items-start mb-1">
+                      <div className="flex justify-between items-start mb-0.5 lg:mb-1">
                         <m.icon className={`w-3.5 h-3.5 lg:w-4 lg:h-4 ${isActive ? 'text-[#4CAF50]' : 'text-[#666666]'}`} />
                         <span className={`text-[8px] lg:text-[9px] font-bold px-1 lg:px-1.5 py-0.5 rounded-md ${isActive ? 'bg-[#4CAF50]/20 text-[#4CAF50]' : 'bg-[#1A1A1A] text-[#888888] border border-[#2A2A2A]'}`}>
                           {m.time}
@@ -614,7 +625,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
                       </div>
                       <span className="block font-bold text-[10px] lg:text-xs tracking-tight">{m.label}</span>
                       {!isGuest && (
-                        <span className="block text-[8px] lg:text-[9px] opacity-70 mt-0.5 font-mono">Elo: {stats.elo[m.id as ChessMode]}</span>
+                        <span className="block text-[8px] lg:text-[9px] opacity-70 lg:mt-0.5 font-mono">Elo: {stats.elo[m.id as ChessMode]}</span>
                       )}
                       
                       {/* Hover Glow Accent */}
@@ -627,34 +638,34 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
           </div>
 
           {/* Action Button */}
-          <div className="flex-1 flex flex-col justify-center items-center py-2 shrink-0">
+          <div className="flex-1 flex flex-col justify-center items-center py-2 min-h-0 shrink">
             {!isSearching ? (
               <button
                 id="search-match-btn"
                 onClick={() => setIsSearching(true)}
-                className="w-full max-w-xs flex items-center justify-center gap-3 py-4 rounded-2xl bg-[#4CAF50] hover:bg-[#388E3C] text-white font-sans font-bold text-lg shadow-md cursor-pointer transition active:scale-95"
+                className="w-full max-w-xs flex items-center justify-center gap-2 lg:gap-3 py-3 lg:py-4 rounded-xl lg:rounded-2xl bg-[#4CAF50] hover:bg-[#388E3C] text-white font-sans font-bold text-base lg:text-lg shadow-md cursor-pointer transition active:scale-95"
               >
-                <Play className="w-5 h-5 fill-white" />
+                <Play className="w-4 h-4 lg:w-5 lg:h-5 fill-white" />
                 Find 1v1 Match
               </button>
             ) : (
               <div className="w-full max-w-xs flex flex-col items-center">
                 {/* Radar scanner */}
-                <div className="relative w-28 h-28 flex items-center justify-center mb-4">
+                <div className="relative w-20 h-20 lg:w-28 lg:h-28 flex items-center justify-center mb-2 lg:mb-4">
                   <div className="absolute inset-0 rounded-full border border-[#4CAF50]/20 animate-ping" />
                   <div className="absolute inset-2 rounded-full border border-[#4CAF50]/40 animate-pulse" />
                   <div className="absolute inset-0 rounded-full border-2 border-[#4CAF50] border-t-transparent animate-spin" style={{ animationDuration: '1.5s' }} />
-                  <Search className="w-10 h-10 text-[#4CAF50] animate-bounce" />
+                  <Search className="w-8 h-8 lg:w-10 lg:h-10 text-[#4CAF50] animate-bounce" />
                 </div>
                 
-                <h4 className="font-bold text-white mb-1">Searching for Opponent...</h4>
-                <p className="text-xs text-[#888888] font-mono">Elapsed time: {searchTime}s</p>
-                <p className="text-xs text-[#4CAF50] font-semibold mt-2 animate-pulse">Matching within ±100 Elo...</p>
+                <h4 className="font-bold text-white text-sm lg:text-base mb-1">Searching for Opponent...</h4>
+                <p className="text-[10px] lg:text-xs text-[#888888] font-mono">Elapsed time: {searchTime}s</p>
+                <p className="text-[10px] lg:text-xs text-[#4CAF50] font-semibold mt-1 lg:mt-2 animate-pulse">Matching within ±100 Elo...</p>
 
                 <button
                   id="cancel-search-btn"
                   onClick={() => setIsSearching(false)}
-                  className="mt-6 px-4 py-2 rounded-xl bg-[#2A2A2A] border border-[#2A2A2A] text-[#888888] hover:text-white font-bold text-xs hover:bg-[#333] transition"
+                  className="mt-4 lg:mt-6 px-3 lg:px-4 py-1.5 lg:py-2 rounded-xl bg-[#2A2A2A] border border-[#2A2A2A] text-[#888888] hover:text-white font-bold text-[10px] lg:text-xs hover:bg-[#333] transition"
                 >
                   Cancel Search
                 </button>

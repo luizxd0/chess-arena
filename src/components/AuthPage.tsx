@@ -165,17 +165,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialStats 
     try {
       const randomID = Math.floor(Math.random() * 900) + 100;
       const defaultGuestName = `Guest#${randomID}`;
-
-      if (isFirebaseAvailable && auth && db) {
-        const userCredential = await signInAnonymously(auth);
-        const uid = userCredential.user.uid;
-        const docRef = doc(db, 'users', uid);
-        await setDoc(docRef, {
-          username: defaultGuestName,
-          stats: initialStats,
-          isGuest: true
-        });
-      }
+      
+      const guestUid = `guest_${randomID}_${Date.now()}`;
+      localStorage.setItem('chess_arena_guest_uid', guestUid);
       
       onAuthSuccess(defaultGuestName, initialStats, true);
     } catch (e: any) {

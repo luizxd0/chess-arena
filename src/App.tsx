@@ -118,10 +118,19 @@ export default function App() {
     };
   }, []);
 
+  // Helper to get current active user ID (firebase uid or guest uid)
+  const getUserId = () => {
+    if (auth?.currentUser) return auth.currentUser.uid;
+    if (isGuest) return localStorage.getItem('chess_arena_guest_uid');
+    return null;
+  };
+
   // Online users ping
   React.useEffect(() => {
-    if (!isAuthenticated || !auth?.currentUser || !db) return;
-    const uid = auth.currentUser.uid;
+    if (!isAuthenticated || !db) return;
+    const uid = getUserId();
+    if (!uid) return;
+    
     const pingRef = doc(db, 'onlineUsers', uid);
     
     const ping = () => {
@@ -131,8 +140,11 @@ export default function App() {
     ping();
     const interval = setInterval(ping, 60000); // every 1 min
     
+    // Decrease the user count by 1 after he gets kicked out (2 minutes)
+    // We can do this with cloud functions, or the user count logic should only query users pinged within last 2 mins.
+    
     return () => clearInterval(interval);
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isGuest]);
 
   const handleAuthSuccess = (name: string, userStats: UserStats, guestStatus: boolean) => {
     setUsername(name);
@@ -149,15 +161,18 @@ export default function App() {
 
   const handleSignOut = async () => {
     try {
+      const uid = getUserId();
+      if (uid && db) {
+        await deleteDoc(doc(db, 'onlineUsers', uid)).catch(() => {});
+      }
+      
       if (isFirebaseAvailable && auth) {
-        if (auth.currentUser && db) {
-          await deleteDoc(doc(db, 'onlineUsers', auth.currentUser.uid)).catch(() => {});
-        }
         await auth.signOut();
       }
     } catch (e) {
       console.warn("Firebase sign out failed:", e);
     }
+    localStorage.removeItem('chess_arena_guest_uid');
     setIsAuthenticated(false);
     setIsGuest(false);
     setUsername('NewPlayer');
