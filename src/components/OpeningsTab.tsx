@@ -213,7 +213,7 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
   const hintMove = showHint ? getHintSquares() : null;
 
   return (
-    <div className="w-full flex flex-col min-h-[500px]">
+    <div className="w-full h-full flex flex-col min-h-0">
       
       {/* 1. SELECTION SCREEN */}
       {!game && (

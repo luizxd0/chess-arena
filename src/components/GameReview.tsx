@@ -302,10 +302,10 @@ export const GameReview: React.FC<GameReviewProps> = ({
   const activeMoveAnalysis = activeMoveIdx >= 0 ? analyzedMoves[activeMoveIdx] : null;
 
   return (
-    <div className="w-full flex flex-col gap-6" id="game-review-component">
+    <div className="w-full h-full flex flex-col gap-3 min-h-0" id="game-review-component">
       
       {/* HEADER SECTION */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-[#2A2A2A]">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-2 border-b border-[#2A2A2A] shrink-0">
         <div className="flex items-center gap-3">
           <button
             id="review-back-btn"
@@ -424,18 +424,20 @@ export const GameReview: React.FC<GameReviewProps> = ({
             </div>
 
             {/* Chessboard */}
-            <ChessBoard
-              fen={currentFen}
-              onMove={() => {}} // Readonly board during review replay
-              playerColor={playerPerspective}
-              isInteractive={false} // completely static board
-              theme={boardTheme}
-              reviewMoveEvaluation={
-                activeMoveAnalysis
-                  ? { square: activeMoveAnalysis.to, type: activeMoveAnalysis.type }
-                  : null
-              }
-            />
+            <div className="w-full aspect-square w-full shrink-0">
+              <ChessBoard
+                fen={currentFen}
+                onMove={() => {}} // Readonly board during review replay
+                playerColor={playerPerspective}
+                isInteractive={false} // completely static board
+                theme={boardTheme}
+                reviewMoveEvaluation={
+                  activeMoveAnalysis
+                    ? { square: activeMoveAnalysis.to, type: activeMoveAnalysis.type }
+                    : null
+                }
+              />
+            </div>
           </div>
 
           {/* RIGHT: Game Statistics, Accuracy & Move classification list */}

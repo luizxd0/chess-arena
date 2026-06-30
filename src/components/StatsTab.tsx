@@ -195,7 +195,7 @@ export const StatsTab: React.FC<StatsTabProps> = ({
       </div>
 
       {/* 2. RATING CARDS GRID */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 shrink-0">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 shrink-0">
         {[
           { label: 'Bullet 1v1', elo: stats.elo.bullet, icon: Zap, color: 'text-amber-400 bg-amber-500/10' },
           { label: 'Blitz 1v1', elo: stats.elo.blitz, icon: Zap, color: 'text-red-400 bg-red-500/10' },
@@ -204,13 +204,13 @@ export const StatsTab: React.FC<StatsTabProps> = ({
         ].map((card, i) => {
           const tier = getRatingTier(card.elo);
           return (
-            <div key={i} className="bg-[#1A1A1A] border border-[#2A2A2A] p-3 rounded-2xl shadow-md flex flex-col justify-between">
+            <div key={i} className="bg-[#1A1A1A] border border-[#2A2A2A] p-2 rounded-xl shadow-md flex flex-col justify-between">
               <div className="flex justify-between items-start mb-1">
                 <span className="text-[10px] font-bold text-[#888888] leading-none">{card.label}</span>
                 <card.icon className={`w-3.5 h-3.5 ${card.color.split(' ')[0]}`} />
               </div>
-              <div className="font-mono font-black text-xl text-white leading-none">{card.elo}</div>
-              <span className={`inline-block text-[8px] font-bold px-1.5 py-0.5 rounded-sm border mt-1.5 w-fit ${getTierColor(tier)}`}>
+              <div className="font-mono font-black text-lg text-white leading-none">{card.elo}</div>
+              <span className={`inline-block text-[8px] font-bold px-1 py-0.5 rounded-sm border mt-1 w-fit ${getTierColor(tier)}`}>
                 {tier}
               </span>
             </div>
@@ -219,7 +219,7 @@ export const StatsTab: React.FC<StatsTabProps> = ({
       </div>
 
       {/* 3. TWO COLUMN LOWER PANEL */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 flex-1 min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 flex-1 min-h-0">
         
         {/* Left 2 Columns: Achievements & Openings checklist */}
         <div className="lg:col-span-2 flex flex-col gap-3 min-h-0">

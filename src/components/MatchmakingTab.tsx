@@ -444,7 +444,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
 
 
   return (
-    <div className="w-full flex flex-col min-h-[500px]">
+    <div className="w-full h-full flex flex-col min-h-0">
       
       {/* 1. LOBBY VIEW */}
       {!game && (

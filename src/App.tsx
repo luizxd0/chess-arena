@@ -319,10 +319,10 @@ export default function App() {
       </header>
 
       {/* Main Workspace Frame */}
-      <main className={`flex-1 w-full mx-auto flex flex-col min-h-0 ${isMenuHidden ? 'p-1 md:p-3 max-w-5xl' : 'p-4 md:p-6 max-w-6xl gap-6'}`}>
+      <main className={`flex-1 w-full mx-auto flex flex-col min-h-0 ${isMenuHidden ? 'p-1 md:p-2 max-w-5xl' : 'p-2 md:p-4 max-w-6xl gap-3'}`}>
         
         {/* Navigation Selector Tabs */}
-        <div className={`bg-[#1A1A1A] border border-[#2A2A2A] p-2 rounded-2xl flex flex-wrap gap-1.5 shadow-md shrink-0 ${isMenuHidden ? 'hidden' : ''}`}>
+        <div className={`bg-[#1A1A1A] border border-[#2A2A2A] p-1.5 rounded-2xl flex flex-wrap gap-1 shadow-md shrink-0 ${isMenuHidden ? 'hidden' : ''}`}>
           {[
             { id: 'matchmaking', label: '1v1 Arena', icon: Trophy, desc: 'Play online' },
             { id: 'openings', label: 'Learn Openings', icon: BookOpen, desc: 'Opening theory' },
@@ -356,7 +356,7 @@ export default function App() {
         </div>
 
         {/* Tab Panel View */}
-        <div className={`flex-1 flex flex-col min-h-0 overflow-hidden ${isMenuHidden ? 'p-0 md:p-4 bg-transparent border-none shadow-none' : 'bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl p-4 md:p-6 shadow-md'}`}>
+        <div className={`flex-1 flex flex-col min-h-0 overflow-hidden ${isMenuHidden ? 'p-0 md:p-2 bg-transparent border-none shadow-none' : 'bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-2 md:p-4 shadow-md'}`}>
           {activeTab === 'matchmaking' && (
             <MatchmakingTab 
               stats={stats} 

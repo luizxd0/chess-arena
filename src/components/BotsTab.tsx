@@ -335,7 +335,7 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
   const filteredBots = botsList.filter(b => b.tier === activeTier);
 
   return (
-    <div className="w-full flex flex-col h-full overflow-hidden">
+    <div className="w-full h-full flex flex-col min-h-0 overflow-hidden">
       
       {/* 1. SELECTION SCREEN */}
       {!game && (
@@ -432,29 +432,29 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
                   )}
 
                   <div className="flex flex-col items-center text-center">
-                    <div className="w-10 h-10 rounded-full bg-[#121212] border border-[#2A2A2A] flex items-center justify-center text-2xl shadow-inner mb-1.5">
+                    <div className="w-8 h-8 rounded-full bg-[#121212] border border-[#2A2A2A] flex items-center justify-center text-xl shadow-inner mb-1">
                       {bot.avatar}
                     </div>
-                    <h3 className="font-sans font-black text-xs text-white leading-tight w-full truncate">{bot.name}</h3>
-                    <span className="text-[9px] font-mono font-bold text-[#4CAF50] mt-0.5">
+                    <h3 className="font-sans font-black text-[11px] text-white leading-tight w-full truncate">{bot.name}</h3>
+                    <span className="text-[8px] font-mono font-bold text-[#4CAF50] mt-0.5">
                       {bot.rating} ELO
                     </span>
-                    <p className="text-[9px] text-[#888888] leading-tight font-medium mt-1.5 line-clamp-2 min-h-[22px]">
+                    <p className="text-[8px] text-[#888888] leading-tight font-medium mt-0.5 line-clamp-1 min-h-[12px]">
                       {bot.personality}
                     </p>
                   </div>
 
-                  <div className="mt-2.5 pt-2 border-t border-[#2A2A2A]">
+                  <div className="mt-2 pt-1.5 border-t border-[#2A2A2A]">
                     {locked ? (
-                      <span className="block text-[9px] font-bold text-center text-red-400 font-mono">
+                      <span className="block text-[8px] font-bold text-center text-red-400 font-mono">
                         {getUnlockRequirement(bot.tier)}
                       </span>
                     ) : (
                       <button
                         onClick={() => handleStartGame(bot)}
-                        className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-[#4CAF50] hover:bg-[#388E3C] text-[#121212] font-bold text-[10px] shadow-sm transition cursor-pointer"
+                        className="w-full flex items-center justify-center gap-1.5 py-1 rounded-lg bg-[#4CAF50] hover:bg-[#388E3C] text-[#121212] font-bold text-[9px] shadow-sm transition cursor-pointer"
                       >
-                        <Play className="w-3 h-3 fill-[#121212]" /> Play
+                        <Play className="w-2.5 h-2.5 fill-[#121212]" /> Play
                       </button>
                     )}
                   </div>
