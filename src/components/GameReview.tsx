@@ -436,9 +436,13 @@ export const GameReview: React.FC<GameReviewProps> = ({
                   : null
               }
             />
+          </div>
 
-            {/* Replay Controls Row */}
-            <div className="w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-3 flex items-center justify-center gap-3.5 mt-3 shadow-md">
+          {/* RIGHT: Game Statistics, Accuracy & Move classification list */}
+          <div className="w-full lg:w-96 flex flex-col justify-between gap-4">
+            
+            {/* Replay Controls Row (Now on the right like chess.com) */}
+            <div className="w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-3 flex items-center justify-center gap-3.5 shadow-md shrink-0">
               <button
                 id="review-ctrl-first"
                 onClick={handleFirst}
@@ -486,10 +490,7 @@ export const GameReview: React.FC<GameReviewProps> = ({
               </button>
             </div>
 
-          </div>
-
-          {/* RIGHT: Game Statistics, Accuracy & Move classification list */}
-          <div className="w-full lg:w-96 bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl p-5 shadow-md flex flex-col justify-between gap-4">
+            <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl p-5 shadow-md flex-1 flex flex-col justify-between gap-4 overflow-y-auto">
             
             {/* Dynamic Analysis Commentary Box */}
             <div className="bg-[#121212] border border-[#2A2A2A] rounded-2xl p-4 min-h-[110px] flex flex-col justify-between">
@@ -631,6 +632,7 @@ export const GameReview: React.FC<GameReviewProps> = ({
               </button>
             </div>
 
+          </div>
           </div>
 
         </div>

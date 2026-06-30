@@ -587,48 +587,6 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
                 </button>
               </div>
             )}
-
-            {/* Mobile/Compact Game Result Panel */}
-            {gameResult && (
-              <div className="lg:hidden w-full max-w-md mt-4 bg-[#1A1A1A] border border-[#2A2A2A] p-4 rounded-xl text-center animate-fade-in space-y-3 shadow-md">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-[#888888]">Game Over</span>
-                  <button
-                    onClick={handleExitGame}
-                    className="text-xs font-bold bg-[#2A2A2A] text-[#E0E0E0] border border-[#2A2A2A] px-2.5 py-1 rounded-lg hover:bg-[#333]"
-                  >
-                    Lobby
-                  </button>
-                </div>
-                <div className="h-px bg-[#2A2A2A]" />
-                <Award className="w-8 h-8 text-amber-500 mx-auto" />
-                <h4 className="font-sans font-extrabold text-base text-white">
-                  {gameResult === 'win' ? 'Victory!' : gameResult === 'loss' ? 'Defeat' : "Draw Game"}
-                </h4>
-                <p className="text-xs text-[#888888]">Reason: {resultReason}</p>
-                <div className="text-xs font-mono font-bold text-[#4CAF50]">
-                  {gameResult === 'win' ? 'Your Rating: +18 Elo' : gameResult === 'loss' ? 'Your Rating: -10 Elo' : 'No change'}
-                </div>
-                {onReviewGame && (
-                  <button
-                    onClick={() => onReviewGame({
-                      id: Math.random().toString(36).substr(2, 9),
-                      opponentName: selectedBot ? `${selectedBot.name} (Bot)` : "Bot AI",
-                      opponentRating: selectedBot ? selectedBot.rating : 1200,
-                      mode: 'bot',
-                      playerColor,
-                      result: gameResult,
-                      date: new Date().toLocaleDateString(),
-                      movesCount: Math.ceil(moveHistory.length / 2),
-                      moves: moveHistory
-                    })}
-                    className="w-full py-2 rounded-lg bg-[#4CAF50]/15 hover:bg-[#4CAF50]/35 border border-[#388E3C]/30 text-[#4CAF50] font-bold text-xs uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" /> AI Move Review
-                  </button>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Right Column: Dialogue, evaluation & log (Desktop Only) */}
@@ -643,39 +601,6 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
                   <span className="block font-sans font-extrabold text-sm text-white leading-tight">Match Status</span>
                 </div>
               </div>
-
-              {/* Game outcome display */}
-              {gameResult && (
-                <div className="bg-amber-500/10 p-4 rounded-xl border border-amber-500/20 text-center animate-fade-in space-y-3">
-                  <Award className="w-8 h-8 text-amber-500 mx-auto mb-1" />
-                  <h4 className="font-sans font-extrabold text-sm text-white">
-                    {gameResult === 'win' ? 'Victory!' : gameResult === 'loss' ? 'Defeat' : "Draw Game"}
-                  </h4>
-                  <p className="text-xs text-[#888888] mt-1">Reason: {resultReason}</p>
-                  <div className="text-xs font-mono font-bold text-[#4CAF50]">
-                    {gameResult === 'win' ? 'Your Rating: +18 Elo' : gameResult === 'loss' ? 'Your Rating: -10 Elo' : 'No change'}
-                  </div>
-                  {onReviewGame && (
-                    <button
-                      id="post-game-review-btn"
-                      onClick={() => onReviewGame({
-                        id: Math.random().toString(36).substr(2, 9),
-                        opponentName: selectedBot ? `${selectedBot.name} (Bot)` : "Bot AI",
-                        opponentRating: selectedBot ? selectedBot.rating : 1200,
-                        mode: 'bot',
-                        playerColor,
-                        result: gameResult,
-                        date: new Date().toLocaleDateString(),
-                        movesCount: Math.ceil(moveHistory.length / 2),
-                        moves: moveHistory
-                      })}
-                      className="w-full py-2 rounded-lg bg-[#4CAF50]/15 hover:bg-[#4CAF50]/35 border border-[#388E3C]/30 text-[#4CAF50] font-bold text-[10px] uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1.5"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" /> AI Move Review
-                    </button>
-                  )}
-                </div>
-              )}
 
               {/* PGN Logs */}
               <div className="bg-[#121212] border border-[#2A2A2A] rounded-xl p-3 h-44 overflow-y-auto">
@@ -738,6 +663,66 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
             </div>
           )}
 
+        </div>
+      )}
+
+      {/* Game Over Popup Modal */}
+      {gameResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl p-6 shadow-2xl w-full max-w-sm relative animate-scale-up">
+            
+            <button 
+              onClick={handleExitGame}
+              className="absolute top-4 right-4 text-gray-500 hover:text-white transition"
+            >
+              <div className="text-xl leading-none">×</div>
+            </button>
+
+            <div className="text-center space-y-4">
+              <Award className="w-12 h-12 text-amber-500 mx-auto" />
+              <div>
+                <h3 className="font-sans font-black text-2xl text-white">
+                  {gameResult === 'win' ? 'Victory!' : gameResult === 'loss' ? 'Defeat' : "Draw Game"}
+                </h3>
+                <p className="text-sm text-[#888888] mt-1">Reason: {resultReason}</p>
+                <div className="text-sm font-mono font-bold text-[#4CAF50] mt-2">
+                  {gameResult === 'win' ? 'Your Rating: +18 Elo' : gameResult === 'loss' ? 'Your Rating: -10 Elo' : 'No change'}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 pt-4">
+                <button
+                  onClick={() => {
+                    handleStartGame(selectedBot!);
+                  }}
+                  className="w-full py-3 rounded-xl bg-[#4CAF50] hover:bg-[#388E3C] text-white font-bold tracking-wider transition cursor-pointer"
+                >
+                  Rematch
+                </button>
+                {onReviewGame && (
+                  <button
+                    onClick={() => {
+                      onReviewGame({
+                        id: Math.random().toString(36).substr(2, 9),
+                        opponentName: selectedBot ? `${selectedBot.name} (Bot)` : "Bot AI",
+                        opponentRating: selectedBot ? selectedBot.rating : 1200,
+                        mode: 'bot',
+                        playerColor,
+                        result: gameResult,
+                        date: new Date().toLocaleDateString(),
+                        movesCount: Math.ceil(moveHistory.length / 2),
+                        moves: moveHistory
+                      });
+                      handleExitGame();
+                    }}
+                    className="w-full py-3 rounded-xl bg-cyan-950/40 border border-cyan-800/50 hover:bg-cyan-900/50 text-cyan-400 font-bold tracking-wider transition cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <Sparkles className="w-4 h-4" /> Game Review
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

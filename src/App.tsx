@@ -250,10 +250,10 @@ export default function App() {
   }
 
   return (
-    <div className={`min-h-screen bg-[#121212] text-[#E0E0E0] flex flex-col font-sans antialiased selection:bg-[#4CAF50]/30 ${isMenuHidden ? 'lg:h-screen lg:h-[100dvh] lg:overflow-hidden' : ''}`}>
+    <div className="h-[100dvh] w-full fixed inset-0 overflow-hidden bg-[#121212] text-[#E0E0E0] flex flex-col font-sans antialiased selection:bg-[#4CAF50]/30">
       
       {/* Top Premium Navbar */}
-      <header className={`border-b border-[#2A2A2A] bg-[#1A1A1A] sticky top-0 z-40 px-4 py-3 shadow-md ${isMenuHidden ? 'hidden' : ''}`}>
+      <header className={`shrink-0 border-b border-[#2A2A2A] bg-[#1A1A1A] sticky top-0 z-40 px-4 py-3 shadow-md ${isMenuHidden ? 'hidden' : ''}`}>
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
           
           {/* Logo brand / Profile Name Left */}
@@ -319,10 +319,10 @@ export default function App() {
       </header>
 
       {/* Main Workspace Frame */}
-      <main className={`flex-1 w-full mx-auto flex flex-col ${isMenuHidden ? 'p-1 md:p-3 max-w-5xl' : 'p-4 md:p-6 max-w-6xl gap-6'}`}>
+      <main className={`flex-1 w-full mx-auto flex flex-col min-h-0 ${isMenuHidden ? 'p-1 md:p-3 max-w-5xl' : 'p-4 md:p-6 max-w-6xl gap-6'}`}>
         
         {/* Navigation Selector Tabs */}
-        <div className={`bg-[#1A1A1A] border border-[#2A2A2A] p-2 rounded-2xl flex flex-wrap gap-1.5 shadow-md ${isMenuHidden ? 'hidden' : ''}`}>
+        <div className={`bg-[#1A1A1A] border border-[#2A2A2A] p-2 rounded-2xl flex flex-wrap gap-1.5 shadow-md shrink-0 ${isMenuHidden ? 'hidden' : ''}`}>
           {[
             { id: 'matchmaking', label: '1v1 Arena', icon: Trophy, desc: 'Play online' },
             { id: 'openings', label: 'Learn Openings', icon: BookOpen, desc: 'Opening theory' },
@@ -356,7 +356,7 @@ export default function App() {
         </div>
 
         {/* Tab Panel View */}
-        <div className={`flex-1 flex flex-col ${isMenuHidden ? 'p-0 md:p-4 bg-transparent border-none shadow-none' : 'bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl p-4 md:p-6 shadow-md'}`}>
+        <div className={`flex-1 flex flex-col min-h-0 overflow-y-auto ${isMenuHidden ? 'p-0 md:p-4 bg-transparent border-none shadow-none' : 'bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl p-4 md:p-6 shadow-md'}`}>
           {activeTab === 'matchmaking' && (
             <MatchmakingTab 
               stats={stats} 
@@ -422,7 +422,7 @@ export default function App() {
       </main>
 
       {/* Global aesthetic footer info lines */}
-      <footer className={`border-t border-[#2A2A2A] py-5 px-4 bg-[#121212] text-center text-xs text-[#888888] ${isMenuHidden ? 'hidden' : ''}`}>
+      <footer className={`shrink-0 border-t border-[#2A2A2A] py-3 md:py-5 px-4 bg-[#121212] text-center text-xs text-[#888888] ${isMenuHidden ? 'hidden' : ''}`}>
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 font-medium">
           <span>♟ "Chess is a struggle against your own errors." — Johannes Zukertort</span>
           <span className="text-[10px] font-mono text-[#666666]">GrandMaster Arena • v1.0.2 Stable</span>

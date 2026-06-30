@@ -167,7 +167,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialStats 
   };
 
   return (
-    <div className="min-h-screen bg-[#121212] flex items-center justify-center p-3 md:p-4 relative overflow-hidden">
+    <div className="h-[100dvh] w-full bg-[#121212] flex items-center justify-center p-3 md:p-4 relative overflow-hidden fixed inset-0">
       {/* Visual Ambient Background Orbs */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
