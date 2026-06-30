@@ -391,7 +391,7 @@ export function evaluateBoard(chess: Chess, botId?: string): number {
 }
 
 // Alpha-Beta Minimax
-function minimax(
+export function minimax(
   chess: Chess,
   depth: number,
   alpha: number,

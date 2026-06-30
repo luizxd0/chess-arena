@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Chess, Square } from 'chess.js';
 import { UserStats, GameRecord } from '../types';
 import { ChessBoard, BoardTheme } from './ChessBoard';
-import { evaluateBoard } from '../utils/chessAI';
+import { evaluateBoard, minimax } from '../utils/chessAI';
 import { openingsList } from '../utils/openingsData';
 import { 
   Award, 
@@ -39,6 +39,7 @@ export interface MoveAnalysis {
   evaluationAfter: number;
   type: 'brilliant' | 'best' | 'excellent' | 'good' | 'book' | 'inaccuracy' | 'mistake' | 'blunder';
   commentary: string;
+  bestMove?: { from: string; to: string };
 }
 
 export const GameReview: React.FC<GameReviewProps> = ({
@@ -78,41 +79,20 @@ export const GameReview: React.FC<GameReviewProps> = ({
 
     // Run in a slight timeout to simulate deep engine analysis & prevent UI freezing
     const timer = setTimeout(() => {
-      const getMoveEval = (chessInstance: Chess): number => {
+      const getDeepEval = (chessInstance: Chess, depth: number): { evalScore: number, bestMoveObj?: {from: string, to: string} } => {
         if (chessInstance.isCheckmate()) {
-          return chessInstance.turn() === 'w' ? -1000.0 : 1000.0;
+          return { evalScore: chessInstance.turn() === 'w' ? -1000.0 : 1000.0 };
         }
         if (chessInstance.isDraw()) {
-          return 0.0;
+          return { evalScore: 0.0 };
         }
-        return evaluateBoard(chessInstance) / 100.0;
-      };
-
-      const getBestMoveEval = (chessInstance: Chess): number => {
-        const movesList = chessInstance.moves({ verbose: true });
-        if (movesList.length === 0) {
-          return getMoveEval(chessInstance);
-        }
-        
-        const side = chessInstance.turn();
-        let bestEval = side === 'w' ? -Infinity : Infinity;
-        
-        for (const m of movesList) {
-          try {
-            chessInstance.move({ from: m.from, to: m.to, promotion: m.promotion || 'q' });
-            const ev = getMoveEval(chessInstance);
-            chessInstance.undo();
-            
-            if (side === 'w') {
-              if (ev > bestEval) bestEval = ev;
-            } else {
-              if (ev < bestEval) bestEval = ev;
-            }
-          } catch (e) {
-            // skip
-          }
-        }
-        return bestEval;
+        const isMaximizing = chessInstance.turn() === 'w';
+        // Run a deep search using minimax for better accuracy
+        const res = minimax(chessInstance, depth, -Infinity, Infinity, isMaximizing);
+        return { 
+          evalScore: res.score / 100.0, 
+          bestMoveObj: res.move ? { from: res.move.from, to: res.move.to } : undefined 
+        };
       };
 
       const moves = selectedGame.moves || [];
@@ -160,14 +140,14 @@ export const GameReview: React.FC<GameReviewProps> = ({
       setDetectedOpening(matchedOpening);
       
       const analysisList: MoveAnalysis[] = [];
-      let lastEval = getMoveEval(chess);
+      let lastEval = getDeepEval(chess, 2).evalScore;
 
       for (let i = 0; i < moves.length; i++) {
         const san = moves[i];
         const turn = chess.turn(); // 'w' or 'b'
         
         // Compute best move evaluation before making the move
-        const bestEval = getBestMoveEval(chess);
+        const { evalScore: bestEval, bestMoveObj } = getDeepEval(chess, 2);
         
         // Find from & to square by dry-running move
         const verboseMoves = chess.moves({ verbose: true });
@@ -185,7 +165,7 @@ export const GameReview: React.FC<GameReviewProps> = ({
           continue;
         }
 
-        const currentEval = getMoveEval(chess);
+        const currentEval = getDeepEval(chess, 2).evalScore;
         
         // Loss of evaluation (centipawn loss, always >= 0)
         let evalLoss = turn === 'w' ? (bestEval - currentEval) : (currentEval - bestEval);
@@ -239,6 +219,12 @@ export const GameReview: React.FC<GameReviewProps> = ({
           }
         }
 
+        // If move was inaccuracy, mistake, or blunder, inform the best move in commentary
+        let finalCommentary = commentary;
+        if ((type === 'inaccuracy' || type === 'mistake' || type === 'blunder') && bestMoveObj) {
+          finalCommentary += ` The engine preferred moving the piece from ${bestMoveObj.from} to ${bestMoveObj.to}.`;
+        }
+
         analysisList.push({
           san,
           from: fromSquare,
@@ -247,7 +233,8 @@ export const GameReview: React.FC<GameReviewProps> = ({
           evaluationBefore: turn === 'w' ? bestEval : -bestEval,
           evaluationAfter: currentEval,
           type,
-          commentary
+          commentary: finalCommentary,
+          bestMove: bestMoveObj
         });
 
         lastEval = currentEval;
@@ -376,13 +363,13 @@ export const GameReview: React.FC<GameReviewProps> = ({
               {selectedGame ? `Review vs ${selectedGame.opponentName}` : 'Game Review Lobby'}
             </h2>
             {detectedOpening && (
-              <div className="flex items-center gap-1.5 mt-1.5 text-xs text-gray-400 font-medium">
+              <div className="flex items-center gap-1.5 mt-1.5 text-xs text-gray-400 font-medium flex-wrap">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
-                <span>Opening: <strong className="text-gray-200">{detectedOpening.name}</strong></span>
+                <span>{detectedOpening.name.toLowerCase().includes('defense') ? 'Defense' : 'Opening'}: <strong className="text-gray-200">{detectedOpening.name}</strong></span>
                 {detectedOpening.variation && (
                   <>
-                    <span className="text-[#2A2A2A] mx-1">•</span>
-                    <span>Variation: <strong className="text-gray-300">{detectedOpening.variation}</strong></span>
+                    <span className="text-[#2A2A2A] mx-1 hidden md:inline-block">•</span>
+                    <span>{detectedOpening.variation.toLowerCase().includes('defense') ? 'Defense' : 'Variation'}: <strong className="text-gray-300">{detectedOpening.variation}</strong></span>
                   </>
                 )}
               </div>
@@ -487,10 +474,17 @@ export const GameReview: React.FC<GameReviewProps> = ({
             </div>
 
             {/* Chessboard */}
-            <div className="w-full aspect-square w-full shrink-0">
+            <div className="w-full aspect-square w-full shrink-0 relative">
               <ChessBoard
                 fen={currentFen}
                 lastMove={activeMoveAnalysis ? { from: activeMoveAnalysis.from, to: activeMoveAnalysis.to } : null}
+                hintMove={
+                  activeMoveAnalysis && 
+                  (activeMoveAnalysis.type === 'inaccuracy' || activeMoveAnalysis.type === 'mistake' || activeMoveAnalysis.type === 'blunder') && 
+                  activeMoveAnalysis.bestMove
+                    ? activeMoveAnalysis.bestMove 
+                    : null
+                }
                 onMove={() => {}} // Readonly board during review replay
                 playerColor={playerPerspective}
                 isInteractive={false} // completely static board
