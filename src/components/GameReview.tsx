@@ -341,7 +341,7 @@ export const GameReview: React.FC<GameReviewProps> = ({
 
       {/* RENDER ANALYZING SPINNER PROGRESS SCREEN */}
       {analyzing ? (
-        <div className="flex-1 flex flex-col justify-center items-center py-20 bg-[#121212]/50 border border-[#2A2A2A] rounded-3xl gap-4">
+        <div className="flex-1 flex flex-col justify-center items-center py-10 bg-[#121212]/50 border border-[#2A2A2A] rounded-3xl gap-4 flex-1 min-h-0">
           <div className="relative w-20 h-20 flex items-center justify-center">
             {/* Spinning ring */}
             <div className="absolute inset-0 rounded-full border-2 border-[#4CAF50] border-t-transparent animate-spin" />
@@ -362,23 +362,23 @@ export const GameReview: React.FC<GameReviewProps> = ({
         </div>
       ) : !selectedGame ? (
         /* NO SELECTED GAME: HISTORY LIST LOBBY */
-        <div className="space-y-6">
-          <div className="bg-[#121212] border border-[#2A2A2A] rounded-2xl p-6 text-center max-w-md mx-auto">
-            <History className="w-12 h-12 text-[#4CAF50] mx-auto mb-3" />
-            <h3 className="font-sans font-black text-lg text-white">Select a Match to Review</h3>
-            <p className="text-xs text-gray-400 mt-2 leading-relaxed">
+        <div className="flex flex-col flex-1 min-h-0">
+          <div className="bg-[#121212] border border-[#2A2A2A] rounded-2xl p-4 text-center max-w-md mx-auto shrink-0 mb-4">
+            <History className="w-10 h-10 text-[#4CAF50] mx-auto mb-2" />
+            <h3 className="font-sans font-black text-base text-white">Select a Match to Review</h3>
+            <p className="text-[11px] text-gray-400 mt-1 leading-relaxed">
               Open any of your recently finished arena or computer bot matches to replay the moves and analyze your brilliant plays and blunders with our AI tool.
             </p>
           </div>
 
-          <div className="max-w-2xl mx-auto bg-[#121212] border border-[#2A2A2A] rounded-3xl p-6 shadow-lg">
-            <h4 className="font-bold text-sm text-white mb-4 uppercase tracking-wider font-mono">My Recent Games</h4>
+          <div className="max-w-2xl mx-auto w-full bg-[#121212] border border-[#2A2A2A] rounded-3xl p-4 shadow-lg flex-1 flex flex-col min-h-0">
+            <h4 className="font-bold text-xs text-white mb-2 uppercase tracking-wider font-mono shrink-0">My Recent Games</h4>
             {stats.gameHistory.length === 0 ? (
-              <div className="text-center py-12 text-gray-500 text-xs">
+              <div className="text-center py-8 text-gray-500 text-xs">
                 No matches found in your profile history yet. Play games to generate logs.
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 overflow-y-auto pr-1 flex-1 content-start">
                 {stats.gameHistory.map((game) => (
                   <button
                     key={game.id}
@@ -407,13 +407,13 @@ export const GameReview: React.FC<GameReviewProps> = ({
         </div>
       ) : (
         /* FULL GAME REVIEW REPLAY VIEW */
-        <div className="flex flex-col lg:flex-row gap-6 items-stretch">
+        <div className="flex flex-col md:flex-row gap-4 items-stretch flex-1 min-h-0 overflow-hidden">
           
           {/* LEFT: Chessboard Frame Column */}
-          <div className="flex-1 max-w-md mx-auto flex flex-col items-center">
+          <div className="flex-1 max-w-md mx-auto flex flex-col items-center h-full">
             
             {/* Evaluation Score Meter */}
-            <div className="w-full bg-[#121212] border border-[#2A2A2A] rounded-xl p-2.5 flex items-center justify-between mb-3 font-mono text-xs text-white">
+            <div className="w-full bg-[#121212] border border-[#2A2A2A] rounded-xl p-2 flex items-center justify-between mb-2 font-mono text-[10px] text-white shrink-0">
               <span className="text-gray-500 font-semibold uppercase">Eval Score:</span>
               <div className="flex items-center gap-1.5">
                 <TrendingUp className="w-3.5 h-3.5 text-[#4CAF50]" />
@@ -439,10 +439,10 @@ export const GameReview: React.FC<GameReviewProps> = ({
           </div>
 
           {/* RIGHT: Game Statistics, Accuracy & Move classification list */}
-          <div className="w-full lg:w-96 flex flex-col justify-between gap-4">
+          <div className="w-full md:w-80 lg:w-96 flex flex-col justify-start gap-2 h-full min-h-0">
             
             {/* Replay Controls Row (Now on the right like chess.com) */}
-            <div className="w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-3 flex items-center justify-center gap-3.5 shadow-md shrink-0">
+            <div className="w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl p-2 flex items-center justify-center gap-2 shadow-md shrink-0">
               <button
                 id="review-ctrl-first"
                 onClick={handleFirst}
@@ -490,12 +490,12 @@ export const GameReview: React.FC<GameReviewProps> = ({
               </button>
             </div>
 
-            <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl p-5 shadow-md flex-1 flex flex-col justify-between gap-4 overflow-y-auto">
+            <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-3 shadow-md flex-1 flex flex-col gap-2 min-h-0 overflow-y-auto">
             
             {/* Dynamic Analysis Commentary Box */}
-            <div className="bg-[#121212] border border-[#2A2A2A] rounded-2xl p-4 min-h-[110px] flex flex-col justify-between">
+            <div className="bg-[#121212] border border-[#2A2A2A] rounded-xl p-3 shrink-0 flex flex-col">
               <div>
-                <span className="block text-[9px] font-bold text-[#4CAF50] uppercase tracking-wider font-mono">Move Commentary</span>
+                <span className="block text-[8px] font-bold text-[#4CAF50] uppercase tracking-wider font-mono">Move Commentary</span>
                 {activeMoveAnalysis ? (
                   <div className="mt-2 flex items-start gap-2.5">
                     <span className={`text-sm font-extrabold px-1.5 py-0.5 rounded font-mono ${
@@ -529,31 +529,31 @@ export const GameReview: React.FC<GameReviewProps> = ({
             </div>
 
             {/* ACCURACY GAUGE */}
-            <div className="grid grid-cols-2 gap-3.5 bg-[#121212]/50 p-4 rounded-2xl border border-[#2A2A2A]">
+            <div className="grid grid-cols-2 gap-2 bg-[#121212]/50 p-2 rounded-xl border border-[#2A2A2A] shrink-0">
               
               {/* White stats */}
-              <div className="text-center border-r border-[#2A2A2A] pr-3.5">
-                <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider block">White Accuracy</span>
-                <span className="text-3xl font-black font-mono text-[#4CAF50]">{whiteAccuracy}%</span>
-                <span className="text-[9px] text-gray-400 block mt-1.5">
+              <div className="text-center border-r border-[#2A2A2A] pr-2">
+                <span className="text-[8px] font-bold text-gray-500 uppercase tracking-wider block">White Accuracy</span>
+                <span className="text-2xl font-black font-mono text-[#4CAF50]">{whiteAccuracy}%</span>
+                <span className="text-[8px] text-gray-400 block mt-0.5">
                   {selectedGame.playerColor === 'w' ? 'You' : selectedGame.opponentName}
                 </span>
               </div>
 
               {/* Black stats */}
               <div className="text-center">
-                <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider block">Black Accuracy</span>
-                <span className="text-3xl font-black font-mono text-cyan-400">{blackAccuracy}%</span>
-                <span className="text-[9px] text-gray-400 block mt-1.5">
+                <span className="text-[8px] font-bold text-gray-500 uppercase tracking-wider block">Black Accuracy</span>
+                <span className="text-2xl font-black font-mono text-cyan-400">{blackAccuracy}%</span>
+                <span className="text-[8px] text-gray-400 block mt-0.5">
                   {selectedGame.playerColor === 'b' ? 'You' : selectedGame.opponentName}
                 </span>
               </div>
             </div>
 
             {/* Move Evaluation Summary Lists */}
-            <div className="bg-[#121212] border border-[#2A2A2A] rounded-2xl p-3">
-              <span className="block text-[10px] font-bold text-[#888888] uppercase tracking-wider mb-2 px-1">Move Breakdowns</span>
-              <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+            <div className="bg-[#121212] border border-[#2A2A2A] rounded-xl p-2 shrink-0">
+              <span className="block text-[9px] font-bold text-[#888888] uppercase tracking-wider mb-1 px-1">Move Breakdowns</span>
+              <div className="space-y-1 pr-1">
                 {[
                   { name: 'Brilliant', key: 'brilliant', color: 'text-cyan-400', symbol: '!!' },
                   { name: 'Best Move', key: 'best', color: 'text-emerald-400', symbol: '★' },
@@ -579,10 +579,9 @@ export const GameReview: React.FC<GameReviewProps> = ({
             </div>
 
             {/* Complete Moves List Scroll Feed */}
-            <div className="bg-[#121212] border border-[#2A2A2A] rounded-2xl p-3 flex-1 min-h-[140px] flex flex-col justify-between">
-              <div>
-                <span className="block text-[10px] font-bold text-[#888888] uppercase tracking-wider mb-2">Move List</span>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 max-h-36 overflow-y-auto pr-1 font-mono text-xs">
+            <div className="bg-[#121212] border border-[#2A2A2A] rounded-xl p-2 flex-1 min-h-0 flex flex-col mt-2">
+              <span className="block text-[9px] font-bold text-[#888888] uppercase tracking-wider mb-1 shrink-0">Move List</span>
+              <div className="grid grid-cols-2 gap-x-2 gap-y-1 overflow-y-auto pr-1 font-mono text-[10px] flex-1 min-h-[80px]">
                   {Array.from({ length: Math.ceil(analyzedMoves.length / 2) }).map((_, idx) => {
                     const wIdx = idx * 2;
                     const bIdx = idx * 2 + 1;
@@ -620,13 +619,12 @@ export const GameReview: React.FC<GameReviewProps> = ({
                     );
                   })}
                 </div>
-              </div>
 
               {/* Back to select match */}
               <button
                 id="review-lobby-btn"
                 onClick={onBackToLobby}
-                className="w-full mt-3.5 py-2 rounded-xl bg-[#2A2A2A] hover:bg-[#333] text-white font-bold text-xs transition cursor-pointer"
+                className="w-full mt-2 py-1.5 rounded-lg bg-[#2A2A2A] hover:bg-[#333] text-white font-bold text-[10px] transition cursor-pointer shrink-0"
               >
                 Back to Match List
               </button>

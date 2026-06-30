@@ -2,7 +2,7 @@ export type ChessColor = 'w' | 'b';
 
 export type ChessMode = 'rapid' | 'blitz' | 'bullet';
 
-export type RatingTier = 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert' | 'Master' | 'Grandmaster';
+export type RatingTier = 'Novice' | 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert' | 'Master' | 'Grandmaster';
 
 export interface UserStats {
   elo: {

@@ -16,11 +16,11 @@ const LOCAL_STORAGE_USERNAME_KEY = 'chess_applet_username_v1';
 
 const INITIAL_STATS: UserStats = {
   elo: {
-    bullet: 800,
-    blitz: 800,
-    rapid: 800
+    bullet: 500,
+    blitz: 500,
+    rapid: 500
   },
-  botRating: 400,
+  botRating: 500,
   wins: 0,
   losses: 0,
   draws: 0,
@@ -210,16 +210,17 @@ export default function App() {
   };
 
   const getRatingTier = (elo: number): RatingTier => {
+    if (elo < 250) return 'Novice';
     if (elo < 800) return 'Beginner';
     if (elo < 1200) return 'Intermediate';
-    if (elo < 1600) return 'Advanced';
-    if (elo < 2000) return 'Expert';
-    if (elo < 2400) return 'Master';
+    if (elo < 1800) return 'Advanced';
+    if (elo < 2200) return 'Master';
     return 'Grandmaster';
   };
 
   const getTierColor = (tier: RatingTier) => {
     switch (tier) {
+      case 'Novice': return 'text-gray-400 bg-gray-950/30 border-gray-800/40';
       case 'Beginner': return 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40';
       case 'Intermediate': return 'text-blue-400 bg-blue-950/30 border-blue-800/40';
       case 'Advanced': return 'text-purple-400 bg-purple-950/30 border-purple-800/40';
@@ -231,6 +232,10 @@ export default function App() {
 
   const activeElo = stats.elo.blitz; // default show blitz ELO in header
   const activeTier = getRatingTier(activeElo);
+
+  const maxElo = Math.max(stats.elo.bullet, stats.elo.blitz, stats.elo.rapid, stats.botRating);
+  const playerTitle = maxElo >= 2200 ? ' GM' : (maxElo >= 1800 ? ' M' : '');
+  const displayUsername = username + playerTitle;
 
   if (isAuthChecking) {
     return (
@@ -263,7 +268,7 @@ export default function App() {
             </div>
             <div className="min-w-0">
               <h1 className="font-sans font-black text-sm md:text-lg tracking-tight leading-none bg-linear-to-r from-white via-slate-100 to-[#81C784] bg-clip-text text-transparent truncate">
-                {username}
+                {displayUsername}
               </h1>
               <span className="text-[9px] md:text-[10px] text-[#888888] font-mono tracking-widest uppercase mt-0.5 block truncate">
                 {activeTier} • {stats.elo.blitz} Elo
@@ -367,7 +372,7 @@ export default function App() {
                 setActiveTab('review');
               }}
               onGameActiveChange={setIsGameplayActive}
-              username={username}
+              username={displayUsername}
             />
           )}
           {activeTab === 'openings' && (
@@ -388,7 +393,7 @@ export default function App() {
                 setActiveTab('review');
               }}
               onGameActiveChange={setIsGameplayActive}
-              username={username}
+              username={displayUsername}
             />
           )}
           {activeTab === 'stats' && (

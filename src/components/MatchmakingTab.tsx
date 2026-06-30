@@ -451,16 +451,17 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
   };
 
   const getRatingTier = (elo: number): RatingTier => {
+    if (elo < 250) return 'Novice';
     if (elo < 800) return 'Beginner';
     if (elo < 1200) return 'Intermediate';
-    if (elo < 1600) return 'Advanced';
-    if (elo < 2000) return 'Expert';
-    if (elo < 2400) return 'Master';
+    if (elo < 1800) return 'Advanced';
+    if (elo < 2200) return 'Master';
     return 'Grandmaster';
   };
 
   const getTierColor = (tier: RatingTier) => {
     switch (tier) {
+      case 'Novice': return 'text-gray-400 bg-gray-950/20 border-gray-900/30';
       case 'Beginner': return 'text-emerald-400 bg-emerald-950/20 border-emerald-900/30';
       case 'Intermediate': return 'text-blue-400 bg-blue-950/20 border-blue-900/30';
       case 'Advanced': return 'text-purple-400 bg-purple-950/20 border-purple-900/30';
@@ -482,80 +483,86 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
       
       {/* 1. LOBBY VIEW */}
       {!game && (
-        <div className="flex-1 flex flex-col">
-          {/* Header Hero */}
-          <div className="relative text-center py-8 px-4 rounded-3xl bg-[#1A1A1A] border border-[#2A2A2A] text-[#E0E0E0] shadow-md overflow-hidden mb-6">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-[#4CAF50]/5 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-36 h-36 bg-[#4CAF50]/5 rounded-full blur-2xl" />
-            
-            <Trophy className="w-12 h-12 mx-auto mb-3 text-amber-500 animate-bounce" />
-            <h2 className="font-sans font-bold text-3xl tracking-tight text-white">1v1 Arena</h2>
-            <p className="text-[#888888] text-sm mt-1 max-w-sm mx-auto">
-              Match with players around your rating tier, climb the global divisions, and claim the rank of Grandmaster.
-            </p>
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex flex-col lg:flex-row gap-4 mb-4 shrink-0">
+            {/* Header Hero */}
+            <div className="relative text-center py-4 px-4 rounded-3xl bg-[#1A1A1A] border border-[#2A2A2A] text-[#E0E0E0] shadow-md overflow-hidden flex-1">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-[#4CAF50]/5 rounded-full blur-3xl" />
+              <div className="absolute bottom-0 left-0 w-36 h-36 bg-[#4CAF50]/5 rounded-full blur-2xl" />
+              
+              <div className="flex items-center justify-center gap-4">
+                <Trophy className="w-8 h-8 text-amber-500 animate-bounce" />
+                <div className="text-left">
+                  <h2 className="font-sans font-bold text-2xl tracking-tight text-white leading-none">1v1 Arena</h2>
+                  <p className="text-[#888888] text-xs mt-1">
+                    Match with players around your rating tier, climb the global divisions.
+                  </p>
+                </div>
+              </div>
 
-            {/* Quick stats row */}
-            <div className="flex justify-center gap-6 mt-6 pt-5 border-t border-[#2A2A2A] text-xs">
-              <div className="text-center">
-                <span className="block text-[#888888] font-medium">Your Elo</span>
-                <span className="block font-mono font-bold text-lg text-amber-500">{stats.elo[mode]}</span>
-              </div>
-              <div className="border-r border-[#2A2A2A]" />
-              <div className="text-center">
-                <span className="block text-[#888888] font-medium">Win/Loss</span>
-                <span className="block font-mono font-bold text-lg text-[#4CAF50]">{stats.wins}W / {stats.losses}L</span>
-              </div>
-              <div className="border-r border-[#2A2A2A]" />
-              <div className="text-center">
-                <span className="block text-[#888888] font-medium text-center">Active Online</span>
-                <span className="block font-mono font-bold text-lg text-[#4CAF50] flex items-center justify-center gap-1">
-                  <span className="inline-block w-2 h-2 rounded-full bg-[#4CAF50] animate-ping" />
-                  {onlineCount}
-                </span>
+              {/* Quick stats row */}
+              <div className="flex justify-center gap-6 mt-4 pt-3 border-t border-[#2A2A2A] text-xs">
+                <div className="text-center">
+                  <span className="block text-[#888888] font-medium text-[10px]">Your Elo</span>
+                  <span className="block font-mono font-bold text-base text-amber-500">{stats.elo[mode]}</span>
+                </div>
+                <div className="border-r border-[#2A2A2A]" />
+                <div className="text-center">
+                  <span className="block text-[#888888] font-medium text-[10px]">Win/Loss</span>
+                  <span className="block font-mono font-bold text-base text-[#4CAF50]">{stats.wins}W / {stats.losses}L</span>
+                </div>
+                <div className="border-r border-[#2A2A2A]" />
+                <div className="text-center">
+                  <span className="block text-[#888888] font-medium text-[10px]">Active Online</span>
+                  <span className="block font-mono font-bold text-base text-[#4CAF50] flex items-center justify-center gap-1">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#4CAF50] animate-ping" />
+                    {onlineCount}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Mode Selector */}
-          <div className="mb-6">
-            <h3 className="text-sm font-bold text-[#E0E0E0] mb-3 flex items-center gap-1.5 px-1">
-              <Clock className="w-4 h-4 text-[#4CAF50]" />
-              Select Time Control
-            </h3>
+            {/* Mode Selector */}
+            <div className="flex-1 bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl p-4 shadow-md">
+              <h3 className="text-xs font-bold text-[#E0E0E0] mb-2 flex items-center gap-1.5 px-1">
+                <Clock className="w-3.5 h-3.5 text-[#4CAF50]" />
+                Select Time Control
+              </h3>
 
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { id: 'bullet', label: 'Bullet', time: '1 + 0', icon: Zap, bg: 'from-amber-500 to-yellow-500' },
-                { id: 'blitz', label: 'Blitz', time: '3 + 2', icon: Zap, bg: 'from-red-500 to-pink-500' },
-                { id: 'rapid', label: 'Rapid', time: '10 + 0', icon: Clock, bg: 'from-green-500 to-emerald-500' }
-              ].map((m) => {
-                const isActive = mode === m.id;
-                return (
-                  <button
-                    key={m.id}
-                    id={`mode-${m.id}`}
-                    onClick={() => setMode(m.id as ChessMode)}
-                    className={`relative p-4 rounded-2xl border text-left transition duration-200 overflow-hidden group ${isActive ? 'bg-[#2A2A2A] border-[#4CAF50]/40 text-white shadow-md' : 'bg-[#1A1A1A] hover:bg-[#2A2A2A]/40 border-[#2A2A2A] text-[#888888] hover:text-[#E0E0E0]'}`}
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <m.icon className={`w-5 h-5 ${isActive ? 'text-[#4CAF50]' : 'text-[#666666]'}`} />
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${isActive ? 'bg-[#4CAF50]/20 text-[#4CAF50]' : 'bg-[#121212] text-[#888888] border border-[#2A2A2A]'}`}>
-                        {m.time}
-                      </span>
-                    </div>
-                    <span className="block font-bold text-sm tracking-tight">{m.label}</span>
-                    <span className="block text-[10px] opacity-70 mt-0.5 font-mono">Elo: {stats.elo[m.id as ChessMode]}</span>
-                    
-                    {/* Hover Glow Accent */}
-                    <div className={`absolute bottom-0 left-0 right-0 h-1 bg-[#4CAF50] opacity-0 group-hover:opacity-100 transition-opacity`} />
-                  </button>
-                );
-              })}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {[
+                  { id: 'bullet', label: 'Bullet', time: '1 + 0', icon: Zap, bg: 'from-amber-500 to-yellow-500' },
+                  { id: 'blitz', label: 'Blitz', time: '3 + 2', icon: Zap, bg: 'from-red-500 to-pink-500' },
+                  { id: 'rapid', label: 'Rapid', time: '10 + 0', icon: Clock, bg: 'from-green-500 to-emerald-500' }
+                ].map((m) => {
+                  const isActive = mode === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      id={`mode-${m.id}`}
+                      onClick={() => setMode(m.id as ChessMode)}
+                      className={`relative p-3 rounded-2xl border text-left transition duration-200 overflow-hidden group ${isActive ? 'bg-[#2A2A2A] border-[#4CAF50]/40 text-white shadow-md' : 'bg-[#121212] hover:bg-[#2A2A2A]/40 border-[#2A2A2A] text-[#888888] hover:text-[#E0E0E0]'}`}
+                    >
+                      <div className="flex justify-between items-start mb-1">
+                        <m.icon className={`w-4 h-4 ${isActive ? 'text-[#4CAF50]' : 'text-[#666666]'}`} />
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${isActive ? 'bg-[#4CAF50]/20 text-[#4CAF50]' : 'bg-[#1A1A1A] text-[#888888] border border-[#2A2A2A]'}`}>
+                          {m.time}
+                        </span>
+                      </div>
+                      <span className="block font-bold text-xs tracking-tight">{m.label}</span>
+                      <span className="block text-[9px] opacity-70 mt-0.5 font-mono">Elo: {stats.elo[m.id as ChessMode]}</span>
+                      
+                      {/* Hover Glow Accent */}
+                      <div className={`absolute bottom-0 left-0 right-0 h-1 bg-[#4CAF50] opacity-0 group-hover:opacity-100 transition-opacity`} />
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
           {/* Action Button */}
-          <div className="flex-1 flex flex-col justify-center items-center py-6">
+          <div className="flex-1 flex flex-col justify-center items-center py-4">
             {!isSearching ? (
               <button
                 id="search-match-btn"
@@ -594,10 +601,10 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
 
       {/* 2. LIVE GAME VIEW */}
       {game && matchedOpponent && (
-        <div className="flex-1 flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col md:flex-row gap-4 items-stretch flex-1 min-h-0 overflow-hidden">
           
           {/* Left Column: Board & Clock */}
-          <div className="flex-1 flex flex-col items-center">
+          <div className="flex-1 max-w-md mx-auto flex flex-col items-center h-full">
             
             {/* Top Player (Opponent) Info */}
             <div className="w-full max-w-md flex justify-between items-center bg-[#1A1A1A] border border-[#2A2A2A] p-3 rounded-xl shadow-md mb-3">
@@ -695,7 +702,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
           </div>
 
           {/* Right Column: Chat & Moves Log (Desktop Only) */}
-          <div className="hidden lg:flex w-full lg:w-80 flex-col h-[460px] lg:h-auto bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl overflow-hidden shadow-md">
+          <div className="hidden md:flex w-full md:w-80 flex-col h-full bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl overflow-hidden shadow-md min-h-0">
             
             {/* Top Tabs: Chats / Moves */}
             <div className="bg-[#121212] border-b border-[#2A2A2A] px-4 py-3 flex items-center justify-between">

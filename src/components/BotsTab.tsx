@@ -338,20 +338,24 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
       {!game && (
         <div className="flex-1 flex flex-col">
           {/* Header Hero */}
-          <div className="relative text-center py-7 px-4 rounded-3xl bg-[#1A1A1A] border border-[#2A2A2A] text-[#E0E0E0] shadow-md overflow-hidden mb-6">
+          <div className="relative text-center py-4 px-4 rounded-3xl bg-[#1A1A1A] border border-[#2A2A2A] text-[#E0E0E0] shadow-md overflow-hidden mb-3 shrink-0">
             <div className="absolute top-0 right-0 w-48 h-48 bg-[#4CAF50]/5 rounded-full blur-3xl" />
-            <Cpu className="w-12 h-12 mx-auto mb-3 text-[#4CAF50]" />
-            <h2 className="font-sans font-bold text-3xl tracking-tight text-white">Play Versus Bots</h2>
-            <p className="text-[#888888] text-sm mt-1 max-w-sm mx-auto">
-              Defeat progressively stronger chess bots, increase your Bot Rating, and unlock advanced grandmasters.
-            </p>
-            <div className="inline-block mt-4 px-4 py-1 rounded-full bg-[#121212] border border-[#2A2A2A] font-mono text-xs font-bold text-[#4CAF50]">
-              Your Bot Elo: {stats.botRating}
+            <div className="flex items-center justify-center gap-4">
+              <Cpu className="w-8 h-8 text-[#4CAF50]" />
+              <div className="text-left">
+                <h2 className="font-sans font-bold text-2xl tracking-tight text-white leading-none">Play Versus Bots</h2>
+                <p className="text-[#888888] text-xs mt-1">
+                  Defeat progressively stronger chess bots to unlock advanced grandmasters.
+                </p>
+              </div>
+              <div className="ml-auto px-4 py-1.5 rounded-xl bg-[#121212] border border-[#2A2A2A] font-mono text-xs font-bold text-[#4CAF50]">
+                Bot Elo: {stats.botRating}
+              </div>
             </div>
           </div>
 
           {/* Sandbox Setup Panel */}
-          <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-5 shadow-md mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-3 shadow-md mb-3 grid grid-cols-1 md:grid-cols-3 gap-3 shrink-0">
             
             {/* Color Select */}
             <div>
@@ -440,57 +444,57 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
 
 
           {/* Bots Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 flex-1">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 flex-1 overflow-y-auto content-start pb-2">
             {botsList.map((bot) => {
               const locked = isBotLocked(bot);
               return (
                 <div
                   key={bot.id}
                   id={`bot-card-${bot.id}`}
-                  className={`relative p-5 rounded-2xl border transition duration-200 flex flex-col justify-between overflow-hidden bg-[#1A1A1A] border-[#2A2A2A] shadow-md ${locked ? 'opacity-70 saturate-50' : 'hover:scale-102 hover:border-[#4CAF50]/40'}`}
+                  className={`relative p-2 rounded-xl border transition duration-200 flex flex-col justify-between overflow-hidden bg-[#1A1A1A] border-[#2A2A2A] shadow-md ${locked ? 'opacity-70 saturate-50' : 'hover:scale-102 hover:border-[#4CAF50]/40'}`}
                 >
                   {/* Lock Overlay Banner */}
                   {locked && (
-                    <div className="absolute top-2 right-2 flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-950/20 text-red-400 border border-red-900/30 text-[10px] font-bold">
-                      <Lock className="w-3 h-3" /> Locked
+                    <div className="absolute top-1 right-1 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-red-950/20 text-red-400 border border-red-900/30 text-[8px] font-bold">
+                      <Lock className="w-2.5 h-2.5" /> Locked
                     </div>
                   )}
 
                   {/* Bot header info */}
                   <div>
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-12 h-12 rounded-full bg-[#121212] border border-[#2A2A2A] flex items-center justify-center text-3xl shadow-inner">
+                    <div className="flex items-center gap-2 mb-1.5 mt-1">
+                      <div className="w-8 h-8 rounded-full bg-[#121212] border border-[#2A2A2A] flex items-center justify-center text-lg shadow-inner shrink-0">
                         {bot.avatar}
                       </div>
                       <div>
-                        <h3 className="font-sans font-extrabold text-base text-white leading-none">{bot.name}</h3>
-                        <div className="flex items-center gap-1.5 mt-1.5">
-                          <span className="text-[10px] font-mono font-bold bg-[#4CAF50]/10 text-[#4CAF50] border border-[#388E3C]/20 px-1.5 py-0.5 rounded-sm">
+                        <h3 className="font-sans font-extrabold text-xs text-white leading-none truncate w-[70px]">{bot.name}</h3>
+                        <div className="flex items-center mt-1">
+                          <span className="text-[8px] font-mono font-bold bg-[#4CAF50]/10 text-[#4CAF50] border border-[#388E3C]/20 px-1 py-0.5 rounded-sm">
                             {bot.rating} ELO
                           </span>
                         </div>
                       </div>
                     </div>
                     
-                    <p className="text-xs text-[#888888] leading-relaxed font-medium mt-1">
+                    <p className="text-[9px] text-[#888888] leading-tight font-medium line-clamp-1">
                       {bot.personality}
                     </p>
                   </div>
 
                   {/* Play/Unlock footer bar */}
-                  <div className="mt-5 pt-4 border-t border-[#2A2A2A]">
+                  <div className="mt-2 pt-1.5 border-t border-[#2A2A2A]">
                     {locked ? (
-                      <span className="block text-[10px] font-bold text-center text-red-400 font-mono">
+                      <span className="block text-[8px] font-bold text-center text-red-400 font-mono truncate">
                         {getUnlockRequirement(bot.tier)}
                       </span>
                     ) : (
                       <button
                         id={`play-bot-btn-${bot.id}`}
                         onClick={() => handleStartGame(bot)}
-                        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#4CAF50] hover:bg-[#388E3C] text-[#121212] font-bold text-xs shadow-md transition cursor-pointer"
+                        className="w-full flex items-center justify-center gap-1 py-1 rounded-lg bg-[#4CAF50] hover:bg-[#388E3C] text-[#121212] font-bold text-[9px] shadow-sm transition cursor-pointer"
                       >
-                        <Play className="w-3.5 h-3.5 fill-[#121212]" />
-                        Challenge Bot
+                        <Play className="w-2.5 h-2.5 fill-[#121212]" />
+                        Play
                       </button>
                     )}
                   </div>
@@ -503,10 +507,10 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
 
       {/* 2. GAME BOARD PLAY VS BOT */}
       {game && selectedBot && (
-        <div className="flex-1 flex flex-col lg:flex-row gap-6 justify-center">
+        <div className="flex flex-col md:flex-row gap-4 items-stretch flex-1 min-h-0 overflow-hidden">
           
           {/* Board Frame Column */}
-          <div className="flex-1 max-w-md mx-auto flex flex-col items-center">
+          <div className="flex-1 max-w-md mx-auto flex flex-col items-center h-full">
             
             {/* Top Bot panel / Unified Chat Speech Balloon */}
             <div className="w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-3.5 shadow-md flex items-start gap-3 relative overflow-hidden mb-3">
@@ -590,22 +594,24 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
           </div>
 
           {/* Right Column: Dialogue, evaluation & log (Desktop Only) */}
-          <div className="hidden lg:flex w-full lg:w-80 flex-col justify-between bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-4 shadow-md h-auto">
+          <div className="hidden md:flex w-full md:w-80 flex-col justify-between bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-4 shadow-md h-full min-h-0">
             
-            <div className="space-y-4">
+            <div className="space-y-3 flex flex-col min-h-0 flex-1">
               {/* Bot Personality Header */}
-              <div className="border-b border-[#2A2A2A] pb-3 flex items-center gap-2">
-                <Cpu className="w-4 h-4 text-[#4CAF50]" />
-                <div>
-                  <span className="block text-[9px] font-bold text-[#4CAF50] uppercase tracking-wider">AI Game Panel</span>
-                  <span className="block font-sans font-extrabold text-sm text-white leading-tight">Match Status</span>
+              <div className="border-b border-[#2A2A2A] pb-2 shrink-0">
+                <div className="flex items-center gap-2">
+                  <Cpu className="w-4 h-4 text-[#4CAF50]" />
+                  <div>
+                    <span className="block text-[9px] font-bold text-[#4CAF50] uppercase tracking-wider">AI Game Panel</span>
+                    <span className="block font-sans font-extrabold text-sm text-white leading-tight">Match Status</span>
+                  </div>
                 </div>
               </div>
 
               {/* PGN Logs */}
-              <div className="bg-[#121212] border border-[#2A2A2A] rounded-xl p-3 h-44 overflow-y-auto">
-                <span className="block text-[10px] font-bold text-[#888888] uppercase tracking-wider mb-2">PGN Move Logs</span>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1 font-mono text-xs text-[#888888]">
+              <div className="bg-[#121212] border border-[#2A2A2A] rounded-xl p-3 flex-1 overflow-y-auto flex flex-col">
+                <span className="block text-[10px] font-bold text-[#888888] uppercase tracking-wider mb-2 shrink-0">PGN Move Logs</span>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 font-mono text-xs text-[#888888] overflow-y-auto pr-1">
                   {Array.from({ length: Math.ceil(moveHistory.length / 2) }).map((_, idx) => (
                     <div key={idx} className="flex gap-2">
                       <span className="text-[#666666] w-5">{idx + 1}.</span>
@@ -623,7 +629,7 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
             <button
               id="reset-bot-game-btn"
               onClick={() => handleStartGame(selectedBot)}
-              className="w-full mt-4 py-2.5 rounded-xl bg-[#2A2A2A] hover:bg-[#333333] border border-[#2A2A2A] text-white text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer"
+              className="w-full mt-3 py-2.5 rounded-xl bg-[#2A2A2A] hover:bg-[#333333] border border-[#2A2A2A] text-white text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shrink-0"
             >
               <RefreshCw className="w-4 h-4" /> Restart Match
             </button>

@@ -25,16 +25,17 @@ export const StatsTab: React.FC<StatsTabProps> = ({
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
   const getRatingTier = (elo: number): RatingTier => {
+    if (elo < 250) return 'Novice';
     if (elo < 800) return 'Beginner';
     if (elo < 1200) return 'Intermediate';
-    if (elo < 1600) return 'Advanced';
-    if (elo < 2000) return 'Expert';
-    if (elo < 2400) return 'Master';
+    if (elo < 1800) return 'Advanced';
+    if (elo < 2200) return 'Master';
     return 'Grandmaster';
   };
 
   const getTierColor = (tier: RatingTier) => {
     switch (tier) {
+      case 'Novice': return 'text-gray-400 bg-gray-500/10 border-gray-500/20';
       case 'Beginner': return 'text-[#4CAF50] bg-[#4CAF50]/10 border-[#388E3C]/30';
       case 'Intermediate': return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
       case 'Advanced': return 'text-purple-400 bg-purple-500/10 border-purple-500/20';
@@ -43,6 +44,10 @@ export const StatsTab: React.FC<StatsTabProps> = ({
       case 'Grandmaster': return 'text-red-400 bg-red-500/10 border-red-500/20';
     }
   };
+
+  const maxElo = Math.max(stats.elo.bullet, stats.elo.blitz, stats.elo.rapid, stats.botRating);
+  const playerTitle = maxElo >= 2200 ? ' GM' : (maxElo >= 1800 ? ' M' : '');
+  const displayUsername = username + playerTitle;
 
   const handleSaveUsername = () => {
     if (usernameInput.trim()) {
@@ -97,10 +102,10 @@ export const StatsTab: React.FC<StatsTabProps> = ({
   ];
 
   return (
-    <div className="w-full flex flex-col gap-6">
+    <div className="w-full h-full flex flex-col gap-3 min-h-0">
       
       {/* 1. PLAYER PROFILE CARD */}
-      <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl p-6 shadow-md flex flex-col md:flex-row items-center gap-6">
+      <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-4 shadow-md flex flex-col md:flex-row items-center gap-4 shrink-0">
         
         {/* Avatar Selectable */}
         <div className="relative">
@@ -152,7 +157,7 @@ export const StatsTab: React.FC<StatsTabProps> = ({
               </div>
             ) : (
               <div className="flex items-center justify-center md:justify-start gap-2">
-                <h2 className="font-sans font-black text-2xl text-white leading-none">{username}</h2>
+                <h2 className="font-sans font-black text-2xl text-white leading-none">{displayUsername}</h2>
                 <button
                   id="edit-username-btn"
                   onClick={() => setIsEditingUsername(true)}
@@ -190,7 +195,7 @@ export const StatsTab: React.FC<StatsTabProps> = ({
       </div>
 
       {/* 2. RATING CARDS GRID */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 shrink-0">
         {[
           { label: 'Bullet 1v1', elo: stats.elo.bullet, icon: Zap, color: 'text-amber-400 bg-amber-500/10' },
           { label: 'Blitz 1v1', elo: stats.elo.blitz, icon: Zap, color: 'text-red-400 bg-red-500/10' },
@@ -199,13 +204,13 @@ export const StatsTab: React.FC<StatsTabProps> = ({
         ].map((card, i) => {
           const tier = getRatingTier(card.elo);
           return (
-            <div key={i} className="bg-[#1A1A1A] border border-[#2A2A2A] p-4 rounded-2xl shadow-md">
-              <div className="flex justify-between items-start mb-2">
-                <span className="text-xs font-bold text-[#888888] leading-none">{card.label}</span>
-                <card.icon className={`w-4 h-4 ${card.color.split(' ')[0]}`} />
+            <div key={i} className="bg-[#1A1A1A] border border-[#2A2A2A] p-3 rounded-2xl shadow-md flex flex-col justify-between">
+              <div className="flex justify-between items-start mb-1">
+                <span className="text-[10px] font-bold text-[#888888] leading-none">{card.label}</span>
+                <card.icon className={`w-3.5 h-3.5 ${card.color.split(' ')[0]}`} />
               </div>
-              <div className="font-mono font-black text-2xl text-white leading-none">{card.elo}</div>
-              <span className={`inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-sm border mt-2.5 ${getTierColor(tier)}`}>
+              <div className="font-mono font-black text-xl text-white leading-none">{card.elo}</div>
+              <span className={`inline-block text-[8px] font-bold px-1.5 py-0.5 rounded-sm border mt-1.5 w-fit ${getTierColor(tier)}`}>
                 {tier}
               </span>
             </div>
@@ -214,34 +219,34 @@ export const StatsTab: React.FC<StatsTabProps> = ({
       </div>
 
       {/* 3. TWO COLUMN LOWER PANEL */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 flex-1 min-h-0">
         
         {/* Left 2 Columns: Achievements & Openings checklist */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 flex flex-col gap-3 min-h-0">
           
           {/* Achievements Grid */}
-          <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl p-6 shadow-md">
-            <h3 className="font-sans font-bold text-lg text-white mb-4 flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-amber-500" />
+          <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-4 shadow-md flex-1 min-h-0 flex flex-col">
+            <h3 className="font-sans font-bold text-sm text-white mb-2 flex items-center gap-1.5 shrink-0">
+              <Trophy className="w-4 h-4 text-amber-500" />
               Accomplishments & Badges
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1 overflow-y-auto">
               {achievementsList.map((ach) => {
                 const Icon = ach.icon;
                 return (
                   <div
                     key={ach.id}
-                    className={`p-4 rounded-2xl border flex items-start gap-3.5 transition ${ach.unlocked ? 'bg-[#121212] border-[#2A2A2A]' : 'border-dashed border-[#2A2A2A] opacity-50'}`}
+                    className={`p-2.5 rounded-xl border flex items-start gap-2.5 transition ${ach.unlocked ? 'bg-[#121212] border-[#2A2A2A]' : 'border-dashed border-[#2A2A2A] opacity-50'}`}
                   >
-                    <div className={`p-2.5 rounded-xl shrink-0 ${ach.unlocked ? ach.color : 'bg-[#2A2A2A] text-[#666666]'}`}>
-                      <Icon className="w-5 h-5" />
+                    <div className={`p-1.5 rounded-lg shrink-0 ${ach.unlocked ? ach.color : 'bg-[#2A2A2A] text-[#666666]'}`}>
+                      <Icon className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-sm text-white leading-none">{ach.title}</h4>
-                      <p className="text-xs text-[#888888] mt-1 leading-relaxed">{ach.desc}</p>
-                      <div className="mt-2 flex items-center gap-1.5">
-                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md font-mono ${ach.unlocked ? 'bg-[#4CAF50]/10 text-[#4CAF50] border border-[#388E3C]/20' : 'bg-[#2A2A2A] text-[#666666]'}`}>
+                      <h4 className="font-bold text-[11px] text-white leading-none">{ach.title}</h4>
+                      <p className="text-[9px] text-[#888888] mt-1 leading-tight line-clamp-2">{ach.desc}</p>
+                      <div className="mt-1 flex items-center gap-1.5">
+                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-md font-mono ${ach.unlocked ? 'bg-[#4CAF50]/10 text-[#4CAF50] border border-[#388E3C]/20' : 'bg-[#2A2A2A] text-[#666666]'}`}>
                           {ach.unlocked ? '✓ Unlocked' : 'Locked'}
                         </span>
                       </div>
@@ -253,16 +258,12 @@ export const StatsTab: React.FC<StatsTabProps> = ({
           </div>
 
           {/* Learned Openings checklist */}
-          <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl p-6 shadow-md">
-            <h3 className="font-sans font-bold text-lg text-white mb-3 flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-[#4CAF50]" />
+          <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-4 shadow-md shrink-0">
+            <h3 className="font-sans font-bold text-sm text-white mb-2 flex items-center gap-1.5">
+              <BookOpen className="w-4 h-4 text-[#4CAF50]" />
               Mastered Openings Theory
             </h3>
-            <p className="text-xs text-[#888888] mb-4 font-medium leading-relaxed">
-              Complete individual opening lines in the **Coach** section to master openings, understand fundamental board tactics, and expand your checklist.
-            </p>
-
-            <div className="space-y-2.5">
+            <div className="space-y-1.5 overflow-y-auto max-h-[100px]">
               {[
                 { id: 'italian-game', name: 'Italian Game (White) - Development Focus' },
                 { id: 'caro-kann', name: 'Caro-Kann Defense (Black) - Solid Structure' },
@@ -273,11 +274,11 @@ export const StatsTab: React.FC<StatsTabProps> = ({
                 return (
                   <div
                     key={op.id}
-                    className="flex items-center justify-between p-3 rounded-xl border border-[#2A2A2A] bg-[#121212]/50 text-xs font-semibold"
+                    className="flex items-center justify-between p-2 rounded-xl border border-[#2A2A2A] bg-[#121212]/50 text-[10px] font-semibold"
                   >
                     <span className={completed ? 'text-white font-bold' : 'text-[#666666]'}>{op.name}</span>
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 ${completed ? 'bg-[#4CAF50]/10 text-[#4CAF50] border border-[#388E3C]/20' : 'bg-[#2A2A2A] text-[#666666]'}`}>
-                      {completed ? <Check className="w-3.5 h-3.5" /> : null}
+                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold flex items-center gap-1 ${completed ? 'bg-[#4CAF50]/10 text-[#4CAF50] border border-[#388E3C]/20' : 'bg-[#2A2A2A] text-[#666666]'}`}>
+                      {completed ? <Check className="w-3 h-3" /> : null}
                       {completed ? 'Learned' : 'Not Mastered'}
                     </span>
                   </div>
@@ -289,13 +290,13 @@ export const StatsTab: React.FC<StatsTabProps> = ({
         </div>
 
         {/* Right 1 Column: Match History feed */}
-        <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl p-6 shadow-md lg:col-span-1 flex flex-col h-[500px]">
-          <h3 className="font-sans font-bold text-lg text-white mb-4 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-indigo-500" />
+        <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-4 shadow-md lg:col-span-1 flex flex-col min-h-0 h-full">
+          <h3 className="font-sans font-bold text-sm text-white mb-2 flex items-center gap-1.5 shrink-0">
+            <Clock className="w-4 h-4 text-indigo-500" />
             Match History Logs
           </h3>
 
-          <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+          <div className="flex-1 overflow-y-auto space-y-2 pr-1">
             {stats.gameHistory.length === 0 ? (
               <div className="h-full flex flex-col justify-center items-center text-center text-[#888888] py-12">
                 <Calendar className="w-8 h-8 text-[#2A2A2A] mb-2" />

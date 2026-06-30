@@ -217,59 +217,65 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
       
       {/* 1. SELECTION SCREEN */}
       {!game && (
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-h-0">
           {/* Header hero */}
-          <div className="relative text-center py-8 px-4 rounded-3xl bg-[#1A1A1A] border border-[#2A2A2A] text-[#E0E0E0] shadow-md overflow-hidden mb-6">
+          <div className="relative text-center py-4 px-4 rounded-3xl bg-[#1A1A1A] border border-[#2A2A2A] text-[#E0E0E0] shadow-md overflow-hidden mb-4 shrink-0">
             <div className="absolute top-0 right-0 w-48 h-48 bg-[#4CAF50]/5 rounded-full blur-3xl" />
-            <BookOpen className="w-12 h-12 mx-auto mb-3 text-[#4CAF50]" />
-            <h2 className="font-sans font-bold text-3xl tracking-tight text-white">Chess Openings Coach</h2>
-            <p className="text-[#888888] text-sm mt-1 max-w-sm mx-auto">
-              Master core opening principles. Practice historical lines move-by-move and prepare to punish mistakes.
-            </p>
+            <div className="flex items-center justify-center gap-4">
+              <BookOpen className="w-8 h-8 text-[#4CAF50]" />
+              <div className="text-left">
+                <h2 className="font-sans font-bold text-2xl tracking-tight text-white leading-none">Chess Openings Coach</h2>
+                <p className="text-[#888888] text-xs mt-1">
+                  Master core opening principles and practice historical lines move-by-move.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Openings Grid */}
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1 overflow-y-auto content-start pb-2">
             {openingsList.map((opening) => {
               const isLearned = stats.completedOpenings.includes(opening.id);
               return (
                 <div
                   key={opening.id}
                   id={`opening-card-${opening.id}`}
-                  className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-5 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4 transition duration-200"
+                  className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-3 shadow-md flex flex-col justify-between transition duration-200"
                 >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${opening.difficulty === 'Beginner' ? 'bg-[#4CAF50]/10 text-[#4CAF50] border border-[#388E3C]/30' : opening.difficulty === 'Intermediate' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 'bg-red-500/10 text-red-400 border border-red-900/30'}`}>
+                  <div>
+                    <div className="flex items-center gap-1 mb-1.5 flex-wrap">
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${opening.difficulty === 'Beginner' ? 'bg-[#4CAF50]/10 text-[#4CAF50] border border-[#388E3C]/30' : opening.difficulty === 'Intermediate' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 'bg-red-500/10 text-red-400 border border-red-900/30'}`}>
                         {opening.difficulty}
                       </span>
-                      <span className="text-[10px] font-bold font-mono bg-[#121212] border border-[#2A2A2A] text-[#888888] px-2 py-0.5 rounded-full">
+                      <span className="text-[9px] font-bold font-mono bg-[#121212] border border-[#2A2A2A] text-[#888888] px-1.5 py-0.5 rounded-full">
                         Play as: {opening.side === 'w' ? 'White ⚪' : 'Black ⚫'}
                       </span>
                       {isLearned && (
-                        <span className="text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <Award className="w-3 h-3" /> Learned
+                        <span className="text-[9px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20 px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                          <Award className="w-2.5 h-2.5" /> Learned
                         </span>
                       )}
                     </div>
-                    <h3 className="font-sans font-extrabold text-lg text-white leading-snug">{opening.name}</h3>
-                    <p className="text-xs text-[#888888] mt-1.5 leading-relaxed">{opening.description}</p>
+                    <h3 className="font-sans font-extrabold text-sm text-white leading-none mb-1">{opening.name}</h3>
+                    <p className="text-[10px] text-[#888888] leading-tight line-clamp-2 mb-2">{opening.description}</p>
                   </div>
 
                   {/* Variations selector list */}
-                  <div className="min-w-[200px] border-t md:border-t-0 md:border-l border-[#2A2A2A] pt-3 md:pt-0 md:pl-5 space-y-1.5 flex flex-col justify-center">
-                    <span className="text-[10px] font-bold text-[#666666] uppercase tracking-wider mb-1 px-1 block">Variations</span>
-                    {opening.variations.map((v, idx) => (
-                      <button
-                        key={idx}
-                        id={`var-btn-${opening.id}-${idx}`}
-                        onClick={() => startTraining(opening, v)}
-                        className="w-full text-left p-2.5 rounded-xl text-xs font-semibold text-[#888888] hover:text-[#4CAF50] bg-[#121212] border border-[#2A2A2A] hover:bg-[#2A2A2A] flex items-center justify-between group transition cursor-pointer"
-                      >
-                        <span className="truncate pr-2">{v.name}</span>
-                        <ChevronRight className="w-4 h-4 text-[#666666] group-hover:text-[#4CAF50] transition-transform group-hover:translate-x-0.5" />
-                      </button>
-                    ))}
+                  <div className="border-t border-[#2A2A2A] pt-2 space-y-1">
+                    <span className="text-[9px] font-bold text-[#666666] uppercase tracking-wider mb-0.5 px-1 block">Variations</span>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {opening.variations.map((v, idx) => (
+                        <button
+                          key={idx}
+                          id={`var-btn-${opening.id}-${idx}`}
+                          onClick={() => startTraining(opening, v)}
+                          className="w-full text-left p-1.5 rounded-lg text-[10px] font-semibold text-[#888888] hover:text-[#4CAF50] bg-[#121212] border border-[#2A2A2A] hover:bg-[#2A2A2A] flex items-center justify-between group transition cursor-pointer"
+                        >
+                          <span className="truncate pr-1">{v.name}</span>
+                          <ChevronRight className="w-3 h-3 text-[#666666] group-hover:text-[#4CAF50] transition-transform group-hover:translate-x-0.5 shrink-0" />
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               );
@@ -280,10 +286,10 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
 
       {/* 2. INTERACTIVE TRAINING VIEW */}
       {game && selectedOpening && selectedVariation && (
-        <div className="flex-1 flex flex-col lg:flex-row gap-6 justify-center">
+        <div className="flex flex-col md:flex-row gap-4 items-stretch flex-1 min-h-0 overflow-hidden">
           
           {/* Left Side: Coach Speech Bubble & Chessboard Column */}
-          <div className="flex-1 max-w-md mx-auto flex flex-col items-center gap-4">
+          <div className="flex-1 max-w-md mx-auto flex flex-col items-center gap-3 h-full">
             
             {/* Top exit and counter bar */}
             <div className="w-full flex justify-between items-center">
@@ -370,19 +376,19 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
           </div>
 
           {/* Right Side: Theoretical Moves List & Control Buttons (Desktop Only) */}
-          <div className="hidden lg:flex w-full lg:w-80 flex-col justify-between bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-4 shadow-md h-auto">
-            <div className="space-y-4">
+          <div className="hidden md:flex w-full md:w-80 flex-col justify-between bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-4 shadow-md h-full min-h-0">
+            <div className="space-y-4 flex flex-col min-h-0">
               {/* Header */}
-              <div className="border-b border-[#2A2A2A] pb-3">
+              <div className="border-b border-[#2A2A2A] pb-3 shrink-0">
                 <span className="block text-[9px] font-bold text-[#4CAF50] uppercase tracking-wider">Opening Line</span>
                 <h4 className="font-sans font-extrabold text-sm text-white">{selectedOpening.name}</h4>
                 <p className="text-[10px] text-[#888888] italic truncate">{selectedVariation.name}</p>
               </div>
 
               {/* Theoretical moves checklist */}
-              <div className="space-y-1.5">
-                <span className="block text-[10px] font-bold text-[#888888] uppercase tracking-wider">Theoretical Moves</span>
-                <div className="max-h-60 overflow-y-auto border border-[#2A2A2A] rounded-xl p-2.5 space-y-1 bg-[#121212]">
+              <div className="space-y-1.5 flex flex-col min-h-0 flex-1">
+                <span className="block text-[10px] font-bold text-[#888888] uppercase tracking-wider shrink-0">Theoretical Moves</span>
+                <div className="overflow-y-auto border border-[#2A2A2A] rounded-xl p-2.5 space-y-1 bg-[#121212] flex-1">
                   {selectedVariation.moves.map((move, idx) => {
                     const isPlayed = idx < currentStep;
                     const isActive = idx === currentStep;
@@ -414,7 +420,7 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
             </div>
 
             {/* Bottom Buttons: Hint / Retry */}
-            <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-[#2A2A2A]">
+            <div className="grid grid-cols-2 gap-3 mt-2 pt-2 border-t border-[#2A2A2A] shrink-0">
               <button
                 id="show-hint-btn"
                 onClick={handleShowHint}

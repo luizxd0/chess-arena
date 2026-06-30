@@ -167,12 +167,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialStats 
   };
 
   return (
-    <div className="h-[100dvh] w-full bg-[#121212] flex items-center justify-center p-3 md:p-4 relative overflow-hidden fixed inset-0">
+    <div className="fixed inset-0 w-full h-full bg-[#121212] overflow-hidden">
       {/* Visual Ambient Background Orbs */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="w-full max-w-md bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl shadow-2xl p-4 md:p-8 relative z-10 transition-all duration-300">
+      <div className="w-full h-full flex items-center justify-center p-4 overflow-y-auto">
+        <div className="w-full max-w-md bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl shadow-2xl p-6 relative z-10 my-auto">
         
         {/* Title Brand */}
         <div className="flex flex-col items-center mb-4 md:mb-8">
@@ -316,6 +317,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialStats 
           <span>Continue as Guest</span>
         </button>
 
+        </div>
       </div>
     </div>
   );
