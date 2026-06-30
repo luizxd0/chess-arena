@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Chess, Square } from 'chess.js';
 import { Bot, UserStats } from '../types';
-import { botsList, getBotMove } from '../utils/chessAI';
+import { botsList, getBotMove, getStockfishMove } from '../utils/chessAI';
 import { openingsList } from '../utils/openingsData';
 import { ChessBoard, BoardTheme } from './ChessBoard';
 import { chessAudio } from '../utils/audio';
@@ -18,6 +18,7 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
   const [game, setGame] = useState<Chess | null>(null);
   const [fen, setFen] = useState('');
   const [playerColor, setPlayerColor] = useState<'w' | 'b'>('w');
+  const [stockfishLevel, setStockfishLevel] = useState<number>(4); // Stockfish Strength level (1-8)
   
   // Starting position settings
   const [startingPositionType, setStartingPositionType] = useState<'standard' | 'opening'>('standard');
@@ -28,6 +29,24 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
   const [botPhrase, setBotPhrase] = useState('');
   const [gameResult, setGameResult] = useState<'win' | 'loss' | 'draw' | null>(null);
   const [resultReason, setResultReason] = useState('');
+
+  const startStockfishGame = () => {
+    const customDepth = stockfishLevel * 2 - 1; // Level 1 -> depth 1, Level 8 -> depth 15
+    const stockfishBot: Bot = {
+      id: 'stockfish',
+      name: `Stockfish Lvl ${stockfishLevel}`,
+      avatar: '🤖',
+      rating: 600 + stockfishLevel * 300, // Level 1 -> 900 ELO, Level 8 -> 3000 ELO
+      tier: stockfishLevel <= 2 ? 'Beginner' : stockfishLevel <= 4 ? 'Intermediate' : stockfishLevel <= 6 ? 'Advanced' : 'Master',
+      personality: `The gold standard of chess engines. Configured at Level ${stockfishLevel} with a search depth of ${customDepth} plies.`,
+      blunderRate: 0,
+      depth: customDepth,
+      greeting: `Hello. I am Stockfish. Operating at strength Level ${stockfishLevel}. Good luck.`,
+      winPhrase: "Calculation complete: mate. Victory is mine.",
+      lossPhrase: "Analysis complete. You have played a brilliant game and defeated my network. Congratulations!"
+    };
+    handleStartGame(stockfishBot);
+  };
   const [moveHistory, setMoveHistory] = useState<string[]>([]);
 
   // Check if a bot is locked based on player's Bot Elo
@@ -80,42 +99,62 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
   const triggerBotPlay = (currentChess: Chess, bot: Bot, openingMovesStack?: string[]) => {
     if (gameResult) return;
 
-    // Simulate thinking delay
-    const delay = Math.floor(Math.random() * 800) + 700; // 0.7s to 1.5s
-    setTimeout(() => {
+    const startTime = Date.now();
+    
+    // Define the move handling logic as an async flow
+    const executeBotTurn = async () => {
       try {
-        const nextMoveObj = getBotMove(currentChess.fen(), bot, openingMovesStack);
-        const playedMove = currentChess.move({
-          from: nextMoveObj.from,
-          to: nextMoveObj.to,
-          promotion: nextMoveObj.promotion || 'q'
-        });
-
-        if (playedMove) {
-          setFen(currentChess.fen());
-          setMoveHistory(currentChess.history());
-
-          // Play Sound
-          if (playedMove.captured) {
-            chessAudio.playCapture();
-            // Custom capture phrase based on piece value captured
-            if (playedMove.captured === 'q') setBotPhrase("Yes! Queen captured! Fear my tactics.");
-            else if (Math.random() < 0.25) setBotPhrase("Piece captured! Keep going.");
-          } else {
-            chessAudio.playMove();
-          }
-
-          if (currentChess.inCheck()) {
-            chessAudio.playCheck();
-            if (Math.random() < 0.40) setBotPhrase("Check! Watch your King safety.");
-          }
-
-          checkGameStatus(currentChess, bot);
+        let nextMoveObj;
+        if (bot.id === 'stockfish') {
+          // Fetch from Stockfish API
+          nextMoveObj = await getStockfishMove(currentChess.fen(), bot.depth);
+        } else {
+          // Compute locally using minimax
+          nextMoveObj = getBotMove(currentChess.fen(), bot, openingMovesStack);
         }
-      } catch (e) {
-        console.error("AI turn error: ", e);
+
+        // Calculate actual elapsed time to make sure the "thinking" indicator has a realistic feel
+        const elapsed = Date.now() - startTime;
+        const remainingDelay = Math.max(50, 700 - elapsed);
+
+        setTimeout(() => {
+          try {
+            const playedMove = currentChess.move({
+              from: nextMoveObj.from,
+              to: nextMoveObj.to,
+              promotion: nextMoveObj.promotion || 'q'
+            });
+
+            if (playedMove) {
+              setFen(currentChess.fen());
+              setMoveHistory(currentChess.history());
+
+              // Play Sound
+              if (playedMove.captured) {
+                chessAudio.playCapture();
+                if (playedMove.captured === 'q') setBotPhrase("Yes! Queen captured! Fear my tactics.");
+                else if (Math.random() < 0.25) setBotPhrase("Piece captured! Keep going.");
+              } else {
+                chessAudio.playMove();
+              }
+
+              if (currentChess.inCheck()) {
+                chessAudio.playCheck();
+                if (Math.random() < 0.40) setBotPhrase("Check! Watch your King safety.");
+              }
+
+              checkGameStatus(currentChess, bot);
+            }
+          } catch (err) {
+            console.error("AI turn execution error inside timeout:", err);
+          }
+        }, remainingDelay);
+      } catch (err) {
+        console.error("Failed to compute bot move:", err);
       }
-    }, delay);
+    };
+
+    executeBotTurn();
   };
 
   const handlePlayerMove = (from: string, to: string, promotion?: string) => {
@@ -335,6 +374,67 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
                 )}
               </div>
             )}
+          </div>
+
+          {/* Stockfish Engine Featured Card */}
+          <div className="relative p-6 rounded-3xl bg-slate-900 border border-cyan-500/30 text-[#E0E0E0] shadow-xl overflow-hidden mb-6">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
+            
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-6 relative z-10">
+              <div className="flex items-center gap-4 flex-1">
+                <div className="w-14 h-14 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 flex items-center justify-center text-3xl shadow-inner shrink-0">
+                  🤖
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[9px] font-black text-cyan-400 uppercase tracking-widest bg-cyan-950/50 px-2 py-0.5 rounded-md border border-cyan-500/20">Official Engine</span>
+                    <span className="text-[9px] font-mono font-bold text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-500/20">Stockfish 16</span>
+                  </div>
+                  <h3 className="font-sans font-black text-xl text-white mt-1">Configurable Stockfish Bot</h3>
+                  <p className="text-gray-400 text-xs mt-1 max-w-lg leading-relaxed">
+                    Play against the gold standard of chess engines. Use the slider to set your desired difficulty from Beginner up to Super Grandmaster.
+                  </p>
+                </div>
+              </div>
+
+              {/* Slider and Start Button */}
+              <div className="w-full md:w-80 bg-[#121212]/60 border border-[#2A2A2A] p-4 rounded-2xl flex flex-col gap-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Engine Strength</span>
+                  <span className="font-mono text-xs font-black text-cyan-400">Level {stockfishLevel} / 8</span>
+                </div>
+                
+                <input
+                  type="range"
+                  min="1"
+                  max="8"
+                  value={stockfishLevel}
+                  onChange={(e) => setStockfishLevel(parseInt(e.target.value))}
+                  className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+                />
+
+                <div className="flex justify-between items-center text-[10px] font-mono font-bold text-gray-500">
+                  <div>
+                    <span className="block text-[8px] text-gray-600 uppercase">Bot Elo</span>
+                    <span className="text-emerald-400 font-extrabold">{600 + stockfishLevel * 300} ELO</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="block text-[8px] text-gray-600 uppercase">Search Depth</span>
+                    <span className="text-cyan-400 font-extrabold">{stockfishLevel * 2 - 1} plies</span>
+                  </div>
+                </div>
+
+                <button
+                  id="challenge-stockfish-btn"
+                  onClick={startStockfishGame}
+                  className="w-full mt-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-black text-xs shadow-md transition cursor-pointer"
+                >
+                  <Play className="w-3.5 h-3.5 fill-slate-950 stroke-none" />
+                  Challenge Stockfish
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Bots Grid */}

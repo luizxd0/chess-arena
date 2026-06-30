@@ -50,10 +50,45 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
     return { x, y };
   };
 
-  const hintCoords = hintMove ? {
-    from: getSquareCoords(hintMove.from),
-    to: getSquareCoords(hintMove.to)
-  } : null;
+  // Helper to check if a move is a Knight move and compute the L-shaped path
+  const getArrowPath = () => {
+    if (!hintMove) return null;
+    
+    const fromCoords = getSquareCoords(hintMove.from);
+    const toCoords = getSquareCoords(hintMove.to);
+    
+    const fromCol = hintMove.from.charCodeAt(0) - 97;
+    const fromRow = 8 - parseInt(hintMove.from[1], 10);
+    const toCol = hintMove.to.charCodeAt(0) - 97;
+    const toRow = 8 - parseInt(hintMove.to[1], 10);
+    
+    const colDiff = Math.abs(fromCol - toCol);
+    const rowDiff = Math.abs(fromRow - toRow);
+    const isKnight = (colDiff === 1 && rowDiff === 2) || (colDiff === 2 && rowDiff === 1);
+    
+    if (isKnight) {
+      let cornerX = fromCoords.x;
+      let cornerY = toCoords.y;
+      
+      // If horizontal difference is 2, we go horizontally first, then vertically.
+      if (colDiff === 2) {
+        cornerX = toCoords.x;
+        cornerY = fromCoords.y;
+      }
+      
+      return {
+        d: `M ${fromCoords.x} ${fromCoords.y} L ${cornerX} ${cornerY} L ${toCoords.x} ${toCoords.y}`,
+        isKnight: true
+      };
+    }
+    
+    return {
+      d: `M ${fromCoords.x} ${fromCoords.y} L ${toCoords.x} ${toCoords.y}`,
+      isKnight: false
+    };
+  };
+
+  const hintArrow = getArrowPath();
 
   // Find King in check for red highlighting
   let kingInCheckSquare: string | null = null;
@@ -336,42 +371,41 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
         </div>
 
         {/* Draw Hint Arrow overlay */}
-        {hintCoords && (
+        {hintArrow && (
           <svg className="absolute inset-0 w-full h-full pointer-events-none z-30" viewBox="0 0 100 100">
             <defs>
+              {/* Chevron-style high-end arrowhead like Chess.com/Lichess */}
               <marker
                 id="hint-arrowhead"
                 viewBox="0 0 10 10"
-                refX="5"
+                refX="6"
                 refY="5"
-                markerWidth="8"
-                markerHeight="8"
+                markerWidth="5.5"
+                markerHeight="5.5"
                 orient="auto-start-reverse"
               >
-                <path d="M 0 2 L 7.5 5 L 0 8 z" fill="#10B981" />
+                <path d="M 1 2 L 8 5 L 1 8 L 3 5 z" fill="#10B981" />
               </marker>
             </defs>
-            {/* Draw a subtle highlighted line under the arrow for separation */}
-            <line
-              x1={hintCoords.from.x}
-              y1={hintCoords.from.y}
-              x2={hintCoords.to.x}
-              y2={hintCoords.to.y}
+            {/* Draw a subtle highlighted path under the arrow for separation */}
+            <path
+              d={hintArrow.d}
               stroke="#064e3b"
               strokeWidth="2.8"
               strokeLinecap="round"
-              opacity="0.35"
+              strokeLinejoin="round"
+              fill="none"
+              opacity="0.25"
             />
-            {/* Main Green Arrow */}
-            <line
-              x1={hintCoords.from.x}
-              y1={hintCoords.from.y}
-              x2={hintCoords.to.x}
-              y2={hintCoords.to.y}
+            {/* Main Green Arrow path with smooth corners */}
+            <path
+              d={hintArrow.d}
               stroke="#10B981"
-              strokeWidth="1.8"
+              strokeWidth="1.6"
               strokeLinecap="round"
-              opacity="0.92"
+              strokeLinejoin="round"
+              fill="none"
+              opacity="0.9"
               markerEnd="url(#hint-arrowhead)"
             />
           </svg>

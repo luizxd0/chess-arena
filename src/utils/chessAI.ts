@@ -395,3 +395,37 @@ export function getMaterialDifference(fen: string): { whiteScore: number; blackS
     capturedBlack  // black pieces captured by white
   };
 }
+
+export async function getStockfishMove(fen: string, depth: number): Promise<{ from: string; to: string; promotion?: string }> {
+  try {
+    const url = `https://stockfish.online/api/s/v2.php?fen=${encodeURIComponent(fen)}&depth=${depth}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Stockfish API HTTP error: ${response.status}`);
+    }
+    const data = await response.json();
+    if (data.success && data.data) {
+      // Stockfish online returns data format: "bestmove e2e4 ponder e7e6"
+      const match = data.data.match(/^bestmove\s+([a-h][1-8])([a-h][1-8])([qrbn])?/);
+      if (match) {
+        return {
+          from: match[1],
+          to: match[2],
+          promotion: match[3] || undefined
+        };
+      }
+    }
+    throw new Error('Invalid Stockfish API response payload');
+  } catch (err) {
+    console.warn('Stockfish.online API call failed, falling back to local minimax AI:', err);
+    // Fallback to local minimax bot with moderate search depth (max 3 to ensure fast response)
+    const fallbackBot = {
+      id: 'stockfish_fallback',
+      name: 'Stockfish Fallback',
+      blunderRate: 0,
+      depth: Math.min(3, depth)
+    };
+    return getBotMove(fen, fallbackBot as any);
+  }
+}
+

@@ -116,20 +116,36 @@ export const King: React.FC<PieceProps> = ({ color, className = 'w-full h-full' 
 };
 
 export const RenderPiece: React.FC<{ type: string; color: 'w' | 'b'; className?: string }> = ({ type, color, className }) => {
-  switch (type.toLowerCase()) {
-    case 'p':
-      return <Pawn color={color} className={className} />;
-    case 'n':
-      return <Knight color={color} className={className} />;
-    case 'b':
-      return <Bishop color={color} className={className} />;
-    case 'r':
-      return <Rook color={color} className={className} />;
-    case 'q':
-      return <Queen color={color} className={className} />;
-    case 'k':
-      return <King color={color} className={className} />;
-    default:
-      return null;
+  const [useFallback, setUseFallback] = React.useState(false);
+  const pieceCode = `${color}${type.toUpperCase()}`; // e.g., wP, bN, wQ
+
+  if (useFallback) {
+    switch (type.toLowerCase()) {
+      case 'p':
+        return <Pawn color={color} className={className} />;
+      case 'n':
+        return <Knight color={color} className={className} />;
+      case 'b':
+        return <Bishop color={color} className={className} />;
+      case 'r':
+        return <Rook color={color} className={className} />;
+      case 'q':
+        return <Queen color={color} className={className} />;
+      case 'k':
+        return <King color={color} className={className} />;
+      default:
+        return null;
+    }
   }
+
+  return (
+    <img
+      src={`https://lichess1.org/assets/piece/cburnett/${pieceCode}.svg`}
+      alt={pieceCode}
+      className={className}
+      referrerPolicy="no-referrer"
+      onError={() => setUseFallback(true)}
+      draggable={false}
+    />
+  );
 };
