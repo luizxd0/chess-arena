@@ -3,18 +3,18 @@ const path = require('path');
 const https = require('https');
 
 const pieces = [
-  { name: 'pl', url: 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pl45.svg' },
-  { name: 'pd', url: 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pd45.svg' },
-  { name: 'nl', url: 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nl45.svg' },
-  { name: 'nd', url: 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_nd45.svg' }, // corrected nd url
-  { name: 'bl', url: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_bl45.svg' },
-  { name: 'bd', url: 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bd45.svg' }, // corrected bd url
-  { name: 'rl', url: 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rl45.svg' },
-  { name: 'rd', url: 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rd45.svg' }, // corrected rd url
-  { name: 'ql', url: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_ql45.svg' },
-  { name: 'qd', url: 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qd45.svg' }, // corrected qd url
-  { name: 'kl', url: 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_kl45.svg' },
-  { name: 'kd', url: 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kd45.svg' }, // corrected kd url
+  { name: 'wp', url: 'https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wP.svg' },
+  { name: 'wn', url: 'https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wN.svg' },
+  { name: 'wb', url: 'https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wB.svg' },
+  { name: 'wr', url: 'https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wR.svg' },
+  { name: 'wq', url: 'https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wQ.svg' },
+  { name: 'wk', url: 'https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wK.svg' },
+  { name: 'bp', url: 'https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bP.svg' },
+  { name: 'bn', url: 'https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bN.svg' },
+  { name: 'bb', url: 'https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bB.svg' },
+  { name: 'br', url: 'https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bR.svg' },
+  { name: 'bq', url: 'https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bQ.svg' },
+  { name: 'bk', url: 'https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bK.svg' },
 ];
 
 const download = (url, dest) => {

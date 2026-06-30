@@ -494,7 +494,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
                 Select Time Control
               </h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 {[
                   { id: 'bullet', label: 'Bullet', time: '1 + 0', icon: Zap, bg: 'from-amber-500 to-yellow-500' },
                   { id: 'blitz', label: 'Blitz', time: '3 + 2', icon: Zap, bg: 'from-red-500 to-pink-500' },
