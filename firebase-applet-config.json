@@ -1,9 +1,10 @@
 {
-  "apiKey": "placeholder-api-key",
-  "authDomain": "placeholder-auth-domain",
-  "projectId": "placeholder-project-id",
-  "storageBucket": "placeholder-storage-bucket",
-  "messagingSenderId": "placeholder-messaging-sender-id",
-  "appId": "placeholder-app-id",
-  "firestoreDatabaseId": "(default)"
+  "projectId": "chess-arena-db943",
+  "appId": "1:1051149635361:web:e628a7ab4792d17baef860",
+  "apiKey": "AIzaSyAk-fQtLrO1IMhsGxvCDICTPhVcOpgDA0I",
+  "authDomain": "chess-arena-db943.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-chessarena-49fc80a6-4685-48cf-af0a-141d85fec925",
+  "storageBucket": "chess-arena-db943.firebasestorage.app",
+  "messagingSenderId": "1051149635361",
+  "measurementId": ""
 }

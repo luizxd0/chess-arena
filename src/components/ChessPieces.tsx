@@ -116,10 +116,19 @@ export const King: React.FC<PieceProps> = ({ color, className = 'w-full h-full' 
 };
 
 export const RenderPiece: React.FC<{ type: string; color: 'w' | 'b'; className?: string }> = ({ type, color, className }) => {
-  const [useFallback, setUseFallback] = React.useState(false);
+  const [urlIndex, setUrlIndex] = React.useState(0);
   const pieceCode = `${color}${type.toUpperCase()}`; // e.g., wP, bN, wQ
 
-  if (useFallback) {
+  const candidateUrls = [
+    // 1. Lichess official CDN (fast, high-quality vector SVGs)
+    `https://lichess1.org/assets/piece/cburnett/${pieceCode}.svg`,
+    // 2. Chess.com Neo pieces (polished PNGs)
+    `https://images.chesscomfiles.com/chess-themes/pieces/neo/150/${color}${type.toLowerCase()}.png`,
+    // 3. CDN jsdelivr for lila
+    `https://cdn.jsdelivr.net/gh/lichess-org/lila@master/public/piece/cburnett/${pieceCode}.svg`
+  ];
+
+  if (urlIndex >= candidateUrls.length) {
     switch (type.toLowerCase()) {
       case 'p':
         return <Pawn color={color} className={className} />;
@@ -140,13 +149,13 @@ export const RenderPiece: React.FC<{ type: string; color: 'w' | 'b'; className?:
 
   return (
     <img
-      src={`https://cdn.jsdelivr.net/gh/lichess-org/lila@master/public/piece/cburnett/${pieceCode}.svg`}
+      src={candidateUrls[urlIndex]}
       alt={pieceCode}
       className={className}
       referrerPolicy="no-referrer"
       onError={() => {
-        // Fallback to lichess1.org if jsdelivr fails, then to local SVGs if both fail
-        setUseFallback(true);
+        // Try the next candidate URL on load failure
+        setUrlIndex(prev => prev + 1);
       }}
       draggable={false}
     />
