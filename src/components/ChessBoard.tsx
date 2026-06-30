@@ -30,6 +30,12 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
   const [draggedSquare, setDraggedSquare] = useState<string | null>(null);
   const [promoPending, setPromoPending] = useState<{ from: string; to: string } | null>(null);
 
+  // Mobile Touch-and-Drag State
+  const [touchStartSquare, setTouchStartSquare] = useState<string | null>(null);
+  const [touchCurrentPos, setTouchCurrentPos] = useState<{ x: number; y: number } | null>(null);
+  const [activeTouchSquare, setActiveTouchSquare] = useState<string | null>(null);
+  const gridRef = React.useRef<HTMLDivElement | null>(null);
+
   const chess = new Chess(fen);
   const board = chess.board();
   const turn = chess.turn();
@@ -236,6 +242,109 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
     setPossibleMoves([]);
   };
 
+  // Touch Gesture Helpers for Mobile Support
+  const getSquareFromCoords = (clientX: number, clientY: number, rect: DOMRect) => {
+    const rx = clientX - rect.left;
+    const ry = clientY - rect.top;
+    const squareWidth = rect.width / 8;
+    const squareHeight = rect.height / 8;
+    
+    const colIdx = Math.floor(rx / squareWidth);
+    const rowIdx = Math.floor(ry / squareHeight);
+    
+    if (colIdx >= 0 && colIdx < 8 && rowIdx >= 0 && rowIdx < 8) {
+      const actualRow = playerColor === 'b' ? 7 - rowIdx : rowIdx;
+      const actualCol = playerColor === 'b' ? 7 - colIdx : colIdx;
+      return getSquareName(actualRow, actualCol);
+    }
+    return null;
+  };
+
+  const handleTouchStart = (e: React.TouchEvent, squareName: string) => {
+    if (!isInteractive || chess.turn() !== playerColor) return;
+    const piece = getSquareData(squareName);
+    if (!piece || piece.color !== playerColor) return;
+
+    setSelectedSquare(squareName);
+    const moves = chess.moves({ square: squareName as Square, verbose: true });
+    setPossibleMoves(moves.map(m => m.to));
+    
+    const touch = e.touches[0];
+    setTouchStartSquare(squareName);
+    setTouchCurrentPos({ x: touch.clientX, y: touch.clientY });
+    setActiveTouchSquare(squareName);
+  };
+
+  const touchStateRef = React.useRef({
+    startSquare: null as string | null,
+    possibleMoves: [] as string[],
+    playerColor,
+    isInteractive
+  });
+
+  useEffect(() => {
+    touchStateRef.current = {
+      startSquare: touchStartSquare,
+      possibleMoves,
+      playerColor,
+      isInteractive
+    };
+  }, [touchStartSquare, possibleMoves, playerColor, isInteractive]);
+
+  useEffect(() => {
+    const gridEl = gridRef.current;
+    if (!gridEl) return;
+
+    const onTouchMove = (e: TouchEvent) => {
+      const state = touchStateRef.current;
+      if (!state.startSquare || !state.isInteractive) return;
+      
+      const touch = e.touches[0];
+      setTouchCurrentPos({ x: touch.clientX, y: touch.clientY });
+      
+      const rect = gridEl.getBoundingClientRect();
+      const sq = getSquareFromCoords(touch.clientX, touch.clientY, rect);
+      setActiveTouchSquare(sq);
+      
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      const state = touchStateRef.current;
+      if (!state.startSquare) return;
+
+      const rect = gridEl.getBoundingClientRect();
+      let targetSquare = null;
+      if (e.changedTouches && e.changedTouches.length > 0) {
+        const lastTouch = e.changedTouches[0];
+        targetSquare = getSquareFromCoords(lastTouch.clientX, lastTouch.clientY, rect);
+      } else if (e.touches && e.touches.length > 0) {
+        const lastTouch = e.touches[0];
+        targetSquare = getSquareFromCoords(lastTouch.clientX, lastTouch.clientY, rect);
+      }
+
+      if (targetSquare && state.possibleMoves.includes(targetSquare)) {
+        triggerMoveAttempt(state.startSquare, targetSquare);
+      }
+      
+      setTouchStartSquare(null);
+      setTouchCurrentPos(null);
+      setActiveTouchSquare(null);
+    };
+
+    gridEl.addEventListener('touchmove', onTouchMove, { passive: false });
+    gridEl.addEventListener('touchend', onTouchEnd, { passive: false });
+    gridEl.addEventListener('touchcancel', onTouchEnd, { passive: false });
+
+    return () => {
+      gridEl.removeEventListener('touchmove', onTouchMove);
+      gridEl.removeEventListener('touchend', onTouchEnd);
+      gridEl.removeEventListener('touchcancel', onTouchEnd);
+    };
+  }, []);
+
   // Drag and drop handlers (for PC support)
   const handleDragStart = (e: React.DragEvent, squareName: string) => {
     if (!isInteractive || chess.turn() !== playerColor) {
@@ -321,7 +430,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
   };
 
   return (
-    <div id="chess-board-wrapper" className="flex flex-col w-full max-w-[min(100vw-24px,100vh-220px)] lg:max-w-md mx-auto select-none">
+    <div id="chess-board-wrapper" style={{ touchAction: 'none' }} className="flex flex-col w-full max-w-[min(100vw-24px,100vh-220px)] lg:max-w-md mx-auto select-none">
       
       {/* Top Captured Bar: Pieces captured by Opponent */}
       <div className="flex items-center justify-between px-3 py-1.5 mb-2 bg-[#121212]/60 border border-[#2A2A2A] rounded-xl text-xs">
@@ -341,7 +450,12 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
 
       {/* Main Board Container */}
       <div className={`relative w-full aspect-square border-4 ${currentTheme.border} rounded-xl overflow-hidden shadow-2xl`}>
-        <div className="grid grid-cols-8 grid-rows-8 w-full h-full">
+        <div 
+          id="chess-board-grid"
+          ref={gridRef}
+          style={{ touchAction: 'none' }}
+          className="grid grid-cols-8 grid-rows-8 w-full h-full"
+        >
           {Array.from({ length: 8 }).map((_, rowIdx) => {
             return Array.from({ length: 8 }).map((_, colIdx) => {
               // Adjust rows/cols for flipped view
@@ -358,6 +472,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
               const isKingInCheck = kingInCheckSquare === squareName;
               const isMatedKing = matedKingSquare === squareName;
               const isWinningKing = winningKingSquare === squareName;
+              const isTouchHovered = activeTouchSquare === squareName && isPossible;
 
               // Grid styling logic
               let squareBg = isDark ? currentTheme.dark : currentTheme.light;
@@ -368,6 +483,9 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
               }
               if (isSelected) {
                 squareBg = 'bg-[#60a5fa]/50 border-2 border-blue-500';
+              }
+              if (isTouchHovered) {
+                squareBg = 'bg-[#10b981]/40 border-2 border-[#10b981]';
               }
               if (isMatedKing) {
                 squareBg = 'animate-mate-pulse';
@@ -399,7 +517,10 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
                       id={`piece-${squareName}`}
                       draggable={isInteractive && chess.turn() === playerColor && piece.color === playerColor}
                       onDragStart={(e) => handleDragStart(e, squareName)}
-                      className={`w-[85%] h-[85%] flex items-center justify-center transition-transform hover:scale-105 active:scale-95 z-10 drop-shadow-[0_3px_3px_rgba(0,0,0,0.5)] ${isMatedKing ? 'animate-piece-shudder' : ''}`}
+                      onTouchStart={(e) => handleTouchStart(e, squareName)}
+                      className={`w-[85%] h-[85%] flex items-center justify-center transition-transform hover:scale-105 active:scale-95 z-10 drop-shadow-[0_3px_3px_rgba(0,0,0,0.5)] ${isMatedKing ? 'animate-piece-shudder' : ''} ${
+                        (draggedSquare === squareName || touchStartSquare === squareName) ? 'opacity-20 scale-90' : ''
+                      }`}
                     >
                       <RenderPiece type={piece.type} color={piece.color} />
                       {isWinningKing && (
@@ -593,6 +714,25 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
           <span className="font-mono text-gray-600 dark:text-gray-300">{playerColor === 'w' ? 'White perspective' : 'Black perspective'}</span>
         </div>
       </div>
+
+      {/* Mobile Floating Dragged Piece Portal-like Overlay */}
+      {touchStartSquare && touchCurrentPos && (() => {
+        const piece = getSquareData(touchStartSquare);
+        if (!piece) return null;
+        return (
+          <div 
+            className="fixed pointer-events-none z-[9999] w-[14vw] h-[14vw] max-w-[55px] max-h-[55px] aspect-square flex items-center justify-center drop-shadow-[0_12px_12px_rgba(0,0,0,0.7)]"
+            style={{
+              left: touchCurrentPos.x,
+              top: touchCurrentPos.y,
+              transform: 'translate(-50%, -50%) scale(1.3)',
+              transition: 'none'
+            }}
+          >
+            <RenderPiece type={piece.type} color={piece.color} />
+          </div>
+        );
+      })()}
     </div>
   );
 };

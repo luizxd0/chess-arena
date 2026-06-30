@@ -467,16 +467,16 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
 
       {/* 2. GAME BOARD PLAY VS BOT */}
       {game && selectedBot && (
-        <div className="flex flex-col md:flex-row gap-4 items-stretch flex-1 min-h-0 overflow-y-auto pb-2">
+        <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-stretch flex-1 min-h-0 overflow-hidden md:overflow-y-auto pb-1 md:pb-2">
           
           {/* Board Frame Column */}
-          <div className="flex-1 w-full max-w-md mx-auto flex flex-col items-center min-h-0 shrink-0">
+          <div className="flex-1 w-full max-w-md mx-auto flex flex-col items-center justify-center min-h-0 md:shrink-0">
             
             {/* Top Bot panel / Unified Chat Speech Balloon */}
-            <div className="w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-3 shadow-md flex items-start gap-3 relative overflow-hidden mb-2">
+            <div className="w-full bg-[#1A1A1A] max-md:bg-transparent max-md:border-none max-md:shadow-none max-md:p-1 p-3 border border-[#2A2A2A] rounded-2xl shadow-md flex items-start gap-2 relative overflow-hidden mb-1 md:mb-2 select-none">
               <div className="absolute top-0 right-0 w-24 h-24 bg-[#4CAF50]/5 rounded-full blur-2xl pointer-events-none" />
               
-              <div className="w-10 h-10 rounded-full bg-[#121212] border border-[#2A2A2A] flex items-center justify-center text-xl shrink-0 shadow-inner relative">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#121212] border border-[#2A2A2A] flex items-center justify-center text-base md:text-xl shrink-0 shadow-inner relative">
                 {selectedBot.avatar}
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-red-500 border-2 border-[#1A1A1A] rounded-full animate-pulse" />
               </div>
@@ -491,12 +491,12 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
                   </div>
                   <button
                     onClick={handleExitGame}
-                    className="text-[9px] font-bold text-[#888888] hover:text-white border border-[#2A2A2A] bg-[#121212] hover:bg-[#2A2A2A] px-2 py-0.5 rounded transition cursor-pointer"
+                    className="text-[9px] font-bold text-[#888888] hover:text-white border border-[#2A2A2A] bg-[#121212] hover:bg-[#2A2A2A] px-1.5 py-0.5 rounded transition cursor-pointer"
                   >
                     Exit
                   </button>
                 </div>
-                <div className="relative bg-[#121212] border border-[#2A2A2A] rounded-lg p-2 text-[11px] text-[#E0E0E0] font-medium leading-tight">
+                <div className="relative bg-[#121212] border border-[#2A2A2A] rounded-lg p-1.5 md:p-2 text-[10px] md:text-[11px] text-[#E0E0E0] font-medium leading-tight">
                   <div className="absolute top-2 -left-1.5 w-2 h-2 bg-[#121212] border-l border-b border-[#2A2A2A] rotate-45" />
                   <p>"{botPhrase || "Good luck, you will need it!"}"</p>
                 </div>
@@ -513,19 +513,19 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
             />
 
             {/* Bottom Self Panel */}
-            <div className="w-full max-w-md flex items-center bg-[#1A1A1A] border border-[#2A2A2A] p-2.5 rounded-xl shadow-md mt-2">
-              <div className="w-8 h-8 rounded-full bg-[#121212] border border-[#2A2A2A] flex items-center justify-center text-lg shadow-xs">
+            <div className="w-full max-w-md flex items-center bg-[#1A1A1A] max-md:bg-transparent max-md:border-none max-md:shadow-none max-md:p-1 p-2.5 rounded-xl shadow-md mt-1 md:mt-2 select-none">
+              <div className="w-8 h-8 rounded-full bg-[#121212] border border-[#2A2A2A] flex items-center justify-center text-base md:text-lg shadow-xs">
                 🏆
               </div>
               <div className="ml-2">
                 <span className="block font-bold text-xs text-white leading-none">{username}</span>
-                <span className="block text-[9px] font-mono text-[#4CAF50] font-bold mt-1">Elo: {stats.botRating}</span>
+                <span className="block text-[9px] font-mono text-[#4CAF50] font-bold mt-0.5 md:mt-1">Elo: {stats.botRating}</span>
               </div>
             </div>
 
             {/* Live Buttons - Mobile version */}
             {!gameResult && (
-              <div className="w-full max-w-md grid grid-cols-2 gap-2 mt-2 md:hidden">
+              <div className="w-full max-w-md grid grid-cols-2 gap-2 mt-1 md:hidden">
                 <button
                   onClick={() => handleStartGame(selectedBot)}
                   className="py-1.5 rounded-xl border border-[#2A2A2A] hover:bg-[#2A2A2A] text-[10px] font-bold text-[#888888] flex items-center justify-center transition cursor-pointer"

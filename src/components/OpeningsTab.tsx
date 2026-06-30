@@ -286,43 +286,43 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
 
       {/* 2. INTERACTIVE TRAINING VIEW */}
       {game && selectedOpening && selectedVariation && (
-        <div className="flex flex-col md:flex-row gap-4 items-stretch flex-1 min-h-0 overflow-y-auto pb-2">
+        <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-stretch flex-1 min-h-0 overflow-hidden md:overflow-y-auto pb-1 md:pb-2">
           
           {/* Left Side: Coach Speech Bubble & Chessboard Column */}
-          <div className="flex-1 w-full max-w-md mx-auto flex flex-col items-center gap-3 min-h-0 shrink-0">
+          <div className="flex-1 w-full max-w-md mx-auto flex flex-col items-center justify-center gap-1.5 md:gap-3 min-h-0 md:shrink-0">
             
             {/* Top exit and counter bar */}
-            <div className="w-full flex justify-between items-center">
+            <div className="w-full flex justify-between items-center select-none">
               <button
                 id="exit-trainer-btn"
                 onClick={handleExitTrainer}
-                className="text-xs font-bold text-[#888888] hover:text-white flex items-center gap-1.5 transition cursor-pointer"
+                className="text-xs font-bold text-[#888888] hover:text-white flex items-center gap-1 transition cursor-pointer"
               >
-                <ArrowLeft className="w-4 h-4" /> Exit Training
+                <ArrowLeft className="w-3.5 h-3.5" /> Exit Training
               </button>
               
-              <div className="text-xs font-bold text-[#4CAF50] bg-[#4CAF50]/10 border border-[#388E3C]/20 px-3 py-1 rounded-full">
+              <div className="text-[10px] md:text-xs font-bold text-[#4CAF50] bg-[#4CAF50]/10 border border-[#388E3C]/20 px-2.5 py-0.5 md:px-3 md:py-1 rounded-full">
                 Theory Move: {currentStep} of {selectedVariation.moves.length}
               </div>
             </div>
 
             {/* Coach Speech Balloon Card */}
-            <div className="w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-3.5 shadow-md flex items-start gap-3 relative overflow-hidden">
+            <div className="w-full bg-[#1A1A1A] max-md:bg-transparent max-md:border-none max-md:shadow-none max-md:p-1 p-3.5 border border-[#2A2A2A] rounded-2xl shadow-md flex items-start gap-2 relative overflow-hidden select-none">
               <div className="absolute top-0 right-0 w-24 h-24 bg-[#4CAF50]/5 rounded-full blur-2xl pointer-events-none" />
               {/* Coach Avatar */}
-              <div className="w-12 h-12 rounded-full bg-[#121212] border border-[#388E3C]/30 flex items-center justify-center text-2xl shrink-0 shadow-inner relative">
+              <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-[#121212] border border-[#388E3C]/30 flex items-center justify-center text-base md:text-2xl shrink-0 shadow-inner relative">
                 🎓
-                <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-[#4CAF50] border-2 border-[#1A1A1A] rounded-full" />
+                <span className="absolute bottom-0 right-0 w-2 h-2 md:w-3.5 md:h-3.5 bg-[#4CAF50] border-2 border-[#1A1A1A] rounded-full" />
               </div>
               {/* Speech Balloon Body */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2 mb-1.5">
+                <div className="flex items-center justify-between gap-2 mb-0.5 md:mb-1.5">
                   <span className="font-sans font-black text-xs text-white">Grandmaster Coach</span>
-                  <span className="text-[9px] text-[#4CAF50] font-bold uppercase tracking-wider bg-[#4CAF50]/10 px-1.5 py-0.5 rounded-sm">AI Tutor</span>
+                  <span className="text-[8px] md:text-[9px] text-[#4CAF50] font-bold uppercase tracking-wider bg-[#4CAF50]/10 px-1.5 py-0.5 rounded-sm">AI Tutor</span>
                 </div>
                 {/* Speech balloon styled text bubble */}
-                <div className="relative bg-[#121212] border border-[#2A2A2A] rounded-xl p-2.5 text-xs text-[#E0E0E0] font-medium leading-relaxed">
-                  <div className="absolute top-3 -left-1.5 w-3 h-3 bg-[#121212] border-l border-b border-[#2A2A2A] rotate-45" />
+                <div className="relative bg-[#121212] border border-[#2A2A2A] rounded-xl p-1.5 md:p-2.5 text-[10px] md:text-xs text-[#E0E0E0] font-medium leading-relaxed">
+                  <div className="absolute top-2 md:top-3 -left-1 w-2 h-2 md:w-3 md:h-3 bg-[#121212] border-l border-b border-[#2A2A2A] rotate-45" />
                   <p>{coachTip}</p>
                 </div>
               </div>
@@ -330,11 +330,11 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
 
             {/* Dynamic Feedback Banner */}
             {feedback && (
-              <div className={`w-full p-2.5 rounded-xl text-xs flex items-center gap-2 border ${feedback.type === 'success' ? 'bg-[#4CAF50]/10 text-[#4CAF50] border-[#388E3C]/30' : feedback.type === 'error' ? 'bg-red-950/20 text-red-400 border-red-900/30' : 'bg-[#121212] text-amber-400 border-amber-500/20'}`}>
+              <div className={`w-full p-1.5 md:p-2.5 rounded-xl text-[10px] md:text-xs flex items-center gap-2 border select-none ${feedback.type === 'success' ? 'bg-[#4CAF50]/10 text-[#4CAF50] border-[#388E3C]/30' : feedback.type === 'error' ? 'bg-red-950/20 text-red-400 border-red-900/30' : 'bg-[#121212] text-amber-400 border-amber-500/20'}`}>
                 {feedback.type === 'success' ? (
-                  <CheckCircle2 className="w-4 h-4 text-[#4CAF50] shrink-0" />
+                  <CheckCircle2 className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#4CAF50] shrink-0" />
                 ) : (
-                  <Lightbulb className="w-4 h-4 text-amber-500 shrink-0" />
+                  <Lightbulb className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500 shrink-0" />
                 )}
                 <p className="font-semibold leading-none">{feedback.text}</p>
               </div>
@@ -351,25 +351,25 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
             />
 
             {/* Live Buttons - Desktop & Mobile version */}
-            <div className="w-full max-w-md grid grid-cols-3 gap-2 mt-3">
+            <div className="w-full max-w-md grid grid-cols-3 gap-2 mt-1 md:mt-3">
               <button
                 onClick={handleShowHint}
                 disabled={isCompleted}
-                className="py-2 rounded-xl border border-[#2A2A2A] hover:bg-[#2A2A2A] text-xs font-bold text-[#888888] hover:text-white flex items-center justify-center gap-1.5 transition cursor-pointer disabled:opacity-40"
+                className="py-1.5 md:py-2 rounded-xl border border-[#2A2A2A] hover:bg-[#2A2A2A] text-[10px] md:text-xs font-bold text-[#888888] hover:text-white flex items-center justify-center gap-1 md:gap-1.5 transition cursor-pointer disabled:opacity-40"
               >
-                <Lightbulb className="w-4 h-4 text-amber-500" /> Hint
+                <Lightbulb className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500" /> Hint
               </button>
               <button
                 onClick={handleResetTrainer}
-                className="py-2 rounded-xl border border-[#2A2A2A] hover:bg-[#2A2A2A] text-xs font-bold text-[#888888] hover:text-white flex items-center justify-center gap-1.5 transition cursor-pointer"
+                className="py-1.5 md:py-2 rounded-xl border border-[#2A2A2A] hover:bg-[#2A2A2A] text-[10px] md:text-xs font-bold text-[#888888] hover:text-white flex items-center justify-center gap-1 md:gap-1.5 transition cursor-pointer"
               >
-                <RefreshCw className="w-4 h-4" /> Restart
+                <RefreshCw className="w-3.5 h-3.5 md:w-4 md:h-4" /> Restart
               </button>
               <button
                 onClick={() => setShowMobileChecklist(true)}
-                className="py-2 lg:hidden rounded-xl border border-[#4CAF50]/30 bg-[#4CAF50]/5 hover:bg-[#4CAF50]/10 text-xs font-bold text-[#4CAF50] flex items-center justify-center gap-1.5 transition cursor-pointer"
+                className="py-1.5 md:py-2 lg:hidden rounded-xl border border-[#4CAF50]/30 bg-[#4CAF50]/5 hover:bg-[#4CAF50]/10 text-[10px] md:text-xs font-bold text-[#4CAF50] flex items-center justify-center gap-1 md:gap-1.5 transition cursor-pointer"
               >
-                <BookOpen className="w-3.5 h-3.5 animate-pulse" />
+                <BookOpen className="w-3 h-3 md:w-3.5 md:h-3.5 animate-pulse" />
                 Theory
               </button>
             </div>

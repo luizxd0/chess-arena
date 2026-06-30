@@ -677,27 +677,27 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
 
       {/* 2. LIVE GAME VIEW */}
       {game && matchedOpponent && (
-        <div className="flex flex-col md:flex-row gap-4 items-stretch flex-1 min-h-0 overflow-y-auto pb-2">
+        <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-stretch flex-1 min-h-0 overflow-hidden md:overflow-y-auto pb-1 md:pb-2">
           
           {/* Left Column: Board & Clock */}
-          <div className="flex-1 w-full max-w-md mx-auto flex flex-col items-center min-h-0 shrink-0">
+          <div className="flex-1 w-full max-w-md mx-auto flex flex-col items-center justify-center min-h-0 md:shrink-0">
             
             {/* Top Player (Opponent) Info */}
-            <div className="w-full max-w-md flex justify-between items-center bg-[#1A1A1A] border border-[#2A2A2A] p-3 rounded-xl shadow-md mb-3">
+            <div className="w-full max-w-md flex justify-between items-center bg-[#1A1A1A] max-md:bg-transparent max-md:border-none max-md:shadow-none max-md:p-1.5 p-3 rounded-xl shadow-md mb-1 md:mb-3 select-none">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#121212] border border-[#2A2A2A] flex items-center justify-center text-xl shadow-xs">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#121212] border border-[#2A2A2A] flex items-center justify-center text-base md:text-xl shadow-xs">
                   👤
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-sm text-white leading-none">{matchedOpponent.name}</span>
+                    <span className="font-bold text-xs md:text-sm text-white leading-none">{matchedOpponent.name}</span>
                     <span className="text-xs" title="Country">{matchedOpponent.country}</span>
                   </div>
-                  <div className="flex items-center gap-1 mt-1">
-                    <span className="text-[10px] font-mono bg-[#121212] border border-[#2A2A2A] text-[#888888] px-1.5 py-0.5 rounded-sm font-semibold">
+                  <div className="flex items-center gap-1 mt-0.5 md:mt-1">
+                    <span className="text-[9px] md:text-[10px] font-mono bg-[#121212] border border-[#2A2A2A] text-[#888888] px-1.5 py-0.5 rounded-sm font-semibold">
                       {matchedOpponent.rating}
                     </span>
-                    <span className={`text-[9px] font-bold px-1 rounded-sm border ${getTierColor(matchedOpponent.tier)}`}>
+                    <span className={`text-[8px] md:text-[9px] font-bold px-1 rounded-sm border ${getTierColor(matchedOpponent.tier)}`}>
                       {matchedOpponent.tier}
                     </span>
                   </div>
@@ -705,8 +705,8 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
               </div>
 
               {/* Opponent Clock */}
-              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-mono font-bold text-lg ${game.turn() !== playerColor && !gameResult ? 'bg-red-950/20 text-red-400 border-red-900/30 animate-pulse' : 'bg-[#121212] text-[#888888] border-[#2A2A2A]'}`}>
-                <Clock className="w-4 h-4 text-[#666666]" />
+              <div className={`flex items-center gap-1 px-2 py-1 md:px-3 md:py-1.5 rounded-lg border font-mono font-bold text-sm md:text-lg ${game.turn() !== playerColor && !gameResult ? 'bg-red-950/20 text-red-400 border-red-900/30 animate-pulse' : 'bg-[#121212] text-[#888888] border-[#2A2A2A]'}`}>
+                <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#666666]" />
                 {formatClock(opponentTime)}
               </div>
             </div>
@@ -721,21 +721,21 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
             />
 
             {/* Bottom Player (Self) Info */}
-            <div className="w-full max-w-md flex justify-between items-center bg-[#1A1A1A] border border-[#2A2A2A] p-3 rounded-xl shadow-md mt-3">
+            <div className="w-full max-w-md flex justify-between items-center bg-[#1A1A1A] max-md:bg-transparent max-md:border-none max-md:shadow-none max-md:p-1.5 p-3 rounded-xl shadow-md mt-1 md:mt-3 select-none">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#121212] border border-[#2A2A2A] flex items-center justify-center text-xl shadow-xs">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#121212] border border-[#2A2A2A] flex items-center justify-center text-base md:text-xl shadow-xs">
                   👑
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-sm text-white leading-none">{username}</span>
+                    <span className="font-bold text-xs md:text-sm text-white leading-none">{username}</span>
                     <span className="text-xs">👋</span>
                   </div>
-                  <div className="flex items-center gap-1 mt-1">
-                    <span className="text-[10px] font-mono bg-[#121212] border border-[#2A2A2A] text-[#4CAF50] px-1.5 py-0.5 rounded-sm font-semibold">
+                  <div className="flex items-center gap-1 mt-0.5 md:mt-1">
+                    <span className="text-[9px] md:text-[10px] font-mono bg-[#121212] border border-[#2A2A2A] text-[#4CAF50] px-1.5 py-0.5 rounded-sm font-semibold">
                       {stats.elo[mode]}
                     </span>
-                    <span className={`text-[9px] font-bold px-1 rounded-sm border ${getTierColor(getRatingTier(stats.elo[mode]))}`}>
+                    <span className={`text-[8px] md:text-[9px] font-bold px-1 rounded-sm border ${getTierColor(getRatingTier(stats.elo[mode]))}`}>
                       {getRatingTier(stats.elo[mode])}
                     </span>
                   </div>
@@ -743,32 +743,32 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
               </div>
 
               {/* Player Clock */}
-              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-mono font-bold text-lg ${game.turn() === playerColor && !gameResult ? 'bg-[#4CAF50]/10 text-[#4CAF50] border-[#388E3C]/30' : 'bg-[#121212] text-[#888888] border-[#2A2A2A]'}`}>
-                <Clock className="w-4 h-4 text-[#666666]" />
+              <div className={`flex items-center gap-1 px-2 py-1 md:px-3 md:py-1.5 rounded-lg border font-mono font-bold text-sm md:text-lg ${game.turn() === playerColor && !gameResult ? 'bg-[#4CAF50]/10 text-[#4CAF50] border-[#388E3C]/30' : 'bg-[#121212] text-[#888888] border-[#2A2A2A]'}`}>
+                <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#666666]" />
                 {formatClock(playerTime)}
               </div>
             </div>
 
             {/* Live Buttons - Desktop & Mobile version */}
             {!gameResult && (
-              <div className="w-full max-w-md grid grid-cols-3 gap-2 mt-3">
+              <div className="w-full max-w-md grid grid-cols-3 gap-2 mt-1 md:mt-3">
                 <button
                   id="offer-draw-btn"
                   onClick={handleOfferDraw}
-                  className="py-2 rounded-xl border border-[#2A2A2A] hover:bg-[#2A2A2A] text-xs font-bold text-[#888888] hover:text-white flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  className="py-1.5 md:py-2 rounded-xl border border-[#2A2A2A] hover:bg-[#2A2A2A] text-[10px] md:text-xs font-bold text-[#888888] hover:text-white flex items-center justify-center gap-1.5 transition cursor-pointer"
                 >
                   Offer Draw
                 </button>
                 <button
                   id="resign-btn"
                   onClick={handleResign}
-                  className="py-2 rounded-xl border border-red-900/30 hover:bg-red-950/20 text-xs font-bold text-red-400 flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  className="py-1.5 md:py-2 rounded-xl border border-red-900/30 hover:bg-red-950/20 text-[10px] md:text-xs font-bold text-red-400 flex items-center justify-center gap-1.5 transition cursor-pointer"
                 >
                   Resign
                 </button>
                 <button
                   onClick={() => setShowMobileChat(true)}
-                  className="py-2 lg:hidden rounded-xl border border-[#4CAF50]/30 bg-[#4CAF50]/5 hover:bg-[#4CAF50]/10 text-xs font-bold text-[#4CAF50] flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  className="py-1.5 md:py-2 lg:hidden rounded-xl border border-[#4CAF50]/30 bg-[#4CAF50]/5 hover:bg-[#4CAF50]/10 text-[10px] md:text-xs font-bold text-[#4CAF50] flex items-center justify-center gap-1.5 transition cursor-pointer"
                 >
                   <MessageSquare className="w-3.5 h-3.5" />
                   Chat / Moves
