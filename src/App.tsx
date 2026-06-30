@@ -368,6 +368,7 @@ export default function App() {
                 setActiveTab('review');
               }}
               onGameActiveChange={setIsGameplayActive}
+              username={username}
             />
           )}
           {activeTab === 'openings' && (
@@ -388,6 +389,7 @@ export default function App() {
                 setActiveTab('review');
               }}
               onGameActiveChange={setIsGameplayActive}
+              username={username}
             />
           )}
           {activeTab === 'stats' && (

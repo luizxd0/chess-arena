@@ -13,9 +13,10 @@ interface BotsTabProps {
   boardTheme: BoardTheme;
   onReviewGame?: (game: GameRecord) => void;
   onGameActiveChange?: (active: boolean) => void;
+  username: string;
 }
 
-export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardTheme, onReviewGame, onGameActiveChange }) => {
+export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardTheme, onReviewGame, onGameActiveChange, username }) => {
   const [selectedBot, setSelectedBot] = useState<Bot | null>(null);
   const [game, setGame] = useState<Chess | null>(null);
 
@@ -30,6 +31,8 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
   const [startingPositionType, setStartingPositionType] = useState<'standard' | 'opening'>('standard');
   const [startingOpeningId, setStartingOpeningId] = useState('');
   const [startingVariationIdx, setStartingVariationIdx] = useState(0);
+  const [practiceOpeningMoves, setPracticeOpeningMoves] = useState<string[]>([]);
+  const [isOpeningPracticeActive, setIsOpeningPracticeActive] = useState<boolean>(false);
 
   // Live in-game bots variables
   const [botPhrase, setBotPhrase] = useState('');
@@ -76,47 +79,72 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
     const chess = new Chess();
     
     let openingMoves: string[] = [];
+    let isOpPractice = false;
     if (startingPositionType === 'opening' && startingOpeningId) {
       const selectedOp = openingsList.find(o => o.id === startingOpeningId);
       if (selectedOp) {
         const selectedVar = selectedOp.variations[startingVariationIdx];
         if (selectedVar) {
           openingMoves = [...selectedVar.moves];
-          // Replay moves on chess board to set starting position
-          openingMoves.forEach(m => chess.move(m));
+          isOpPractice = true;
         }
       }
     }
+
+    setPracticeOpeningMoves(openingMoves);
+    setIsOpeningPracticeActive(isOpPractice);
 
     setGame(chess);
     setFen(chess.fen());
     setSelectedBot(bot);
     setGameResult(null);
     setMoveHistory(chess.history());
-    setBotPhrase(bot.greeting);
+    setBotPhrase(isOpPractice ? `Let's practice the opening! Make your first move.` : bot.greeting);
 
     // If bot plays White, they make the move immediately
     if (playerColor === 'b' && chess.turn() === 'w') {
-      triggerBotPlay(chess, bot, openingMoves);
+      triggerBotPlay(chess, bot, openingMoves, isOpPractice);
     }
   };
 
   // Bot play logic
-  const triggerBotPlay = (currentChess: Chess, bot: Bot, openingMovesStack?: string[]) => {
+  const triggerBotPlay = (currentChess: Chess, bot: Bot, openingMovesStack?: string[], isPracticeActiveOverride?: boolean) => {
     if (gameResult) return;
 
     const startTime = Date.now();
+    const isPracticeActive = isPracticeActiveOverride !== undefined ? isPracticeActiveOverride : isOpeningPracticeActive;
     
     // Define the move handling logic as an async flow
     const executeBotTurn = async () => {
       try {
         let nextMoveObj;
-        if (bot.id === 'stockfish') {
-          // Fetch from Stockfish API
-          nextMoveObj = await getStockfishMove(currentChess.fen(), bot.depth);
-        } else {
-          // Compute locally using minimax
-          nextMoveObj = getBotMove(currentChess.fen(), bot, openingMovesStack);
+        
+        // If in opening practice, look up the next expected book move for the bot
+        const currentHistoryLength = currentChess.history().length;
+        if (isPracticeActive && practiceOpeningMoves.length > currentHistoryLength) {
+          const nextSan = practiceOpeningMoves[currentHistoryLength];
+          const dryChess = new Chess(currentChess.fen());
+          try {
+            const played = dryChess.move(nextSan);
+            nextMoveObj = {
+              from: played.from,
+              to: played.to,
+              promotion: played.promotion || 'q'
+            };
+            setBotPhrase(`Book move: ${nextSan}. Following theory!`);
+          } catch (e) {
+            console.warn("Dry run failed for bot opening move:", e);
+          }
+        }
+
+        if (!nextMoveObj) {
+          if (bot.id === 'stockfish') {
+            // Fetch from Stockfish API
+            nextMoveObj = await getStockfishMove(currentChess.fen(), bot.depth);
+          } else {
+            // Compute locally using minimax
+            nextMoveObj = getBotMove(currentChess.fen(), bot, openingMovesStack);
+          }
         }
 
         // Calculate actual elapsed time to make sure the "thinking" indicator has a realistic feel
@@ -138,15 +166,17 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
               // Play Sound
               if (playedMove.captured) {
                 chessAudio.playCapture();
-                if (playedMove.captured === 'q') setBotPhrase("Yes! Queen captured! Fear my tactics.");
-                else if (Math.random() < 0.25) setBotPhrase("Piece captured! Keep going.");
+                if (!isPracticeActive) {
+                  if (playedMove.captured === 'q') setBotPhrase("Yes! Queen captured! Fear my tactics.");
+                  else if (Math.random() < 0.25) setBotPhrase("Piece captured! Keep going.");
+                }
               } else {
                 chessAudio.playMove();
               }
 
               if (currentChess.inCheck()) {
                 chessAudio.playCheck();
-                if (Math.random() < 0.40) setBotPhrase("Check! Watch your King safety.");
+                if (!isPracticeActive && Math.random() < 0.40) setBotPhrase("Check! Watch your King safety.");
               }
 
               checkGameStatus(currentChess, bot);
@@ -167,6 +197,7 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
     if (!game || !selectedBot || gameResult) return;
 
     try {
+      const fenBefore = game.fen();
       const playedMove = game.move({ from, to, promotion: promotion || 'q' });
 
       if (playedMove) {
@@ -175,9 +206,6 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
 
         if (playedMove.captured) {
           chessAudio.playCapture();
-          if (Math.random() < 0.3) {
-            setBotPhrase(`Ouch, you took my ${playedMove.captured === 'p' ? 'pawn' : playedMove.captured === 'q' ? 'Queen' : 'piece'}! Nice move.`);
-          }
         } else {
           chessAudio.playMove();
         }
@@ -186,12 +214,47 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
           chessAudio.playCheck();
         }
 
+        // Handle book opening practice verification
+        let nextOpeningActive = isOpeningPracticeActive;
+        if (isOpeningPracticeActive) {
+          const histLength = game.history().length;
+          let isCorrectMove = false;
+          const expectedSan = practiceOpeningMoves[histLength - 1];
+
+          if (expectedSan) {
+            const tempChess = new Chess(fenBefore);
+            try {
+              const expectedMoveObj = tempChess.move(expectedSan);
+              if (expectedMoveObj.from === from && expectedMoveObj.to === to) {
+                isCorrectMove = true;
+              }
+            } catch (e) {
+              console.warn("Dry run check of expected player opening move failed:", e);
+            }
+          }
+
+          if (isCorrectMove) {
+            if (histLength >= practiceOpeningMoves.length) {
+              setBotPhrase("Incredible! You completed the book opening line perfectly! Now the game continues...");
+              setIsOpeningPracticeActive(false);
+              nextOpeningActive = false;
+            } else {
+              setBotPhrase(`Correct book move: ${playedMove.san}!`);
+            }
+          } else {
+            const expectedWord = expectedSan ? ` (${expectedSan} was expected)` : "";
+            setBotPhrase(`That deviates from the chosen book line${expectedWord}. We are now playing normal chess.`);
+            setIsOpeningPracticeActive(false);
+            nextOpeningActive = false;
+          }
+        }
+
         // Check game status after player's move
         const isGameOver = checkGameStatus(game, selectedBot);
 
         // Trigger bot counterplay if not finished
         if (!isGameOver) {
-          triggerBotPlay(game, selectedBot);
+          triggerBotPlay(game, selectedBot, undefined, nextOpeningActive);
         }
       }
     } catch (e) {
@@ -563,7 +626,7 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
                 🏆
               </div>
               <div className="ml-3">
-                <span className="block font-bold text-sm text-white leading-none">You</span>
+                <span className="block font-bold text-sm text-white leading-none">{username}</span>
                 <span className="block text-[10px] font-mono text-[#4CAF50] font-bold mt-1">Rating: {stats.botRating} ELO</span>
               </div>
             </div>

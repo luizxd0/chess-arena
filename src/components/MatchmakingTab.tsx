@@ -12,6 +12,7 @@ interface MatchmakingTabProps {
   boardTheme: BoardTheme;
   onReviewGame?: (game: GameRecord) => void;
   onGameActiveChange?: (active: boolean) => void;
+  username: string;
 }
 
 interface ChatMessage {
@@ -41,7 +42,7 @@ const OPPONENT_CHAT_TEMPLATES = {
   gg: ["Good game! Well played", "gg wp!", "Wow, you are strong! Thanks for the game", "Thanks for the game! gg"]
 };
 
-export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateStats, boardTheme, onReviewGame, onGameActiveChange }) => {
+export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateStats, boardTheme, onReviewGame, onGameActiveChange, username }) => {
   const [mode, setMode] = useState<ChessMode>('blitz');
   const [isSearching, setIsSearching] = useState(false);
   const [searchTime, setSearchTime] = useState(0);
@@ -641,7 +642,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-sm text-white leading-none">You</span>
+                    <span className="font-bold text-sm text-white leading-none">{username}</span>
                     <span className="text-xs">👋</span>
                   </div>
                   <div className="flex items-center gap-1 mt-1">

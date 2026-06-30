@@ -270,26 +270,48 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
     );
   };
 
+  const renderCapturedPieces = (pieces: string[], isWhitePieces: boolean) => {
+    const pieceOrder: Record<string, number> = { 'Q': 5, 'R': 4, 'B': 3, 'N': 2, 'P': 1, 'q': 5, 'r': 4, 'b': 3, 'n': 2, 'p': 1 };
+    const sortedPieces = [...pieces].sort((a, b) => pieceOrder[b] - pieceOrder[a]);
+
+    return (
+      <div className="flex items-center gap-0.5">
+        {sortedPieces.map((piece, i) => {
+          const char = piece.toLowerCase();
+          const symbol = char === 'p' ? '♟' : char === 'n' ? '♞' : char === 'b' ? '♝' : char === 'r' ? '♜' : '♛';
+          return (
+            <span
+              key={i}
+              className={`text-lg leading-none font-sans select-none ${
+                isWhitePieces 
+                  ? 'text-gray-100 drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.9)] bg-slate-700/25 px-0.5 rounded-sm border border-slate-600/10' 
+                  : 'text-neutral-950 drop-shadow-[0_1px_0.5px_rgba(255,255,255,0.45)] bg-slate-300/10 px-0.5 rounded-sm border border-slate-400/5'
+              }`}
+              title={isWhitePieces ? `White ${piece}` : `Black ${piece}`}
+            >
+              {symbol}
+            </span>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div id="chess-board-wrapper" className="flex flex-col w-full max-w-md mx-auto select-none">
       
-      {/* Top Captured Bar (Black captured pieces if White is at bottom) */}
-      <div className="flex items-center justify-between px-2 py-1 mb-2 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg text-xs">
-        <div className="flex items-center gap-1.5 min-h-[24px]">
-          <span className="font-semibold text-gray-500 dark:text-gray-400">Captured:</span>
-          <div className="flex items-center gap-0.5 scale-90 origin-left">
-            {(playerColor === 'w' ? materialData.capturedBlack : materialData.capturedWhite).map((piece, i) => (
-              <span key={i} className="text-xl leading-none font-sans" title={piece}>
-                {piece === 'p' || piece === 'P' ? '♟' : piece === 'n' || piece === 'N' ? '♞' : piece === 'b' || piece === 'B' ? '♝' : piece === 'r' || piece === 'R' ? '♜' : '♛'}
-              </span>
-            ))}
-          </div>
+      {/* Top Captured Bar: Pieces captured by Opponent */}
+      <div className="flex items-center justify-between px-3 py-1.5 mb-2 bg-[#121212]/60 border border-[#2A2A2A] rounded-xl text-xs">
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-[#888888]">Opponent Captures:</span>
+          {renderCapturedPieces(
+            playerColor === 'w' ? materialData.capturedWhite : materialData.capturedBlack,
+            playerColor === 'w'
+          )}
         </div>
-        {materialData.diff !== 0 && (
-          <div className="font-mono font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400">
-            {playerColor === 'w' 
-              ? (materialData.diff > 0 ? `+${materialData.diff}` : materialData.diff)
-              : (materialData.diff < 0 ? `+${Math.abs(materialData.diff)}` : -materialData.diff)}
+        {((playerColor === 'w' && materialData.diff < 0) || (playerColor === 'b' && materialData.diff > 0)) && (
+          <div className="font-mono font-black text-[10px] px-1.5 py-0.5 rounded-sm bg-red-950/40 text-red-400 border border-red-900/30">
+            +{Math.abs(materialData.diff)}
           </div>
         )}
       </div>
@@ -507,18 +529,20 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
         )}
       </div>
 
-      {/* Bottom Captured Bar (White captured pieces if White is at bottom) */}
-      <div className="flex items-center justify-between px-2 py-1 mt-2 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg text-xs">
-        <div className="flex items-center gap-1.5 min-h-[24px]">
-          <span className="font-semibold text-gray-500 dark:text-gray-400">Captured:</span>
-          <div className="flex items-center gap-0.5 scale-90 origin-left">
-            {(playerColor === 'w' ? materialData.capturedWhite : materialData.capturedBlack).map((piece, i) => (
-              <span key={i} className="text-xl leading-none font-sans" title={piece}>
-                {piece === 'p' || piece === 'P' ? '♟' : piece === 'n' || piece === 'N' ? '♞' : piece === 'b' || piece === 'B' ? '♝' : piece === 'r' || piece === 'R' ? '♜' : '♛'}
-              </span>
-            ))}
-          </div>
+      {/* Bottom Captured Bar: Pieces captured by You */}
+      <div className="flex items-center justify-between px-3 py-1.5 mt-2 bg-[#121212]/60 border border-[#2A2A2A] rounded-xl text-xs">
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-[#888888]">Your Captures:</span>
+          {renderCapturedPieces(
+            playerColor === 'w' ? materialData.capturedBlack : materialData.capturedWhite,
+            playerColor === 'b'
+          )}
         </div>
+        {((playerColor === 'w' && materialData.diff > 0) || (playerColor === 'b' && materialData.diff < 0)) && (
+          <div className="font-mono font-black text-[10px] px-1.5 py-0.5 rounded-sm bg-[#4CAF50]/15 text-[#4CAF50] border border-[#388E3C]/30">
+            +{Math.abs(materialData.diff)}
+          </div>
+        )}
       </div>
 
       {/* Status Indicators */}
