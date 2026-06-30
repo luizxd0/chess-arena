@@ -147,11 +147,10 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
 
   const currentTheme = themeClasses[theme];
 
-  // Map indexes based on flipped state
   const getSquareName = (row: number, col: number): string => {
-    const actualRow = playerColor === 'b' ? row + 1 : 8 - row;
-    const actualCol = playerColor === 'b' ? 8 - col - 1 : col;
-    return `${String.fromCharCode(97 + actualCol)}${actualRow}`;
+    const file = String.fromCharCode(97 + col);
+    const rank = 8 - row;
+    return `${file}${rank}`;
   };
 
   const getSquareData = (squareName: string) => {

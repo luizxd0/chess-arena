@@ -12,11 +12,16 @@ interface BotsTabProps {
   onUpdateStats: (updater: (prev: UserStats) => UserStats) => void;
   boardTheme: BoardTheme;
   onReviewGame?: (game: GameRecord) => void;
+  onGameActiveChange?: (active: boolean) => void;
 }
 
-export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardTheme, onReviewGame }) => {
+export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardTheme, onReviewGame, onGameActiveChange }) => {
   const [selectedBot, setSelectedBot] = useState<Bot | null>(null);
   const [game, setGame] = useState<Chess | null>(null);
+
+  useEffect(() => {
+    onGameActiveChange?.(game !== null);
+  }, [game, onGameActiveChange]);
   const [fen, setFen] = useState('');
   const [playerColor, setPlayerColor] = useState<'w' | 'b'>('w');
   const [stockfishLevel, setStockfishLevel] = useState<number>(4); // Stockfish Strength level (1-8)

@@ -11,6 +11,7 @@ interface MatchmakingTabProps {
   onUpdateStats: (updater: (prev: UserStats) => UserStats) => void;
   boardTheme: BoardTheme;
   onReviewGame?: (game: GameRecord) => void;
+  onGameActiveChange?: (active: boolean) => void;
 }
 
 interface ChatMessage {
@@ -40,7 +41,7 @@ const OPPONENT_CHAT_TEMPLATES = {
   gg: ["Good game! Well played", "gg wp!", "Wow, you are strong! Thanks for the game", "Thanks for the game! gg"]
 };
 
-export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateStats, boardTheme, onReviewGame }) => {
+export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateStats, boardTheme, onReviewGame, onGameActiveChange }) => {
   const [mode, setMode] = useState<ChessMode>('blitz');
   const [isSearching, setIsSearching] = useState(false);
   const [searchTime, setSearchTime] = useState(0);
@@ -49,6 +50,10 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
   
   // Game state
   const [game, setGame] = useState<Chess | null>(null);
+
+  useEffect(() => {
+    onGameActiveChange?.(game !== null);
+  }, [game, onGameActiveChange]);
   const [fen, setFen] = useState('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
   const [playerColor, setPlayerColor] = useState<ChessColor>('w');
   const [gameResult, setGameResult] = useState<'win' | 'loss' | 'draw' | null>(null);

@@ -76,16 +76,56 @@ export const GameReview: React.FC<GameReviewProps> = ({
 
     // Run in a slight timeout to simulate deep engine analysis & prevent UI freezing
     const timer = setTimeout(() => {
+      const getMoveEval = (chessInstance: Chess, turn: 'w' | 'b'): number => {
+        if (chessInstance.isCheckmate()) {
+          return turn === 'w' ? 1000.0 : -1000.0;
+        }
+        if (chessInstance.isDraw()) {
+          return 0.0;
+        }
+        return evaluateBoard(chessInstance) / 100.0;
+      };
+
+      const getBestMoveEval = (chessInstance: Chess): number => {
+        const movesList = chessInstance.moves({ verbose: true });
+        const side = chessInstance.turn();
+        if (movesList.length === 0) {
+          return getMoveEval(chessInstance, side);
+        }
+        
+        let bestEval = side === 'w' ? -Infinity : Infinity;
+        
+        for (const m of movesList) {
+          try {
+            chessInstance.move({ from: m.from, to: m.to, promotion: m.promotion || 'q' });
+            const ev = getMoveEval(chessInstance, side);
+            chessInstance.undo();
+            
+            if (side === 'w') {
+              if (ev > bestEval) bestEval = ev;
+            } else {
+              if (ev < bestEval) bestEval = ev;
+            }
+          } catch (e) {
+            // skip
+          }
+        }
+        return bestEval;
+      };
+
       const moves = selectedGame.moves || [];
       const initialFen = selectedGame.initialFen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
       const chess = new Chess(initialFen);
       
       const analysisList: MoveAnalysis[] = [];
-      let lastEval = evaluateBoard(chess) / 100.0; // in pawns
+      let lastEval = getMoveEval(chess, 'w');
 
       for (let i = 0; i < moves.length; i++) {
         const san = moves[i];
         const turn = chess.turn(); // 'w' or 'b'
+        
+        // Compute best move evaluation before making the move
+        const bestEval = getBestMoveEval(chess);
         
         // Find from & to square by dry-running move
         const verboseMoves = chess.moves({ verbose: true });
@@ -103,14 +143,13 @@ export const GameReview: React.FC<GameReviewProps> = ({
           continue;
         }
 
-        const nextFen = chess.fen();
-        const currentEval = evaluateBoard(chess) / 100.0; // in pawns
+        const currentEval = getMoveEval(chess, turn);
         
-        // Evaluation difference from the moving player's perspective
-        // positive means position improved for mover, negative means worse
-        const evalDiff = turn === 'w' ? (currentEval - lastEval) : (lastEval - currentEval);
+        // Loss of evaluation (centipawn loss, always >= 0)
+        const evalLoss = turn === 'w' ? (bestEval - currentEval) : (currentEval - bestEval);
+        const loss = Math.max(0, evalLoss);
 
-        // Classification heuristics
+        // Classification heuristics based on centipawn loss
         let type: 'brilliant' | 'best' | 'excellent' | 'good' | 'book' | 'inaccuracy' | 'mistake' | 'blunder' = 'good';
         let commentary = '';
 
@@ -122,8 +161,7 @@ export const GameReview: React.FC<GameReviewProps> = ({
           type = 'brilliant';
           commentary = 'Brilliant! Forced checkmate delivered directly on the board.';
         } else {
-          // Centipawn-based rules
-          if (evalDiff >= 0.1) {
+          if (loss <= 0.05) {
             // Check if it is a tactical sacrifice (brilliant)
             if (captured && (pieceType === 'n' || pieceType === 'b' || pieceType === 'r' || pieceType === 'q')) {
               type = 'brilliant';
@@ -132,16 +170,16 @@ export const GameReview: React.FC<GameReviewProps> = ({
               type = 'best';
               commentary = 'Best move! Matches the absolute peak line evaluated by the engine.';
             }
-          } else if (evalDiff >= -0.25) {
+          } else if (loss <= 0.20) {
             type = 'excellent';
             commentary = 'Excellent move! Solid choice that keeps your position strong.';
-          } else if (evalDiff >= -0.65) {
+          } else if (loss <= 0.50) {
             type = 'good';
             commentary = 'Good move. Balanced play keeping the match competitive.';
-          } else if (evalDiff >= -1.5) {
+          } else if (loss <= 1.00) {
             type = 'inaccuracy';
             commentary = 'An inaccuracy. Missing slightly better positional squares.';
-          } else if (evalDiff >= -2.8) {
+          } else if (loss <= 2.00) {
             type = 'mistake';
             commentary = 'A mistake! Gives your opponent opportunities to gain initiative.';
           } else {
@@ -155,7 +193,7 @@ export const GameReview: React.FC<GameReviewProps> = ({
           from: fromSquare,
           to: toSquare,
           color: turn,
-          evaluationBefore: lastEval,
+          evaluationBefore: turn === 'w' ? bestEval : -bestEval,
           evaluationAfter: currentEval,
           type,
           commentary

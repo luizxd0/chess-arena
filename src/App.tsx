@@ -37,7 +37,10 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [isGameplayActive, setIsGameplayActive] = useState(false);
   const [reviewGameRecord, setReviewGameRecord] = useState<GameRecord | null>(null);
+
+  const isMenuHidden = isGameplayActive || (activeTab === 'review' && reviewGameRecord !== null);
 
   // Check active session on mount
   useEffect(() => {
@@ -250,7 +253,7 @@ export default function App() {
     <div className="min-h-screen bg-[#121212] text-[#E0E0E0] flex flex-col font-sans antialiased selection:bg-[#4CAF50]/30">
       
       {/* Top Premium Navbar */}
-      <header className="border-b border-[#2A2A2A] bg-[#1A1A1A] sticky top-0 z-40 px-4 py-3 shadow-md">
+      <header className={`border-b border-[#2A2A2A] bg-[#1A1A1A] sticky top-0 z-40 px-4 py-3 shadow-md ${isMenuHidden ? 'hidden' : ''}`}>
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
           
           {/* Logo brand */}
@@ -267,20 +270,20 @@ export default function App() {
           </div>
 
           {/* User ratings preview bar */}
-          <div className="hidden md:flex items-center gap-5 bg-[#121212] border border-[#2A2A2A] py-1.5 px-4 rounded-2xl text-xs font-medium">
-            <div className="flex items-center gap-2">
-              <span className="text-[#E0E0E0] font-semibold">{username}</span>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-sm border ${getTierColor(activeTier)}`}>
+          <div className="flex items-center gap-3 md:gap-5 bg-[#121212] border border-[#2A2A2A] py-1.5 px-3 md:px-4 rounded-2xl text-xs font-medium">
+            <div className="flex items-center gap-1.5 md:gap-2">
+              <span className="text-[#E0E0E0] font-semibold truncate max-w-[80px] md:max-w-none">{username}</span>
+              <span className={`text-[9px] md:text-[10px] font-bold px-1.5 py-0.5 rounded-sm border ${getTierColor(activeTier)}`}>
                 {activeTier}
               </span>
               {isGuest && (
-                <span className="text-[9px] font-black text-cyan-400 bg-cyan-950/40 px-1.5 py-0.5 rounded border border-cyan-500/10 uppercase tracking-wider">Guest</span>
+                <span className="hidden sm:inline text-[9px] font-black text-cyan-400 bg-cyan-950/40 px-1.5 py-0.5 rounded border border-cyan-500/10 uppercase tracking-wider">Guest</span>
               )}
             </div>
             <div className="h-4 w-[1px] bg-[#2A2A2A]" />
-            <div className="flex items-center gap-4 font-mono">
-              <span className="text-[#888888] text-[11px]"><Zap className="inline-block w-3 h-3 text-[#4CAF50] mr-1 align-middle" />Blitz: <strong className="text-white">{stats.elo.blitz}</strong></span>
-              <span className="text-[#888888] text-[11px]"><Trophy className="inline-block w-3.5 h-3.5 text-amber-500 mr-1 align-middle" />Bot: <strong className="text-white">{stats.botRating}</strong></span>
+            <div className="flex items-center gap-2 md:gap-4 font-mono text-[10px] md:text-[11px]">
+              <span className="text-[#888888]"><Zap className="inline-block w-3 h-3 text-[#4CAF50] mr-0.5 md:mr-1 align-middle" /><span className="hidden sm:inline">Blitz: </span><strong className="text-white">{stats.elo.blitz}</strong></span>
+              <span className="text-[#888888]"><Trophy className="inline-block w-3.5 h-3.5 text-amber-500 mr-0.5 md:mr-1 align-middle" /><span className="hidden sm:inline">Bot: </span><strong className="text-white">{stats.botRating}</strong></span>
             </div>
           </div>
 
@@ -317,10 +320,10 @@ export default function App() {
       </header>
 
       {/* Main Workspace Frame */}
-      <main className="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 flex flex-col gap-6">
+      <main className={`flex-1 w-full mx-auto flex flex-col ${isMenuHidden ? 'p-1 md:p-3 max-w-5xl' : 'p-4 md:p-6 max-w-6xl gap-6'}`}>
         
         {/* Navigation Selector Tabs */}
-        <div className="bg-[#1A1A1A] border border-[#2A2A2A] p-2 rounded-2xl flex flex-wrap gap-1.5 shadow-md">
+        <div className={`bg-[#1A1A1A] border border-[#2A2A2A] p-2 rounded-2xl flex flex-wrap gap-1.5 shadow-md ${isMenuHidden ? 'hidden' : ''}`}>
           {[
             { id: 'matchmaking', label: '1v1 Arena', icon: Trophy, desc: 'Play online' },
             { id: 'openings', label: 'Learn Openings', icon: BookOpen, desc: 'Opening theory' },
@@ -354,7 +357,7 @@ export default function App() {
         </div>
 
         {/* Tab Panel View */}
-        <div className="flex-1 bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl p-4 md:p-6 shadow-md flex flex-col">
+        <div className={`flex-1 flex flex-col ${isMenuHidden ? 'p-0 md:p-4 bg-transparent border-none shadow-none' : 'bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl p-4 md:p-6 shadow-md'}`}>
           {activeTab === 'matchmaking' && (
             <MatchmakingTab 
               stats={stats} 
@@ -364,10 +367,16 @@ export default function App() {
                 setReviewGameRecord(game);
                 setActiveTab('review');
               }}
+              onGameActiveChange={setIsGameplayActive}
             />
           )}
           {activeTab === 'openings' && (
-            <OpeningsTab stats={stats} onUpdateStats={handleUpdateStats} boardTheme={boardTheme} />
+            <OpeningsTab 
+              stats={stats} 
+              onUpdateStats={handleUpdateStats} 
+              boardTheme={boardTheme} 
+              onGameActiveChange={setIsGameplayActive}
+            />
           )}
           {activeTab === 'bots' && (
             <BotsTab 
@@ -378,6 +387,7 @@ export default function App() {
                 setReviewGameRecord(game);
                 setActiveTab('review');
               }}
+              onGameActiveChange={setIsGameplayActive}
             />
           )}
           {activeTab === 'stats' && (
@@ -411,7 +421,7 @@ export default function App() {
       </main>
 
       {/* Global aesthetic footer info lines */}
-      <footer className="border-t border-[#2A2A2A] py-5 px-4 bg-[#121212] text-center text-xs text-[#888888]">
+      <footer className={`border-t border-[#2A2A2A] py-5 px-4 bg-[#121212] text-center text-xs text-[#888888] ${isMenuHidden ? 'hidden' : ''}`}>
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 font-medium">
           <span>♟ "Chess is a struggle against your own errors." — Johannes Zukertort</span>
           <span className="text-[10px] font-mono text-[#666666]">GrandMaster Arena • v1.0.2 Stable</span>

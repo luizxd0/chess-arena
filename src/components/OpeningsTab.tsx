@@ -10,14 +10,19 @@ interface OpeningsTabProps {
   stats: UserStats;
   onUpdateStats: (updater: (prev: UserStats) => UserStats) => void;
   boardTheme: BoardTheme;
+  onGameActiveChange?: (active: boolean) => void;
 }
 
-export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, boardTheme }) => {
+export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, boardTheme, onGameActiveChange }) => {
   const [selectedOpening, setSelectedOpening] = useState<Opening | null>(null);
   const [selectedVariation, setSelectedVariation] = useState<OpeningVariation | null>(null);
   
   // Trainer gameplay state
   const [game, setGame] = useState<Chess | null>(null);
+
+  useEffect(() => {
+    onGameActiveChange?.(game !== null);
+  }, [game, onGameActiveChange]);
   const [fen, setFen] = useState('');
   const [currentStep, setCurrentStep] = useState(0); // active move index in variation.moves
   const [coachTip, setCoachTip] = useState('');
