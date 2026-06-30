@@ -5,7 +5,7 @@ import { botsList, getBotMove, getStockfishMove } from '../utils/chessAI';
 import { openingsList } from '../utils/openingsData';
 import { ChessBoard, BoardTheme } from './ChessBoard';
 import { chessAudio } from '../utils/audio';
-import { Lock, Unlock, Play, ArrowLeft, RefreshCw, Award, Cpu, MessageCircle, Sparkles } from 'lucide-react';
+import { Lock, Unlock, Play, ArrowLeft, RefreshCw, Award, Cpu, MessageCircle, Sparkles, Clock } from 'lucide-react';
 
 interface BotsTabProps {
   stats: UserStats;
@@ -41,6 +41,7 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
 
   const [moveHistory, setMoveHistory] = useState<string[]>([]);
   const [lastMove, setLastMove] = useState<{from: string, to: string} | null>(null);
+  const [preMove, setPreMove] = useState<{from: string, to: string} | null>(null);
 
   // Check if a bot is locked based on player's Bot Elo
   const isBotLocked = (bot: Bot): boolean => {
@@ -187,6 +188,23 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
 
     executeBotTurn();
   };
+
+  // Execute preMove automatically if it's our turn
+  useEffect(() => {
+    if (game && !gameResult && game.turn() === playerColor && preMove) {
+      const pm = preMove;
+      setPreMove(null); // Clear it before executing to avoid loops
+      try {
+        const tempChess = new Chess(game.fen());
+        const res = tempChess.move({ from: pm.from, to: pm.to, promotion: 'q' });
+        if (res) {
+          handlePlayerMove(pm.from, pm.to, 'q');
+        }
+      } catch (e) {
+        // Invalid premove
+      }
+    }
+  }, [fen, game, gameResult, playerColor, preMove]);
 
   const handlePlayerMove = (from: string, to: string, promotion?: string) => {
     if (!game || !selectedBot || gameResult) return;
@@ -529,8 +547,11 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
               lastMove={lastMove}
               onMove={handlePlayerMove}
               playerColor={playerColor}
-              isInteractive={!gameResult && game.turn() === playerColor}
+              isInteractive={!gameResult}
               theme={boardTheme}
+              preMove={preMove}
+              onPremove={(from, to) => setPreMove({from, to})}
+              onClearPremove={() => setPreMove(null)}
             />
 
             {/* Bottom Self Panel */}

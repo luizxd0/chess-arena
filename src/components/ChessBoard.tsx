@@ -204,8 +204,12 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
 
     if (!isPlayerTurn) {
       if (selectedSquare) {
-        if (onPremove) onPremove(selectedSquare, squareName);
-        clearSelection();
+        if (selectedSquare === squareName) {
+          clearSelection();
+        } else {
+          if (onPremove) onPremove(selectedSquare, squareName);
+          clearSelection();
+        }
       } else {
         const piece = getSquareData(squareName);
         if (piece && piece.color === playerColor) {
@@ -231,9 +235,14 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
 
     // Select piece
     if (piece && piece.color === playerColor) {
-      setSelectedSquare(squareName);
-      const moves = chess.moves({ square: squareName as Square, verbose: true });
-      setPossibleMoves(moves.map(m => m.to));
+      if (selectedSquare === squareName) {
+        setSelectedSquare(null);
+        setPossibleMoves([]);
+      } else {
+        setSelectedSquare(squareName);
+        const moves = chess.moves({ square: squareName as Square, verbose: true });
+        setPossibleMoves(moves.map(m => m.to));
+      }
     } else {
       setSelectedSquare(null);
       setPossibleMoves([]);
@@ -531,6 +540,11 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
           ref={gridRef}
           style={{ touchAction: 'none' }}
           className="grid grid-cols-8 grid-rows-8 w-full h-full"
+          onContextMenu={(e) => {
+            e.preventDefault();
+            clearSelection();
+            if (onClearPremove) onClearPremove();
+          }}
         >
           {Array.from({ length: 8 }).map((_, rowIdx) => {
             return Array.from({ length: 8 }).map((_, colIdx) => {
