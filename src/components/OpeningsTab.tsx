@@ -217,7 +217,7 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
       
       {/* 1. SELECTION SCREEN */}
       {!game && (
-        <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto pb-2">
           {/* Header hero */}
           <div className="relative text-center py-4 px-4 rounded-3xl bg-[#1A1A1A] border border-[#2A2A2A] text-[#E0E0E0] shadow-md overflow-hidden mb-4 shrink-0">
             <div className="absolute top-0 right-0 w-48 h-48 bg-[#4CAF50]/5 rounded-full blur-3xl" />
@@ -233,7 +233,7 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
           </div>
 
           {/* Openings Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1 overflow-y-auto content-start pb-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1 content-start pb-2">
             {openingsList.map((opening) => {
               const isLearned = stats.completedOpenings.includes(opening.id);
               return (
@@ -286,10 +286,10 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
 
       {/* 2. INTERACTIVE TRAINING VIEW */}
       {game && selectedOpening && selectedVariation && (
-        <div className="flex flex-col md:flex-row gap-4 items-stretch flex-1 min-h-0 overflow-hidden">
+        <div className="flex flex-col md:flex-row gap-4 items-stretch flex-1 min-h-0 overflow-y-auto pb-2">
           
           {/* Left Side: Coach Speech Bubble & Chessboard Column */}
-          <div className="flex-1 max-w-md mx-auto flex flex-col items-center gap-3 h-full">
+          <div className="flex-1 w-full max-w-md mx-auto flex flex-col items-center gap-3 min-h-0 shrink-0">
             
             {/* Top exit and counter bar */}
             <div className="w-full flex justify-between items-center">

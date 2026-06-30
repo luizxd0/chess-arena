@@ -448,7 +448,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
       
       {/* 1. LOBBY VIEW */}
       {!game && (
-        <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto pb-2">
           <div className="flex flex-col lg:flex-row gap-4 mb-4 shrink-0">
             {/* Header Hero */}
             <div className="relative text-center py-4 px-4 rounded-3xl bg-[#1A1A1A] border border-[#2A2A2A] text-[#E0E0E0] shadow-md overflow-hidden flex-1">
@@ -566,10 +566,10 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
 
       {/* 2. LIVE GAME VIEW */}
       {game && matchedOpponent && (
-        <div className="flex flex-col md:flex-row gap-4 items-stretch flex-1 min-h-0 overflow-hidden">
+        <div className="flex flex-col md:flex-row gap-4 items-stretch flex-1 min-h-0 overflow-y-auto pb-2">
           
           {/* Left Column: Board & Clock */}
-          <div className="flex-1 max-w-md mx-auto flex flex-col items-center h-full">
+          <div className="flex-1 w-full max-w-md mx-auto flex flex-col items-center min-h-0 shrink-0">
             
             {/* Top Player (Opponent) Info */}
             <div className="w-full max-w-md flex justify-between items-center bg-[#1A1A1A] border border-[#2A2A2A] p-3 rounded-xl shadow-md mb-3">

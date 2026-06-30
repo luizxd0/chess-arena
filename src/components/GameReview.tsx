@@ -302,7 +302,7 @@ export const GameReview: React.FC<GameReviewProps> = ({
   const activeMoveAnalysis = activeMoveIdx >= 0 ? analyzedMoves[activeMoveIdx] : null;
 
   return (
-    <div className="w-full h-full flex flex-col gap-3 min-h-0" id="game-review-component">
+    <div className="w-full h-full flex flex-col gap-3 min-h-0 overflow-y-auto pb-2" id="game-review-component">
       
       {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-2 border-b border-[#2A2A2A] shrink-0">
@@ -407,10 +407,10 @@ export const GameReview: React.FC<GameReviewProps> = ({
         </div>
       ) : (
         /* FULL GAME REVIEW REPLAY VIEW */
-        <div className="flex flex-col md:flex-row gap-4 items-stretch flex-1 min-h-0 overflow-hidden">
+        <div className="flex flex-col md:flex-row gap-4 items-stretch flex-1 min-h-0 overflow-y-auto pb-2">
           
           {/* LEFT: Chessboard Frame Column */}
-          <div className="flex-1 max-w-md mx-auto flex flex-col items-center h-full">
+          <div className="flex-1 w-full max-w-md mx-auto flex flex-col items-center min-h-0 shrink-0">
             
             {/* Evaluation Score Meter */}
             <div className="w-full bg-[#121212] border border-[#2A2A2A] rounded-xl p-2 flex items-center justify-between mb-2 font-mono text-[10px] text-white shrink-0">

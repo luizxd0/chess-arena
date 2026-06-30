@@ -102,7 +102,7 @@ export const StatsTab: React.FC<StatsTabProps> = ({
   ];
 
   return (
-    <div className="w-full h-full flex flex-col gap-3 min-h-0">
+    <div className="w-full h-full flex flex-col gap-3 min-h-0 overflow-y-auto pr-1 pb-2">
       
       {/* 1. PLAYER PROFILE CARD */}
       <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-4 shadow-md flex flex-col md:flex-row items-center gap-4 shrink-0">
@@ -231,7 +231,7 @@ export const StatsTab: React.FC<StatsTabProps> = ({
               Accomplishments & Badges
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1 overflow-y-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1">
               {achievementsList.map((ach) => {
                 const Icon = ach.icon;
                 return (
