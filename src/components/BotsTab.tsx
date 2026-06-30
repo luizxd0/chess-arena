@@ -278,53 +278,61 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
   };
 
   const triggerGameOver = (result: 'win' | 'loss' | 'draw', reason: string, bot: Bot) => {
-    setGameResult(result);
-    setResultReason(reason);
+    const finalizeGameOver = () => {
+      setGameResult(result);
+      setResultReason(reason);
 
-    chessAudio.playGameOver(result === 'win');
+      chessAudio.playGameOver(result === 'win');
 
-    // Dialogue reaction
-    if (result === 'win') {
-      setBotPhrase(bot.lossPhrase);
-    } else if (result === 'loss') {
-      setBotPhrase(bot.winPhrase);
+      // Dialogue reaction
+      if (result === 'win') {
+        setBotPhrase(bot.lossPhrase);
+      } else if (result === 'loss') {
+        setBotPhrase(bot.winPhrase);
+      } else {
+        setBotPhrase("A balanced game! Let's shake hands on a draw. GG.");
+      }
+
+      // Update Player Bot Rating ELO based on difficulty
+      let eloChange = 0;
+      if (result === 'win') {
+        // Defeating stronger bots awards much more Elo
+        const difficultyGap = bot.rating - stats.botRating;
+        eloChange = Math.max(5, Math.floor(15 + (difficultyGap / 10)));
+      } else if (result === 'loss') {
+        eloChange = Math.min(-5, Math.floor(-10 + ((bot.rating - stats.botRating) / 12)));
+      }
+
+      onUpdateStats(prev => {
+        const nextBotRating = Math.max(100, prev.botRating + eloChange);
+        const newHistoryRecord = {
+          id: Math.random().toString(36).substr(2, 9),
+          opponentName: `${bot.name} (Bot)`,
+          opponentRating: bot.rating,
+          mode: 'bot' as const,
+          playerColor,
+          result,
+          date: new Date().toLocaleDateString(),
+          movesCount: Math.ceil(moveHistory.length / 2),
+          moves: moveHistory
+        };
+
+        return {
+          ...prev,
+          botRating: nextBotRating,
+          wins: prev.wins + (result === 'win' ? 1 : 0),
+          losses: prev.losses + (result === 'loss' ? 1 : 0),
+          draws: prev.draws + (result === 'draw' ? 1 : 0),
+          gameHistory: [newHistoryRecord, ...prev.gameHistory]
+        };
+      });
+    };
+
+    if (reason === 'Checkmate') {
+      setTimeout(finalizeGameOver, 2000);
     } else {
-      setBotPhrase("A balanced game! Let's shake hands on a draw. GG.");
+      finalizeGameOver();
     }
-
-    // Update Player Bot Rating ELO based on difficulty
-    let eloChange = 0;
-    if (result === 'win') {
-      // Defeating stronger bots awards much more Elo
-      const difficultyGap = bot.rating - stats.botRating;
-      eloChange = Math.max(5, Math.floor(15 + (difficultyGap / 10)));
-    } else if (result === 'loss') {
-      eloChange = Math.min(-5, Math.floor(-10 + ((bot.rating - stats.botRating) / 12)));
-    }
-
-    onUpdateStats(prev => {
-      const nextBotRating = Math.max(100, prev.botRating + eloChange);
-      const newHistoryRecord = {
-        id: Math.random().toString(36).substr(2, 9),
-        opponentName: `${bot.name} (Bot)`,
-        opponentRating: bot.rating,
-        mode: 'bot' as const,
-        playerColor,
-        result,
-        date: new Date().toLocaleDateString(),
-        movesCount: Math.ceil(moveHistory.length / 2),
-        moves: moveHistory
-      };
-
-      return {
-        ...prev,
-        botRating: nextBotRating,
-        wins: prev.wins + (result === 'win' ? 1 : 0),
-        losses: prev.losses + (result === 'loss' ? 1 : 0),
-        draws: prev.draws + (result === 'draw' ? 1 : 0),
-        gameHistory: [newHistoryRecord, ...prev.gameHistory]
-      };
-    });
   };
 
   const handleExitGame = () => {

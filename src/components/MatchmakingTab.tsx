@@ -430,59 +430,68 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
 
   const triggerGameOver = async (result: 'win' | 'loss' | 'draw', reason: string, syncToDb = false) => {
     clearInterval(clockInterval.current);
-    setGameResult(result);
-    setResultReason(reason);
 
-    localStorage.removeItem('chess_arena_active_match');
-    localStorage.removeItem('chess_arena_match_color');
+    const finalizeGameOver = () => {
+      setGameResult(result);
+      setResultReason(reason);
 
-    chessAudio.playGameOver(result === 'win');
-    
-    const uid = getUserId();
-    if (syncToDb && matchId && uid) {
-      let winnerUid = result === 'draw' ? 'draw' : (result === 'win' ? uid : 'opponent');
-      updateDoc(doc(db, 'matches', matchId), {
-        status: 'finished',
-        winner: winnerUid,
-        reason: reason
-      }).catch(e => console.error(e));
-    }
+      localStorage.removeItem('chess_arena_active_match');
+      localStorage.removeItem('chess_arena_match_color');
 
-    let eloDelta = 0;
-    if (result === 'win') {
-      eloDelta = Math.floor(Math.random() * 7) + 12;
-    } else if (result === 'loss') {
-      eloDelta = -(Math.floor(Math.random() * 6) + 10);
-    }
-
-    onUpdateStats(prev => {
-      const currentElo = prev.elo[mode];
-      const nextElo = Math.max(100, currentElo + eloDelta);
+      chessAudio.playGameOver(result === 'win');
       
-      const newHistoryRecord = {
-        id: Math.random().toString(36).substr(2, 9),
-        opponentName: matchedOpponent.name,
-        opponentRating: matchedOpponent.rating,
-        mode,
-        playerColor,
-        result,
-        date: new Date().toLocaleDateString(),
-        movesCount: Math.ceil(moveHistory.length / 2),
-        moves: moveHistory
-      };
+      const uid = getUserId();
+      if (syncToDb && matchId && uid) {
+        let winnerUid = result === 'draw' ? 'draw' : (result === 'win' ? uid : 'opponent');
+        updateDoc(doc(db, 'matches', matchId), {
+          status: 'finished',
+          winner: winnerUid,
+          reason: reason
+        }).catch(e => console.error(e));
+      }
 
-      return {
-        ...prev,
-        elo: {
-          ...prev.elo,
-          [mode]: nextElo
-        },
-        wins: prev.wins + (result === 'win' ? 1 : 0),
-        losses: prev.losses + (result === 'loss' ? 1 : 0),
-        draws: prev.draws + (result === 'draw' ? 1 : 0),
-        gameHistory: [newHistoryRecord, ...prev.gameHistory]
-      };
-    });
+      let eloDelta = 0;
+      if (result === 'win') {
+        eloDelta = Math.floor(Math.random() * 7) + 12;
+      } else if (result === 'loss') {
+        eloDelta = -(Math.floor(Math.random() * 6) + 10);
+      }
+
+      onUpdateStats(prev => {
+        const currentElo = prev.elo[mode];
+        const nextElo = Math.max(100, currentElo + eloDelta);
+        
+        const newHistoryRecord = {
+          id: Math.random().toString(36).substr(2, 9),
+          opponentName: matchedOpponent.name,
+          opponentRating: matchedOpponent.rating,
+          mode,
+          playerColor,
+          result,
+          date: new Date().toLocaleDateString(),
+          movesCount: Math.ceil(moveHistory.length / 2),
+          moves: moveHistory
+        };
+
+        return {
+          ...prev,
+          elo: {
+            ...prev.elo,
+            [mode]: nextElo
+          },
+          wins: prev.wins + (result === 'win' ? 1 : 0),
+          losses: prev.losses + (result === 'loss' ? 1 : 0),
+          draws: prev.draws + (result === 'draw' ? 1 : 0),
+          gameHistory: [newHistoryRecord, ...prev.gameHistory]
+        };
+      });
+    };
+
+    if (reason === 'Checkmate') {
+      setTimeout(finalizeGameOver, 2000);
+    } else {
+      finalizeGameOver();
+    }
   };
 
   const handleResign = () => {
