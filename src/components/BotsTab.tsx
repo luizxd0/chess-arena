@@ -25,9 +25,6 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
   }, [game, onGameActiveChange]);
   const [fen, setFen] = useState('');
   const [playerColor, setPlayerColor] = useState<'w' | 'b'>('w');
-  const [stockfishLevel, setStockfishLevel] = useState<number>(4); // Stockfish Strength level (1-8)
-  
-  // Starting position settings
   const [startingPositionType, setStartingPositionType] = useState<'standard' | 'opening'>('standard');
   const [startingOpeningId, setStartingOpeningId] = useState('');
   const [startingVariationIdx, setStartingVariationIdx] = useState(0);
@@ -39,38 +36,21 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
   const [gameResult, setGameResult] = useState<'win' | 'loss' | 'draw' | null>(null);
   const [resultReason, setResultReason] = useState('');
 
-  const startStockfishGame = () => {
-    const customDepth = stockfishLevel * 2 - 1; // Level 1 -> depth 1, Level 8 -> depth 15
-    const stockfishBot: Bot = {
-      id: 'stockfish',
-      name: `Stockfish Lvl ${stockfishLevel}`,
-      avatar: '🤖',
-      rating: 600 + stockfishLevel * 300, // Level 1 -> 900 ELO, Level 8 -> 3000 ELO
-      tier: stockfishLevel <= 2 ? 'Beginner' : stockfishLevel <= 4 ? 'Intermediate' : stockfishLevel <= 6 ? 'Advanced' : 'Master',
-      personality: `The gold standard of chess engines. Configured at Level ${stockfishLevel} with a search depth of ${customDepth} plies.`,
-      blunderRate: 0,
-      depth: customDepth,
-      greeting: `Hello. I am Stockfish. Operating at strength Level ${stockfishLevel}. Good luck.`,
-      winPhrase: "Calculation complete: mate. Victory is mine.",
-      lossPhrase: "Analysis complete. You have played a brilliant game and defeated my network. Congratulations!"
-    };
-    handleStartGame(stockfishBot);
-  };
   const [moveHistory, setMoveHistory] = useState<string[]>([]);
 
   // Check if a bot is locked based on player's Bot Elo
   const isBotLocked = (bot: Bot): boolean => {
     if (bot.tier === 'Beginner') return false;
-    if (bot.tier === 'Intermediate') return stats.botRating < 850;
-    if (bot.tier === 'Advanced') return stats.botRating < 1450;
-    if (bot.tier === 'Master') return stats.botRating < 2050;
+    if (bot.tier === 'Intermediate') return stats.botRating < 1000;
+    if (bot.tier === 'Advanced') return stats.botRating < 1600;
+    if (bot.tier === 'Master') return stats.botRating < 2200;
     return false;
   };
 
   const getUnlockRequirement = (tier: string): string => {
-    if (tier === 'Intermediate') return 'Unlock at 850 Bot Elo';
-    if (tier === 'Advanced') return 'Unlock at 1450 Bot Elo';
-    if (tier === 'Master') return 'Unlock at 2050 Bot Elo';
+    if (tier === 'Intermediate') return 'Unlock at 1000 Bot Elo';
+    if (tier === 'Advanced') return 'Unlock at 1600 Bot Elo';
+    if (tier === 'Master') return 'Unlock at 2200 Bot Elo';
     return '';
   };
 
@@ -138,12 +118,20 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
         }
 
         if (!nextMoveObj) {
-          if (bot.id === 'stockfish') {
-            // Fetch from Stockfish API
-            nextMoveObj = await getStockfishMove(currentChess.fen(), bot.depth);
+          // Roll blunder rate BEFORE calling Stockfish to simulate human mistakes at lower tiers
+          const isBlunder = Math.random() < bot.blunderRate && currentChess.moves().length > 1;
+          
+          if (isBlunder) {
+            // Pick a randomized/suboptimal move locally and instantly
+            nextMoveObj = getBotMove(currentChess.fen(), { ...bot, blunderRate: 1.0 }, openingMovesStack);
           } else {
-            // Compute locally using minimax
-            nextMoveObj = getBotMove(currentChess.fen(), bot, openingMovesStack);
+            try {
+              // Query Stockfish Online with the specific bot's search depth
+              nextMoveObj = await getStockfishMove(currentChess.fen(), bot.depth);
+            } catch (err) {
+              console.warn(`Stockfish Online API failed for ${bot.name}, falling back to local minimax:`, err);
+              nextMoveObj = getBotMove(currentChess.fen(), bot, openingMovesStack);
+            }
           }
         }
 
@@ -446,63 +434,39 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
             )}
           </div>
 
-          {/* Stockfish Engine Featured Card */}
-          <div className="relative p-6 rounded-3xl bg-slate-900 border border-cyan-500/30 text-[#E0E0E0] shadow-xl overflow-hidden mb-6">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
+          {/* Stockfish Engine Arena Informational Header */}
+          <div className="relative p-6 rounded-3xl bg-radial from-slate-900 via-[#121212] to-[#121212] border border-[#2A2A2A] text-[#E0E0E0] shadow-xl overflow-hidden mb-6">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-[#4CAF50]/5 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-2xl pointer-events-none" />
             
             <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-6 relative z-10">
               <div className="flex items-center gap-4 flex-1">
-                <div className="w-14 h-14 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 flex items-center justify-center text-3xl shadow-inner shrink-0">
-                  🤖
+                <div className="w-14 h-14 rounded-2xl bg-[#1A1A1A] border border-[#2A2A2A] flex items-center justify-center text-3xl shadow-inner shrink-0">
+                  🐟
                 </div>
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[9px] font-black text-cyan-400 uppercase tracking-widest bg-cyan-950/50 px-2 py-0.5 rounded-md border border-cyan-500/20">Official Engine</span>
-                    <span className="text-[9px] font-mono font-bold text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-500/20">Stockfish 16</span>
+                    <span className="text-[9px] font-black text-[#4CAF50] uppercase tracking-widest bg-[#4CAF50]/10 px-2 py-0.5 rounded-md border border-[#4CAF50]/20">Stockfish Engine Core</span>
+                    <span className="text-[9px] font-mono font-bold text-cyan-400 bg-cyan-950/40 px-2 py-0.5 rounded-md border border-cyan-500/20">Skill Levels 1-20</span>
                   </div>
-                  <h3 className="font-sans font-black text-xl text-white mt-1">Configurable Stockfish Bot</h3>
-                  <p className="text-gray-400 text-xs mt-1 max-w-lg leading-relaxed">
-                    Play against the gold standard of chess engines. Use the slider to set your desired difficulty from Beginner up to Super Grandmaster.
+                  <h3 className="font-sans font-black text-xl text-white mt-1">Stockfish Bot Arena</h3>
+                  <p className="text-gray-400 text-xs mt-1 max-w-2xl leading-relaxed">
+                    Improve gradually with Chess.com-style bots! Every opponent here is powered in the background by the **Stockfish Engine**, configured with realistic blunder rates and depth profiles. Defeat bots to increase your rating and unlock the ultimate **Level 20 Stockfish Supreme**!
                   </p>
                 </div>
               </div>
 
-              {/* Slider and Start Button */}
-              <div className="w-full md:w-80 bg-[#121212]/60 border border-[#2A2A2A] p-4 rounded-2xl flex flex-col gap-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Engine Strength</span>
-                  <span className="font-mono text-xs font-black text-cyan-400">Level {stockfishLevel} / 8</span>
+              {/* Quick Arena Stats Badge */}
+              <div className="flex items-center gap-3 bg-[#1A1A1A] border border-[#2B2B2B] p-4 rounded-2xl shrink-0">
+                <div className="text-center px-2">
+                  <span className="block text-[8px] text-gray-500 uppercase font-bold tracking-wider">Your Rating</span>
+                  <span className="text-[#4CAF50] font-black text-lg font-mono">{stats.botRating} ELO</span>
                 </div>
-                
-                <input
-                  type="range"
-                  min="1"
-                  max="8"
-                  value={stockfishLevel}
-                  onChange={(e) => setStockfishLevel(parseInt(e.target.value))}
-                  className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500"
-                />
-
-                <div className="flex justify-between items-center text-[10px] font-mono font-bold text-gray-500">
-                  <div>
-                    <span className="block text-[8px] text-gray-600 uppercase">Bot Elo</span>
-                    <span className="text-emerald-400 font-extrabold">{600 + stockfishLevel * 300} ELO</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="block text-[8px] text-gray-600 uppercase">Search Depth</span>
-                    <span className="text-cyan-400 font-extrabold">{stockfishLevel * 2 - 1} plies</span>
-                  </div>
+                <div className="h-8 w-px bg-[#2B2B2B]" />
+                <div className="text-center px-2">
+                  <span className="block text-[8px] text-gray-500 uppercase font-bold tracking-wider">Opponents</span>
+                  <span className="text-white font-black text-lg font-mono">20 Bots</span>
                 </div>
-
-                <button
-                  id="challenge-stockfish-btn"
-                  onClick={startStockfishGame}
-                  className="w-full mt-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-black text-xs shadow-md transition cursor-pointer"
-                >
-                  <Play className="w-3.5 h-3.5 fill-slate-950 stroke-none" />
-                  Challenge Stockfish
-                </button>
               </div>
             </div>
           </div>

@@ -115,7 +115,7 @@ export const King: React.FC<PieceProps> = ({ color, className = 'w-full h-full' 
   );
 };
 
-export const RenderPiece: React.FC<{ type: string; color: 'w' | 'b'; className?: string }> = ({ type, color, className }) => {
+export const RenderPiece: React.FC<{ type: string; color: 'w' | 'b'; className?: string }> = React.memo(({ type, color, className }) => {
   const [urlIndex, setUrlIndex] = React.useState(0);
   const pieceCode = `${color}${type.toUpperCase()}`; // e.g., wP, bN, wQ
 
@@ -162,4 +162,6 @@ export const RenderPiece: React.FC<{ type: string; color: 'w' | 'b'; className?:
       draggable={false}
     />
   );
-};
+});
+
+RenderPiece.displayName = 'RenderPiece';

@@ -44,6 +44,17 @@ export default function App() {
 
   // Check active session on mount
   useEffect(() => {
+    // Preload chess pieces assets to guarantee instant mobile rendering and no network delays
+    const pieceTypes = ['p', 'n', 'b', 'r', 'q', 'k'];
+    const colors = ['w', 'b'];
+    colors.forEach(color => {
+      pieceTypes.forEach(type => {
+        const pieceCode = `${color}${type.toUpperCase()}`;
+        const img = new Image();
+        img.src = `https://unpkg.com/chessground/assets/pieces/cburnett/${pieceCode}.svg`;
+      });
+    });
+
     let unsubscribe: any = null;
 
     if (isFirebaseAvailable && auth) {
