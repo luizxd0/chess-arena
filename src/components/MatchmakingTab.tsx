@@ -6,7 +6,7 @@ import { chessAudio } from '../utils/audio';
 import { UserStats, ChessMode, ChessColor, RatingTier, GameRecord } from '../types';
 import { Play, Shield, Zap, Search, MessageSquare, Send, Award, Clock, ArrowLeft, RefreshCw, Trophy, Sparkles } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
-import { collection, getCountFromServer, addDoc, query, where, getDocs, updateDoc, doc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
+import { collection, getCountFromServer, addDoc, query, where, getDocs, updateDoc, doc, onSnapshot, serverTimestamp, setDoc, getDoc } from 'firebase/firestore';
 
 interface MatchmakingTabProps {
   stats: UserStats;
@@ -75,6 +75,34 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
     return () => clearInterval(timer);
   }, []);
 
+  // Reconnect logic
+  useEffect(() => {
+    const checkReconnect = async () => {
+      if (!auth.currentUser || matchId || !db) return;
+      const savedMatchId = localStorage.getItem('chess_arena_active_match');
+      const savedColor = localStorage.getItem('chess_arena_match_color') as ChessColor;
+      if (savedMatchId && savedColor) {
+        try {
+          const docRef = doc(db, 'matches', savedMatchId);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.status === 'playing' || data.status === 'waiting') {
+              setPlayerColor(savedColor);
+              setMatchId(savedMatchId);
+            } else {
+              localStorage.removeItem('chess_arena_active_match');
+              localStorage.removeItem('chess_arena_match_color');
+            }
+          }
+        } catch (e) {
+          console.error('Reconnect failed', e);
+        }
+      }
+    };
+    checkReconnect();
+  }, [auth.currentUser, matchId]);
+
   // Searching timer
   useEffect(() => {
     let timer: any;
@@ -108,6 +136,8 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
                   rating: stats.elo[mode]
                 }
               });
+              localStorage.setItem('chess_arena_active_match', matchDoc.id);
+              localStorage.setItem('chess_arena_match_color', 'b');
               setPlayerColor('b');
               setMatchId(matchDoc.id);
               setupMatch(matchDoc.id, 'b', data.player1);
@@ -129,6 +159,8 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
             history: [],
             lastMoveTime: Date.now()
           });
+          localStorage.setItem('chess_arena_active_match', newMatch.id);
+          localStorage.setItem('chess_arena_match_color', 'w');
           setPlayerColor('w');
           setMatchId(newMatch.id);
           // Wait for opponent in onSnapshot
@@ -143,6 +175,8 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
     }
   }, [isSearching]);
 
+  const oppPingRef = useRef<number>(Date.now());
+
   // Listen to match document
   useEffect(() => {
     if (!matchId) return;
@@ -155,7 +189,15 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
         if (data.status === 'playing' && !game) {
           const oppData = playerColor === 'w' ? data.player2 : data.player1;
           if (oppData) {
-            setupMatch(matchId, playerColor, oppData);
+            setupMatch(matchId, playerColor, oppData, data.fen, data.history);
+          }
+        }
+
+        // Track opponent ping
+        if (data.status === 'playing') {
+          const oppPingField = playerColor === 'w' ? data.p2Ping : data.p1Ping;
+          if (oppPingField) {
+            oppPingRef.current = oppPingField;
           }
         }
         
@@ -191,7 +233,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
     return () => unsubscribe();
   }, [matchId, game, playerColor, gameResult]);
 
-  const setupMatch = (mId: string, color: ChessColor, oppData: any) => {
+  const setupMatch = (mId: string, color: ChessColor, oppData: any, existingFen?: string, existingHistory?: any[]) => {
     setIsSearching(false);
     setShowMobileChat(false);
     
@@ -203,6 +245,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
       tier: getRatingTier(oppData.rating)
     };
     setMatchedOpponent(matchObj);
+    oppPingRef.current = Date.now();
     
     // Initialize Chess Clock
     let totalSec = 180;
@@ -213,15 +256,21 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
     setOpponentTime(totalSec);
 
     const chessGame = new Chess();
+    if (existingFen) {
+      chessGame.load(existingFen);
+    }
     setGame(chessGame);
     setFen(chessGame.fen());
-    setMoveHistory([]);
+    setMoveHistory(existingHistory || []);
     setGameResult(null);
 
     const welcomeMsgs: ChatMessage[] = [
       { sender: 'system', text: `Match found! You are playing ${color === 'w' ? 'White' : 'Black'}.`, time: formatTime() },
       { sender: 'system', text: `Time control: ${mode === 'bullet' ? '1m Bullet' : mode === 'blitz' ? '3m Blitz' : '10m Rapid'}.`, time: formatTime() }
     ];
+    if (existingFen) {
+      welcomeMsgs.push({ sender: 'system', text: 'Reconnected to match in progress.', time: formatTime() });
+    }
     setChatMessages(welcomeMsgs);
   };
 
@@ -252,6 +301,39 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
     }
     return () => clearInterval(clockInterval.current);
   }, [game, gameResult, playerColor]);
+
+  // Ping mechanism to detect abandonment
+  useEffect(() => {
+    if (!game || gameResult || !matchId) return;
+    
+    // Ping every 30 seconds
+    const pingInterval = setInterval(() => {
+      const pingField = playerColor === 'w' ? 'p1Ping' : 'p2Ping';
+      updateDoc(doc(db, 'matches', matchId), { [pingField]: Date.now() }).catch(e=>e);
+    }, 30000);
+    
+    // Initial ping
+    const pingField = playerColor === 'w' ? 'p1Ping' : 'p2Ping';
+    updateDoc(doc(db, 'matches', matchId), { [pingField]: Date.now() }).catch(e=>e);
+
+    return () => clearInterval(pingInterval);
+  }, [game, gameResult, matchId, playerColor]);
+
+  // Abandonment checker
+  useEffect(() => {
+    if (!game || gameResult || !matchId) return;
+    
+    const checkInterval = setInterval(() => {
+      const now = Date.now();
+      // If opponent hasn't pinged in 2 minutes (120000ms), they abandoned the match
+      if (now - oppPingRef.current > 120000) {
+        clearInterval(checkInterval);
+        triggerGameOver('win', 'Opponent abandoned', true);
+      }
+    }, 10000);
+
+    return () => clearInterval(checkInterval);
+  }, [game, gameResult, matchId]);
 
   // Scroll chat to bottom
   useEffect(() => {
@@ -324,6 +406,9 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
     clearInterval(clockInterval.current);
     setGameResult(result);
     setResultReason(reason);
+
+    localStorage.removeItem('chess_arena_active_match');
+    localStorage.removeItem('chess_arena_match_color');
 
     chessAudio.playGameOver(result === 'win');
     
@@ -435,6 +520,8 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
     if (matchId && !gameResult) {
       updateDoc(doc(db, 'matches', matchId), { status: 'finished', winner: 'opponent', reason: 'Opponent left' }).catch(e=>e);
     }
+    localStorage.removeItem('chess_arena_active_match');
+    localStorage.removeItem('chess_arena_match_color');
     setGame(null);
     setMatchedOpponent(null);
     setGameResult(null);

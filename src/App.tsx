@@ -59,13 +59,14 @@ export default function App() {
               const data = docSnap.data();
               setUsername(data.username || 'PawnPusher');
               setStats(data.stats || INITIAL_STATS);
+              setIsGuest(!!data.isGuest);
             } else {
               const fallbackUsername = user.email ? user.email.split('@')[0] : 'Player';
               setUsername(fallbackUsername);
               setStats(INITIAL_STATS);
+              setIsGuest(user.isAnonymous);
             }
             setIsAuthenticated(true);
-            setIsGuest(false);
           } catch (err) {
             console.warn("Could not retrieve Firestore user stats:", err);
           }

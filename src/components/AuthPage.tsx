@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Trophy, Mail, Lock, User, Play, ArrowRight, ShieldAlert, Sparkles } from 'lucide-react';
 import { auth, db, isFirebaseAvailable } from '../lib/firebase';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInAnonymously } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { UserStats } from '../types';
 
@@ -159,11 +159,31 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialStats 
     }
   };
 
-  const handleGuestPlay = () => {
-    // Generate a quick fun random username or load existing guest from localStorage if there is one
-    const randomID = Math.floor(Math.random() * 900) + 100;
-    const defaultGuestName = `Guest#${randomID}`;
-    onAuthSuccess(defaultGuestName, initialStats, true);
+  const handleGuestPlay = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const randomID = Math.floor(Math.random() * 900) + 100;
+      const defaultGuestName = `Guest#${randomID}`;
+
+      if (isFirebaseAvailable && auth && db) {
+        const userCredential = await signInAnonymously(auth);
+        const uid = userCredential.user.uid;
+        const docRef = doc(db, 'users', uid);
+        await setDoc(docRef, {
+          username: defaultGuestName,
+          stats: initialStats,
+          isGuest: true
+        });
+      }
+      
+      onAuthSuccess(defaultGuestName, initialStats, true);
+    } catch (e: any) {
+      console.error(e);
+      setError(e.message || 'Failed to sign in as guest.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
