@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { UserStats, ChessMode, RatingTier } from './types';
+import { UserStats, ChessMode, RatingTier, GameRecord } from './types';
 import { MatchmakingTab } from './components/MatchmakingTab';
 import { OpeningsTab } from './components/OpeningsTab';
 import { BotsTab } from './components/BotsTab';
 import { StatsTab } from './components/StatsTab';
+import { GameReview } from './components/GameReview';
 import { BoardTheme } from './components/ChessBoard';
 import { AuthPage } from './components/AuthPage';
 import { isFirebaseAvailable, auth, db } from './lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { Trophy, Cpu, BookOpen, User, Flame, Palette, Zap, LogOut } from 'lucide-react';
+import { Trophy, Cpu, BookOpen, User, Flame, Palette, Zap, LogOut, Sparkles } from 'lucide-react';
 
 const LOCAL_STORAGE_KEY = 'chess_applet_user_stats_v1';
 const LOCAL_STORAGE_USERNAME_KEY = 'chess_applet_username_v1';
@@ -29,13 +30,14 @@ const INITIAL_STATS: UserStats = {
 };
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'matchmaking' | 'openings' | 'bots' | 'stats'>('matchmaking');
+  const [activeTab, setActiveTab] = useState<'matchmaking' | 'openings' | 'bots' | 'stats' | 'review'>('matchmaking');
   const [boardTheme, setBoardTheme] = useState<BoardTheme>('elegant');
   const [username, setUsername] = useState('NewPlayer');
   const [stats, setStats] = useState<UserStats>(INITIAL_STATS);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [reviewGameRecord, setReviewGameRecord] = useState<GameRecord | null>(null);
 
   // Check active session on mount
   useEffect(() => {
@@ -323,7 +325,8 @@ export default function App() {
             { id: 'matchmaking', label: '1v1 Arena', icon: Trophy, desc: 'Play online' },
             { id: 'openings', label: 'Learn Openings', icon: BookOpen, desc: 'Opening theory' },
             { id: 'bots', label: 'Play vs Bots', icon: Cpu, desc: 'Challenge computer' },
-            { id: 'stats', label: 'Stats & Rank', icon: User, desc: 'Climb ladder' }
+            { id: 'stats', label: 'Stats & Rank', icon: User, desc: 'Climb ladder' },
+            { id: 'review', label: 'AI Review', icon: Sparkles, desc: 'Analyze moves' }
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -331,8 +334,14 @@ export default function App() {
               <button
                 key={tab.id}
                 id={`tab-${tab.id}`}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex-1 min-w-[120px] py-2.5 px-3.5 rounded-xl flex items-center justify-center gap-2.5 font-sans font-extrabold text-sm transition cursor-pointer ${isActive ? 'bg-[#2A2A2A] text-[#4CAF50] border border-[#4CAF50]/20 shadow-md' : 'text-[#888] hover:text-[#E0E0E0] hover:bg-[#2A2A2A]/40'}`}
+                onClick={() => {
+                  if (tab.id === 'review' && !reviewGameRecord && stats.gameHistory.length > 0) {
+                    // Pre-select most recent game if none selected
+                    setReviewGameRecord(stats.gameHistory[0]);
+                  }
+                  setActiveTab(tab.id as any);
+                }}
+                className={`flex-1 min-w-[110px] py-2.5 px-3.5 rounded-xl flex items-center justify-center gap-2.5 font-sans font-extrabold text-sm transition cursor-pointer ${isActive ? 'bg-[#2A2A2A] text-[#4CAF50] border border-[#4CAF50]/20 shadow-md' : 'text-[#888] hover:text-[#E0E0E0] hover:bg-[#2A2A2A]/40'}`}
               >
                 <Icon className={`w-4 h-4 ${isActive ? 'text-[#4CAF50]' : 'text-[#888]'}`} />
                 <div className="text-left">
@@ -347,13 +356,29 @@ export default function App() {
         {/* Tab Panel View */}
         <div className="flex-1 bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl p-4 md:p-6 shadow-md flex flex-col">
           {activeTab === 'matchmaking' && (
-            <MatchmakingTab stats={stats} onUpdateStats={handleUpdateStats} boardTheme={boardTheme} />
+            <MatchmakingTab 
+              stats={stats} 
+              onUpdateStats={handleUpdateStats} 
+              boardTheme={boardTheme} 
+              onReviewGame={(game) => {
+                setReviewGameRecord(game);
+                setActiveTab('review');
+              }}
+            />
           )}
           {activeTab === 'openings' && (
             <OpeningsTab stats={stats} onUpdateStats={handleUpdateStats} boardTheme={boardTheme} />
           )}
           {activeTab === 'bots' && (
-            <BotsTab stats={stats} onUpdateStats={handleUpdateStats} boardTheme={boardTheme} />
+            <BotsTab 
+              stats={stats} 
+              onUpdateStats={handleUpdateStats} 
+              boardTheme={boardTheme} 
+              onReviewGame={(game) => {
+                setReviewGameRecord(game);
+                setActiveTab('review');
+              }}
+            />
           )}
           {activeTab === 'stats' && (
             <StatsTab
@@ -361,6 +386,24 @@ export default function App() {
               onUpdateStats={handleUpdateStats}
               username={username}
               onUpdateUsername={handleUpdateUsername}
+              onSelectGameToReview={(game) => {
+                setReviewGameRecord(game);
+                setActiveTab('review');
+              }}
+            />
+          )}
+          {activeTab === 'review' && (
+            <GameReview
+              stats={stats}
+              selectedGame={reviewGameRecord}
+              boardTheme={boardTheme}
+              onBackToLobby={() => {
+                setReviewGameRecord(null);
+                setActiveTab('stats');
+              }}
+              onSelectGameToReview={(game) => {
+                setReviewGameRecord(game);
+              }}
             />
           )}
         </div>

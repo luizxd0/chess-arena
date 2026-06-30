@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Chess, Square } from 'chess.js';
-import { Bot, UserStats } from '../types';
+import { Bot, UserStats, GameRecord } from '../types';
 import { botsList, getBotMove, getStockfishMove } from '../utils/chessAI';
 import { openingsList } from '../utils/openingsData';
 import { ChessBoard, BoardTheme } from './ChessBoard';
 import { chessAudio } from '../utils/audio';
-import { Lock, Unlock, Play, ArrowLeft, RefreshCw, Award, Cpu, MessageCircle } from 'lucide-react';
+import { Lock, Unlock, Play, ArrowLeft, RefreshCw, Award, Cpu, MessageCircle, Sparkles } from 'lucide-react';
 
 interface BotsTabProps {
   stats: UserStats;
   onUpdateStats: (updater: (prev: UserStats) => UserStats) => void;
   boardTheme: BoardTheme;
+  onReviewGame?: (game: GameRecord) => void;
 }
 
-export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardTheme }) => {
+export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardTheme, onReviewGame }) => {
   const [selectedBot, setSelectedBot] = useState<Bot | null>(null);
   const [game, setGame] = useState<Chess | null>(null);
   const [fen, setFen] = useState('');
@@ -247,7 +248,8 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
         playerColor,
         result,
         date: new Date().toLocaleDateString(),
-        movesCount: Math.ceil(moveHistory.length / 2)
+        movesCount: Math.ceil(moveHistory.length / 2),
+        moves: moveHistory
       };
 
       return {
@@ -577,15 +579,34 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
 
               {/* Game outcome display */}
               {gameResult && (
-                <div className="bg-amber-500/10 p-4 rounded-xl border border-amber-500/20 text-center animate-fade-in">
+                <div className="bg-amber-500/10 p-4 rounded-xl border border-amber-500/20 text-center animate-fade-in space-y-3">
                   <Award className="w-8 h-8 text-amber-500 mx-auto mb-1" />
                   <h4 className="font-sans font-extrabold text-sm text-white">
                     {gameResult === 'win' ? 'Victory!' : gameResult === 'loss' ? 'Defeat' : "Draw Game"}
                   </h4>
                   <p className="text-xs text-[#888888] mt-1">Reason: {resultReason}</p>
-                  <div className="mt-2.5 text-xs font-mono font-bold text-[#4CAF50]">
+                  <div className="text-xs font-mono font-bold text-[#4CAF50]">
                     {gameResult === 'win' ? 'Your Rating: +18 Elo' : gameResult === 'loss' ? 'Your Rating: -10 Elo' : 'No change'}
                   </div>
+                  {onReviewGame && (
+                    <button
+                      id="post-game-review-btn"
+                      onClick={() => onReviewGame({
+                        id: Math.random().toString(36).substr(2, 9),
+                        opponentName: selectedBot ? `${selectedBot.name} (Bot)` : "Bot AI",
+                        opponentRating: selectedBot ? selectedBot.rating : 1200,
+                        mode: 'bot',
+                        playerColor,
+                        result: gameResult,
+                        date: new Date().toLocaleDateString(),
+                        movesCount: Math.ceil(moveHistory.length / 2),
+                        moves: moveHistory
+                      })}
+                      className="w-full py-2 rounded-lg bg-[#4CAF50]/15 hover:bg-[#4CAF50]/35 border border-[#388E3C]/30 text-[#4CAF50] font-bold text-[10px] uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" /> AI Move Review
+                    </button>
+                  )}
                 </div>
               )}
 

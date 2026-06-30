@@ -13,6 +13,7 @@ interface ChessBoardProps {
   isInteractive?: boolean;
   theme?: BoardTheme;
   hintMove?: { from: string; to: string } | null;
+  reviewMoveEvaluation?: { square: string; type: string } | null;
 }
 
 export const ChessBoard: React.FC<ChessBoardProps> = ({
@@ -21,7 +22,8 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
   playerColor = 'w',
   isInteractive = true,
   theme = 'elegant',
-  hintMove = null
+  hintMove = null,
+  reviewMoveEvaluation = null
 }) => {
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [possibleMoves, setPossibleMoves] = useState<string[]>([]);
@@ -351,6 +353,62 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
                       <RenderPiece type={piece.type} color={piece.color} />
                     </div>
                   )}
+
+                  {/* Render Chess.com-style Evaluation Indicator Badge */}
+                  {reviewMoveEvaluation && reviewMoveEvaluation.square === squareName && (() => {
+                    let badgeBg = 'bg-gray-500';
+                    let badgeText = '';
+                    const isBrilliant = reviewMoveEvaluation.type === 'brilliant';
+                    const isBlunder = reviewMoveEvaluation.type === 'blunder';
+
+                    switch (reviewMoveEvaluation.type) {
+                      case 'brilliant':
+                        badgeBg = 'bg-linear-to-r from-cyan-400 to-teal-400 text-white border-cyan-200';
+                        badgeText = '!!';
+                        break;
+                      case 'best':
+                        badgeBg = 'bg-emerald-500 text-white border-emerald-300';
+                        badgeText = '★';
+                        break;
+                      case 'excellent':
+                        badgeBg = 'bg-green-500 text-white border-green-300';
+                        badgeText = '✓';
+                        break;
+                      case 'good':
+                        badgeBg = 'bg-slate-500 text-white border-slate-400';
+                        badgeText = '✓';
+                        break;
+                      case 'book':
+                        badgeBg = 'bg-amber-600 text-white border-amber-400';
+                        badgeText = '📖';
+                        break;
+                      case 'inaccuracy':
+                        badgeBg = 'bg-yellow-400 text-slate-900 border-yellow-100';
+                        badgeText = '?!';
+                        break;
+                      case 'mistake':
+                        badgeBg = 'bg-orange-500 text-white border-orange-300';
+                        badgeText = '?';
+                        break;
+                      case 'blunder':
+                        badgeBg = 'bg-red-600 text-white border-red-300';
+                        badgeText = '??';
+                        break;
+                    }
+
+                    return (
+                      <div className="absolute inset-0 pointer-events-none z-30">
+                        {/* Brilliant Halo background pulse */}
+                        {isBrilliant && (
+                          <div className="absolute top-0 right-0 w-6 h-6 -translate-y-1/3 translate-x-1/3 rounded-full border-4 border-cyan-400/85 animate-brilliant-halo" />
+                        )}
+                        {/* Main Badge Container */}
+                        <div className={`absolute top-0 right-0 w-6 h-6 -translate-y-1/3 translate-x-1/3 rounded-full flex items-center justify-center text-[10px] font-black border-[1.5px] shadow-lg ${badgeBg} ${isBlunder ? 'animate-chess-shake' : 'animate-pop-scale'}`}>
+                          {badgeText}
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Render Possible Move Indicator */}
                   {isPossible && (

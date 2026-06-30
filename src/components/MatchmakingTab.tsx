@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Chess } from 'chess.js';
-import { Play, Shield, Zap, Search, MessageSquare, Send, Award, Clock, ArrowLeft, RefreshCw, Trophy } from 'lucide-react';
 import { ChessBoard, BoardTheme } from './ChessBoard';
 import { getBotMove } from '../utils/chessAI';
 import { chessAudio } from '../utils/audio';
-import { UserStats, ChessMode, ChessColor, RatingTier } from '../types';
+import { UserStats, ChessMode, ChessColor, RatingTier, GameRecord } from '../types';
+import { Play, Shield, Zap, Search, MessageSquare, Send, Award, Clock, ArrowLeft, RefreshCw, Trophy, Sparkles } from 'lucide-react';
 
 interface MatchmakingTabProps {
   stats: UserStats;
   onUpdateStats: (updater: (prev: UserStats) => UserStats) => void;
   boardTheme: BoardTheme;
+  onReviewGame?: (game: GameRecord) => void;
 }
 
 interface ChatMessage {
@@ -39,7 +40,7 @@ const OPPONENT_CHAT_TEMPLATES = {
   gg: ["Good game! Well played", "gg wp!", "Wow, you are strong! Thanks for the game", "Thanks for the game! gg"]
 };
 
-export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateStats, boardTheme }) => {
+export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateStats, boardTheme, onReviewGame }) => {
   const [mode, setMode] = useState<ChessMode>('blitz');
   const [isSearching, setIsSearching] = useState(false);
   const [searchTime, setSearchTime] = useState(0);
@@ -363,7 +364,8 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
         playerColor,
         result,
         date: new Date().toLocaleDateString(),
-        movesCount: Math.ceil(moveHistory.length / 2)
+        movesCount: Math.ceil(moveHistory.length / 2),
+        moves: moveHistory
       };
 
       return {
@@ -699,15 +701,34 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
 
             {/* Game Result Screen (Overlays active tab if game finished) */}
             {gameResult && (
-              <div className="bg-[#4CAF50]/5 p-4 border-b border-[#2A2A2A] text-center animate-fade-in">
+              <div className="bg-[#4CAF50]/5 p-4 border-b border-[#2A2A2A] text-center animate-fade-in space-y-2.5">
                 <Award className="w-8 h-8 text-amber-500 mx-auto mb-1" />
                 <h4 className="font-sans font-extrabold text-base text-white">
                   {gameResult === 'win' ? 'You Won!' : gameResult === 'loss' ? 'Opponent Won' : "It's a Draw"}
                 </h4>
                 <p className="text-xs text-[#888888] mt-0.5">By {resultReason}</p>
-                <div className="mt-2 text-xs font-mono font-bold text-[#4CAF50]">
+                <div className="text-xs font-mono font-bold text-[#4CAF50]">
                   {gameResult === 'win' ? 'Rating: +15 Elo' : gameResult === 'loss' ? 'Rating: -12 Elo' : 'Rating: Unchanged'}
                 </div>
+                {onReviewGame && (
+                  <button
+                    id="post-match-review-btn"
+                    onClick={() => onReviewGame({
+                      id: Math.random().toString(36).substr(2, 9),
+                      opponentName: matchedOpponent ? matchedOpponent.name : "Opponent",
+                      opponentRating: matchedOpponent ? matchedOpponent.rating : 1200,
+                      mode,
+                      playerColor,
+                      result: gameResult,
+                      date: new Date().toLocaleDateString(),
+                      movesCount: Math.ceil(moveHistory.length / 2),
+                      moves: moveHistory
+                    })}
+                    className="w-full py-2 rounded-lg bg-[#4CAF50]/15 hover:bg-[#4CAF50]/35 border border-[#388E3C]/30 text-[#4CAF50] font-bold text-[10px] uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" /> AI Move Review
+                  </button>
+                )}
               </div>
             )}
 

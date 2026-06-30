@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserStats, RatingTier, ChessMode } from '../types';
+import { UserStats, RatingTier, ChessMode, GameRecord } from '../types';
 import { Award, Trophy, Zap, Shield, BookOpen, Clock, Calendar, Check, Edit2, CheckSquare, Target } from 'lucide-react';
 
 interface StatsTabProps {
@@ -7,11 +7,18 @@ interface StatsTabProps {
   onUpdateStats: (updater: (prev: UserStats) => UserStats) => void;
   username: string;
   onUpdateUsername: (name: string) => void;
+  onSelectGameToReview?: (game: GameRecord) => void;
 }
 
 const AVATARS = ['👑', '🏆', '♟', '♞', '♝', '♜', '♛', '🦁', '🦊', '🦅', '☯', '⚡', '🔥', '🧠'];
 
-export const StatsTab: React.FC<StatsTabProps> = ({ stats, onUpdateStats, username, onUpdateUsername }) => {
+export const StatsTab: React.FC<StatsTabProps> = ({ 
+  stats, 
+  onUpdateStats, 
+  username, 
+  onUpdateUsername,
+  onSelectGameToReview 
+}) => {
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [usernameInput, setUsernameInput] = useState(username);
   const [selectedAvatar, setSelectedAvatar] = useState('👑');
@@ -313,7 +320,17 @@ export const StatsTab: React.FC<StatsTabProps> = ({ stats, onUpdateStats, userna
                   
                   <div className="flex justify-between items-center text-[9px] text-[#888888] font-mono pt-1.5 border-t border-[#2A2A2A]">
                     <span>{game.mode.toUpperCase()} ({game.playerColor === 'w' ? 'White' : 'Black'})</span>
-                    <span>{game.movesCount} moves • {game.date}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span>{game.movesCount} moves • {game.date}</span>
+                      {onSelectGameToReview && (
+                        <button
+                          onClick={() => onSelectGameToReview(game)}
+                          className="px-1.5 py-0.5 rounded bg-[#4CAF50]/15 hover:bg-[#4CAF50]/30 border border-[#388E3C]/30 text-[#4CAF50] font-bold text-[8px] uppercase tracking-wider transition cursor-pointer"
+                        >
+                          Review
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))

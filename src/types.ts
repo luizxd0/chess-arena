@@ -28,6 +28,8 @@ export interface GameRecord {
   result: 'win' | 'loss' | 'draw';
   date: string;
   movesCount: number;
+  moves?: string[];
+  initialFen?: string;
 }
 
 export interface Bot {
