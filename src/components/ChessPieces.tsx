@@ -1,4 +1,5 @@
 import React from 'react';
+import { pieceUrls } from '../utils/pieceUrls';
 
 interface PieceProps {
   type: string;
@@ -6,51 +7,23 @@ interface PieceProps {
   className?: string;
 }
 
-const piecesSVG: Record<string, Record<string, string>> = {
-  w: {
-    k: "M 22.5 11.63 L 22.5 6 L 20 6 L 20 3.5 L 25 3.5 L 25 6 L 22.5 6 L 22.5 11.63 C 21.05 11.96 20 13.3 20 14.86 C 20 16.74 21.53 18.27 23.41 18.27 C 24.36 18.27 25.21 17.88 25.84 17.25 C 26.47 16.62 26.86 15.77 26.86 14.82 C 26.86 13.31 25.86 12 24.45 11.66 L 24.45 6 L 22.5 6 M 22.5 11.63 Z M 21 21 L 24 21 L 26 27 L 19 27 L 21 21 M 26 27 L 28 34 L 17 34 L 19 27 M 28 34 L 30.5 40 L 14.5 40 L 17 34 M 14.5 40 L 30.5 40 L 30.5 44 L 14.5 44 L 14.5 40 Z",
-    q: "M 9 26 C 17.5 24.5 30 24.5 36 26 L 38 14 L 31 25 L 27 11 L 22.5 25 L 18 11 L 14 25 L 7 14 L 9 26 Z M 9 26 C 9 28 10.5 28 11.5 30 C 12.5 31.5 12.5 31 12 33.5 C 10.5 34.5 10.5 36 10.5 36 C 9 37.5 11 38.5 11 38.5 C 17.5 39.5 27.5 39.5 34 38.5 C 34 38.5 35.5 37.5 34 36 C 34 36 34.5 34.5 33 33.5 C 32.5 31 32.5 31.5 33.5 30 C 34.5 28 36 28 36 26 C 27.5 24.5 17.5 24.5 9 26 Z M 11 38.5 L 34 38.5 L 34 44 L 11 44 L 11 38.5 Z",
-    r: "M 9 39 L 36 39 L 36 11 L 9 11 L 9 39 Z M 12 36 L 12 14 L 33 14 L 33 36 L 12 36 Z M 15 33 L 15 17 L 30 17 L 30 33 L 15 33 Z M 12 39 L 12 44 L 33 44 L 33 39 L 12 39 Z",
-    b: "M 9 36 C 14.2 38 29.8 38 35 36 C 31.6 22 22 17 22 17 C 22.2 15.6 21 14 19 14 C 17 14 15.8 15.6 16 17 C 16 17 6.4 22 9 36 Z M 15 32 C 17.5 34.5 27.5 34.5 30 32 C 30 32 30 28 22.5 24 C 15 28 15 32 15 32 Z M 11 36 L 34 36 L 34 44 L 11 44 L 11 36 Z",
-    n: "M 22 10 C 32.5 11 34 26.5 34 35 L 11 35 C 11 26.5 15.5 11 22 10 Z M 22 12 C 17.5 13 14 26 14 32 L 31 32 C 31 26 27.5 13 22 12 Z M 24 16 C 24 16 26 19 26 22 C 26 25 24 28 24 28 C 24 28 22 25 22 22 C 22 19 24 16 24 16 Z M 11 35 L 34 35 L 34 44 L 11 44 L 11 35 Z",
-    p: "M 22 9 C 19.79 9 18 10.79 18 13 C 18 15.21 19.79 17 22 17 C 24.21 17 26 15.21 26 13 C 26 10.79 24.21 9 22 9 Z M 22 17 C 17 17 14 23 14 23 L 30 23 C 30 23 27 17 22 17 Z M 14 23 L 11 35 L 33 35 L 30 23 L 14 23 Z M 11 35 L 33 35 L 33 44 L 11 44 L 11 35 Z"
-  },
-  b: {
-    k: "M 22.5 11.63 L 22.5 6 L 20 6 L 20 3.5 L 25 3.5 L 25 6 L 22.5 6 L 22.5 11.63 C 21.05 11.96 20 13.3 20 14.86 C 20 16.74 21.53 18.27 23.41 18.27 C 24.36 18.27 25.21 17.88 25.84 17.25 C 26.47 16.62 26.86 15.77 26.86 14.82 C 26.86 13.31 25.86 12 24.45 11.66 L 24.45 6 L 22.5 6 M 22.5 11.63 Z M 21 21 L 24 21 L 26 27 L 19 27 L 21 21 M 26 27 L 28 34 L 17 34 L 19 27 M 28 34 L 30.5 40 L 14.5 40 L 17 34 M 14.5 40 L 30.5 40 L 30.5 44 L 14.5 44 L 14.5 40 Z",
-    q: "M 9 26 C 17.5 24.5 30 24.5 36 26 L 38 14 L 31 25 L 27 11 L 22.5 25 L 18 11 L 14 25 L 7 14 L 9 26 Z M 9 26 C 9 28 10.5 28 11.5 30 C 12.5 31.5 12.5 31 12 33.5 C 10.5 34.5 10.5 36 10.5 36 C 9 37.5 11 38.5 11 38.5 C 17.5 39.5 27.5 39.5 34 38.5 C 34 38.5 35.5 37.5 34 36 C 34 36 34.5 34.5 33 33.5 C 32.5 31 32.5 31.5 33.5 30 C 34.5 28 36 28 36 26 C 27.5 24.5 17.5 24.5 9 26 Z M 11 38.5 L 34 38.5 L 34 44 L 11 44 L 11 38.5 Z",
-    r: "M 9 39 L 36 39 L 36 11 L 9 11 L 9 39 Z M 12 39 L 12 44 L 33 44 L 33 39 L 12 39 Z",
-    b: "M 9 36 C 14.2 38 29.8 38 35 36 C 31.6 22 22 17 22 17 C 22.2 15.6 21 14 19 14 C 17 14 15.8 15.6 16 17 C 16 17 6.4 22 9 36 Z M 11 36 L 34 36 L 34 44 L 11 44 L 11 36 Z",
-    n: "M 22 10 C 32.5 11 34 26.5 34 35 L 11 35 C 11 26.5 15.5 11 22 10 Z M 11 35 L 34 35 L 34 44 L 11 44 L 11 35 Z",
-    p: "M 22 9 C 19.79 9 18 10.79 18 13 C 18 15.21 19.79 17 22 17 C 24.21 17 26 15.21 26 13 C 26 10.79 24.21 9 22 9 Z M 22 17 C 17 17 14 23 14 23 L 30 23 C 30 23 27 17 22 17 Z M 14 23 L 11 35 L 33 35 L 30 23 L 14 23 Z M 11 35 L 33 35 L 33 44 L 11 44 L 11 35 Z"
-  }
-};
-
 export const RenderPiece: React.FC<PieceProps> = React.memo(({ type, color, className }) => {
   const char = type.toLowerCase();
-  
-  // Use inline SVGs from piecesSVG
-  const svgPath = piecesSVG[color]?.[char];
+  const key = `${color}${char}`;
+  const svgUrl = pieceUrls[key];
 
-  if (!svgPath) {
+  if (!svgUrl) {
     return null;
   }
 
   return (
     <div className={`w-full h-full flex items-center justify-center select-none pointer-events-none drop-shadow-md ${className || ''}`}>
-      <svg 
-        viewBox="0 0 45 45" 
-        className="w-[85%] h-[85%] object-contain select-none pointer-events-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
-        preserveAspectRatio="xMidYMid meet"
-      >
-        <path
-          d={svgPath}
-          fill={color === 'w' ? '#ffffff' : '#000000'}
-          stroke={color === 'w' ? '#000000' : '#ffffff'}
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
+      <img 
+        src={svgUrl} 
+        alt={key} 
+        className="w-[90%] h-[90%] object-contain select-none pointer-events-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
+        draggable="false" 
+      />
     </div>
   );
 });
