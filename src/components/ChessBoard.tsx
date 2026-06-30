@@ -275,19 +275,20 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
     const sortedPieces = [...pieces].sort((a, b) => pieceOrder[b] - pieceOrder[a]);
 
     return (
-      <div className="flex items-center gap-0.5">
+      <div className="flex items-center -space-x-1 overflow-visible">
         {sortedPieces.map((piece, i) => {
           const char = piece.toLowerCase();
           const symbol = char === 'p' ? '♟' : char === 'n' ? '♞' : char === 'b' ? '♝' : char === 'r' ? '♜' : '♛';
           return (
             <span
               key={i}
-              className={`text-lg leading-none font-sans select-none ${
+              className={`text-xl leading-none font-sans select-none transition-all hover:translate-y-[-1px] ${
                 isWhitePieces 
-                  ? 'text-gray-100 drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.9)] bg-slate-700/25 px-0.5 rounded-sm border border-slate-600/10' 
-                  : 'text-neutral-950 drop-shadow-[0_1px_0.5px_rgba(255,255,255,0.45)] bg-slate-300/10 px-0.5 rounded-sm border border-slate-400/5'
+                  ? 'text-white drop-shadow-[0_1.5px_1px_rgba(0,0,0,0.85)]' 
+                  : 'text-[#111111] drop-shadow-[0_1px_0.5px_rgba(255,255,255,0.25)]'
               }`}
               title={isWhitePieces ? `White ${piece}` : `Black ${piece}`}
+              style={{ zIndex: i }}
             >
               {symbol}
             </span>
@@ -308,12 +309,12 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
             playerColor === 'w' ? materialData.capturedWhite : materialData.capturedBlack,
             playerColor === 'w'
           )}
+          {((playerColor === 'w' && materialData.diff < 0) || (playerColor === 'b' && materialData.diff > 0)) && (
+            <span className="font-mono font-bold text-xs text-[#E53935] ml-1">
+              +{Math.abs(materialData.diff)}
+            </span>
+          )}
         </div>
-        {((playerColor === 'w' && materialData.diff < 0) || (playerColor === 'b' && materialData.diff > 0)) && (
-          <div className="font-mono font-black text-[10px] px-1.5 py-0.5 rounded-sm bg-red-950/40 text-red-400 border border-red-900/30">
-            +{Math.abs(materialData.diff)}
-          </div>
-        )}
       </div>
 
       {/* Main Board Container */}
@@ -537,12 +538,12 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
             playerColor === 'w' ? materialData.capturedBlack : materialData.capturedWhite,
             playerColor === 'b'
           )}
+          {((playerColor === 'w' && materialData.diff > 0) || (playerColor === 'b' && materialData.diff < 0)) && (
+            <span className="font-mono font-bold text-xs text-[#4CAF50] ml-1">
+              +{Math.abs(materialData.diff)}
+            </span>
+          )}
         </div>
-        {((playerColor === 'w' && materialData.diff > 0) || (playerColor === 'b' && materialData.diff < 0)) && (
-          <div className="font-mono font-black text-[10px] px-1.5 py-0.5 rounded-sm bg-[#4CAF50]/15 text-[#4CAF50] border border-[#388E3C]/30">
-            +{Math.abs(materialData.diff)}
-          </div>
-        )}
       </div>
 
       {/* Status Indicators */}
