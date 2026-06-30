@@ -5,7 +5,10 @@ import { OpeningsTab } from './components/OpeningsTab';
 import { BotsTab } from './components/BotsTab';
 import { StatsTab } from './components/StatsTab';
 import { BoardTheme } from './components/ChessBoard';
-import { Trophy, Cpu, BookOpen, User, Flame, Palette, Zap } from 'lucide-react';
+import { AuthPage } from './components/AuthPage';
+import { isFirebaseAvailable, auth, db } from './lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { Trophy, Cpu, BookOpen, User, Flame, Palette, Zap, LogOut } from 'lucide-react';
 
 const LOCAL_STORAGE_KEY = 'chess_applet_user_stats_v1';
 const LOCAL_STORAGE_USERNAME_KEY = 'chess_applet_username_v1';
@@ -30,34 +33,141 @@ export default function App() {
   const [boardTheme, setBoardTheme] = useState<BoardTheme>('elegant');
   const [username, setUsername] = useState('NewPlayer');
   const [stats, setStats] = useState<UserStats>(INITIAL_STATS);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
 
-  // Load state from localStorage on init
+  // Check active session on mount
   useEffect(() => {
-    try {
-      const storedStats = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (storedStats) {
-        setStats(JSON.parse(storedStats));
-      }
+    let unsubscribe: any = null;
 
-      const storedUsername = localStorage.getItem(LOCAL_STORAGE_USERNAME_KEY);
-      if (storedUsername) {
-        setUsername(storedUsername);
-      } else {
-        // Assign a fun chess-themed username by default
-        const randomID = Math.floor(Math.random() * 900) + 100;
-        setUsername(`PawnPusher#${randomID}`);
+    if (isFirebaseAvailable && auth) {
+      // Listen for Firebase Auth state changes
+      unsubscribe = auth.onAuthStateChanged(async (user: any) => {
+        if (user) {
+          try {
+            const docRef = doc(db, 'users', user.uid);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+              const data = docSnap.data();
+              setUsername(data.username || 'PawnPusher');
+              setStats(data.stats || INITIAL_STATS);
+            } else {
+              const fallbackUsername = user.email ? user.email.split('@')[0] : 'Player';
+              setUsername(fallbackUsername);
+              setStats(INITIAL_STATS);
+            }
+            setIsAuthenticated(true);
+            setIsGuest(false);
+          } catch (err) {
+            console.warn("Could not retrieve Firestore user stats:", err);
+          }
+        } else {
+          // Firebase not authenticated; check local session keys
+          const storedAuth = localStorage.getItem('chess_arena_is_authenticated');
+          if (storedAuth === 'true') {
+            const storedIsGuest = localStorage.getItem('chess_arena_is_guest') === 'true';
+            setIsGuest(storedIsGuest);
+            
+            const storedUsername = localStorage.getItem(LOCAL_STORAGE_USERNAME_KEY);
+            if (storedUsername) setUsername(storedUsername);
+            
+            const storedStats = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (storedStats) setStats(JSON.parse(storedStats));
+
+            setIsAuthenticated(true);
+          } else {
+            setIsAuthenticated(false);
+            setIsGuest(false);
+          }
+        }
+        setIsAuthChecking(false);
+      });
+    } else {
+      // Local mock auth mode
+      try {
+        const storedAuth = localStorage.getItem('chess_arena_is_authenticated');
+        if (storedAuth === 'true') {
+          const storedIsGuest = localStorage.getItem('chess_arena_is_guest') === 'true';
+          setIsGuest(storedIsGuest);
+          
+          const storedUsername = localStorage.getItem(LOCAL_STORAGE_USERNAME_KEY);
+          if (storedUsername) setUsername(storedUsername);
+          
+          const storedStats = localStorage.getItem(LOCAL_STORAGE_KEY);
+          if (storedStats) setStats(JSON.parse(storedStats));
+
+          setIsAuthenticated(true);
+        }
+      } catch (e) {
+        console.warn("Could not read local authentication state:", e);
       }
-    } catch (e) {
-      console.warn("Could not read local storage: ", e);
+      setIsAuthChecking(false);
     }
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
-  // Update stats wrapper that also writes to localStorage
+  const handleAuthSuccess = (name: string, userStats: UserStats, guestStatus: boolean) => {
+    setUsername(name);
+    setStats(userStats);
+    setIsGuest(guestStatus);
+    setIsAuthenticated(true);
+    
+    // Save state to localStorage to persist session
+    localStorage.setItem('chess_arena_is_authenticated', 'true');
+    localStorage.setItem('chess_arena_is_guest', guestStatus ? 'true' : 'false');
+    localStorage.setItem(LOCAL_STORAGE_USERNAME_KEY, name);
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userStats));
+  };
+
+  const handleSignOut = async () => {
+    try {
+      if (isFirebaseAvailable && auth) {
+        await auth.signOut();
+      }
+    } catch (e) {
+      console.warn("Firebase sign out failed:", e);
+    }
+    setIsAuthenticated(false);
+    setIsGuest(false);
+    setUsername('NewPlayer');
+    setStats(INITIAL_STATS);
+    localStorage.removeItem('chess_arena_is_authenticated');
+    localStorage.removeItem('chess_arena_is_guest');
+    localStorage.removeItem('chess_arena_logged_in_email');
+    localStorage.removeItem(LOCAL_STORAGE_USERNAME_KEY);
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
+  };
+
+  // Update stats wrapper that also writes to localStorage & Firestore
   const handleUpdateStats = (updater: (prev: UserStats) => UserStats) => {
     setStats(prev => {
       const next = updater(prev);
       try {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(next));
+        
+        // Sync to firestore if authenticated
+        if (isFirebaseAvailable && auth && auth.currentUser) {
+          const uid = auth.currentUser.uid;
+          setDoc(doc(db, 'users', uid), { stats: next }, { merge: true })
+            .catch(e => console.warn("Firestore stats sync failed:", e));
+        } else if (!isGuest) {
+          // Update in local mock db
+          const email = localStorage.getItem('chess_arena_logged_in_email');
+          if (email) {
+            const users = localStorage.getItem('chess_arena_mock_users');
+            if (users) {
+              const usersObj = JSON.parse(users);
+              if (usersObj[email]) {
+                usersObj[email].stats = next;
+                localStorage.setItem('chess_arena_mock_users', JSON.stringify(usersObj));
+              }
+            }
+          }
+        }
       } catch (e) {
         console.warn("Could not write to local storage: ", e);
       }
@@ -69,6 +179,26 @@ export default function App() {
     setUsername(newName);
     try {
       localStorage.setItem(LOCAL_STORAGE_USERNAME_KEY, newName);
+
+      // Sync to firestore if authenticated
+      if (isFirebaseAvailable && auth && auth.currentUser) {
+        const uid = auth.currentUser.uid;
+        setDoc(doc(db, 'users', uid), { username: newName }, { merge: true })
+          .catch(e => console.warn("Firestore username sync failed:", e));
+      } else if (!isGuest) {
+        // Update in local mock db
+        const email = localStorage.getItem('chess_arena_logged_in_email');
+        if (email) {
+          const users = localStorage.getItem('chess_arena_mock_users');
+          if (users) {
+            const usersObj = JSON.parse(users);
+            if (usersObj[email]) {
+              usersObj[email].username = newName;
+              localStorage.setItem('chess_arena_mock_users', JSON.stringify(usersObj));
+            }
+          }
+        }
+      }
     } catch (e) {
       console.warn("Could not write username to local storage: ", e);
     }
@@ -97,6 +227,23 @@ export default function App() {
   const activeElo = stats.elo.blitz; // default show blitz ELO in header
   const activeTier = getRatingTier(activeElo);
 
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen bg-[#121212] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-linear-to-tr from-[#388E3C] via-[#4CAF50] to-[#81C784] flex items-center justify-center text-2xl shadow-lg rotate-3 animate-bounce">
+            👑
+          </div>
+          <span className="text-xs text-[#888888] font-mono tracking-widest uppercase animate-pulse">Analyzing Board State...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <AuthPage onAuthSuccess={handleAuthSuccess} initialStats={INITIAL_STATS} />;
+  }
+
   return (
     <div className="min-h-screen bg-[#121212] text-[#E0E0E0] flex flex-col font-sans antialiased selection:bg-[#4CAF50]/30">
       
@@ -124,6 +271,9 @@ export default function App() {
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-sm border ${getTierColor(activeTier)}`}>
                 {activeTier}
               </span>
+              {isGuest && (
+                <span className="text-[9px] font-black text-cyan-400 bg-cyan-950/40 px-1.5 py-0.5 rounded border border-cyan-500/10 uppercase tracking-wider">Guest</span>
+              )}
             </div>
             <div className="h-4 w-[1px] bg-[#2A2A2A]" />
             <div className="flex items-center gap-4 font-mono">
@@ -132,21 +282,33 @@ export default function App() {
             </div>
           </div>
 
-          {/* Theme custom picker */}
-          <div className="flex items-center gap-2">
-            <Palette className="w-4 h-4 text-[#888888] shrink-0" />
-            <select
-              id="global-board-theme-select"
-              value={boardTheme}
-              onChange={(e) => setBoardTheme(e.target.value as BoardTheme)}
-              className="bg-[#121212] border border-[#2A2A2A] rounded-xl px-2.5 py-1.5 text-xs text-[#E0E0E0] font-bold focus:outline-hidden cursor-pointer"
+          <div className="flex items-center gap-3">
+            {/* Theme custom picker */}
+            <div className="flex items-center gap-2">
+              <Palette className="w-4 h-4 text-[#888888] shrink-0" />
+              <select
+                id="global-board-theme-select"
+                value={boardTheme}
+                onChange={(e) => setBoardTheme(e.target.value as BoardTheme)}
+                className="bg-[#121212] border border-[#2A2A2A] rounded-xl px-2.5 py-1.5 text-xs text-[#E0E0E0] font-bold focus:outline-hidden cursor-pointer"
+              >
+                <option value="elegant">Elegant Dark</option>
+                <option value="emerald">Emerald Wood</option>
+                <option value="wood">Lichess Maple</option>
+                <option value="cyber">Cyber Midnight</option>
+                <option value="royal">Royal Gold</option>
+              </select>
+            </div>
+
+            {/* Logout Button */}
+            <button
+              id="global-signout-btn"
+              onClick={handleSignOut}
+              title="Sign Out"
+              className="p-2 rounded-xl border border-[#2A2A2A] hover:border-red-500/30 hover:bg-red-950/15 hover:text-red-400 text-gray-500 transition cursor-pointer"
             >
-              <option value="elegant">Elegant Dark</option>
-              <option value="emerald">Emerald Wood</option>
-              <option value="wood">Lichess Maple</option>
-              <option value="cyber">Cyber Midnight</option>
-              <option value="royal">Royal Gold</option>
-            </select>
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
 
         </div>
