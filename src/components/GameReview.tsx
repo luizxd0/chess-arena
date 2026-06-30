@@ -67,6 +67,8 @@ export const GameReview: React.FC<GameReviewProps> = ({
 
   // Run full game analysis when a selected game changes
   useEffect(() => {
+    let isCancelled = false;
+
     if (!selectedGame || !selectedGame.moves || selectedGame.moves.length === 0) {
       setAnalyzedMoves([]);
       setActiveMoveIdx(-1);
@@ -75,10 +77,9 @@ export const GameReview: React.FC<GameReviewProps> = ({
     }
 
     setAnalyzing(true);
-    setProgress(10);
+    setProgress(5);
 
-    // Run in a slight timeout to simulate deep engine analysis & prevent UI freezing
-    const timer = setTimeout(() => {
+    const runAnalysis = async () => {
       const getDeepEval = (chessInstance: Chess, depth: number): { evalScore: number, bestMoveObj?: {from: string, to: string} } => {
         if (chessInstance.isCheckmate()) {
           return { evalScore: chessInstance.turn() === 'w' ? -1000.0 : 1000.0 };
@@ -99,50 +100,58 @@ export const GameReview: React.FC<GameReviewProps> = ({
       const initialFen = selectedGame.initialFen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
       const chess = new Chess(initialFen);
       
-      // Detect Opening
+      // Detect Opening - Longest Prefix Match
       let matchedOpening: {name: string, variation?: string} | null = null;
-      let maxDepthMatched = 0;
+      let maxDepthMatched = 1; // Require at least 2 plies (1 full turn) to match
 
       for (const op of openingsList) {
         // match baseline
-        let baselineMatch = true;
-        for (let j = 0; j < op.moves.length; j++) {
-          if (moves[j] !== op.moves[j]) {
-            baselineMatch = false;
+        let baselineMatchLen = 0;
+        for (let j = 0; j < Math.min(moves.length, op.moves.length); j++) {
+          if (moves[j] === op.moves[j]) {
+            baselineMatchLen++;
+          } else {
             break;
           }
         }
         
-        if (baselineMatch) {
-          if (op.moves.length > maxDepthMatched) {
-            maxDepthMatched = op.moves.length;
-            matchedOpening = { name: op.name };
-          }
-          
-          // match variations
-          if (op.variations) {
-            for (const v of op.variations) {
-              let vMatch = true;
-              for (let j = 0; j < v.moves.length; j++) {
-                if (moves[j] !== v.moves[j]) {
-                  vMatch = false;
-                  break;
-                }
+        if (baselineMatchLen >= 2 && baselineMatchLen > maxDepthMatched) {
+          maxDepthMatched = baselineMatchLen;
+          matchedOpening = { name: op.name };
+        }
+        
+        // match variations
+        if (op.variations) {
+          for (const v of op.variations) {
+            let vMatchLen = 0;
+            for (let j = 0; j < Math.min(moves.length, v.moves.length); j++) {
+              if (moves[j] === v.moves[j]) {
+                vMatchLen++;
+              } else {
+                break;
               }
-              if (vMatch && v.moves.length > maxDepthMatched) {
-                maxDepthMatched = v.moves.length;
-                matchedOpening = { name: op.name, variation: v.name };
-              }
+            }
+            if (vMatchLen > maxDepthMatched) {
+              maxDepthMatched = vMatchLen;
+              matchedOpening = { name: op.name, variation: v.name };
             }
           }
         }
       }
-      setDetectedOpening(matchedOpening);
+      
+      if (!isCancelled) {
+        setDetectedOpening(matchedOpening);
+      }
       
       const analysisList: MoveAnalysis[] = [];
       let lastEval = getDeepEval(chess, 2).evalScore;
 
       for (let i = 0; i < moves.length; i++) {
+        if (isCancelled) return;
+
+        // Yield to main thread every move so UI doesn't freeze and progress updates smoothly
+        await new Promise(r => setTimeout(r, 10));
+
         const san = moves[i];
         const turn = chess.turn(); // 'w' or 'b'
         
@@ -238,16 +247,30 @@ export const GameReview: React.FC<GameReviewProps> = ({
         });
 
         lastEval = currentEval;
+        
+        if (!isCancelled) {
+          setProgress(Math.round(((i + 1) / moves.length) * 100));
+        }
       }
 
-      setAnalyzedMoves(analysisList);
-      setActiveMoveIdx(-1);
-      setCurrentFen(initialFen);
-      setProgress(100);
-      setAnalyzing(false);
-    }, 850);
+      if (!isCancelled) {
+        setAnalyzedMoves(analysisList);
+        setActiveMoveIdx(-1);
+        setCurrentFen(initialFen);
+        setProgress(100);
+        setAnalyzing(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    // Add small delay to let UI render the loading screen first
+    const startupTimer = setTimeout(() => {
+      runAnalysis();
+    }, 100);
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(startupTimer);
+    };
   }, [selectedGame]);
 
   // Navigate replaying state
@@ -518,8 +541,8 @@ export const GameReview: React.FC<GameReviewProps> = ({
             <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl shadow-md flex-1 flex flex-col min-h-0">
               
               {/* Complete Moves List Scroll Feed */}
-              <div className="p-2 flex-1 min-h-0 flex flex-col overflow-y-auto">
-                <div className="grid grid-cols-2 gap-x-2 gap-y-1 font-mono text-sm flex-1">
+              <div className="p-1 flex-1 min-h-0 flex flex-col overflow-y-auto bg-[#1A1A1A]">
+                <div className="grid grid-cols-2 gap-x-1 gap-y-0 text-xs font-semibold flex-1">
                     {Array.from({ length: Math.ceil(analyzedMoves.length / 2) }).map((_, idx) => {
                       const wIdx = idx * 2;
                       const bIdx = idx * 2 + 1;
@@ -527,14 +550,14 @@ export const GameReview: React.FC<GameReviewProps> = ({
                       const bMove = analyzedMoves[bIdx];
 
                       return (
-                        <div key={idx} className="flex items-center gap-1">
-                          <span className="text-[#555555] w-6 text-right mr-1 text-xs">{idx + 1}.</span>
+                        <div key={idx} className={`flex items-center gap-1 ${idx % 2 === 0 ? 'bg-[#222222]' : 'bg-[#1A1A1A]'} px-1`}>
+                          <span className="text-[#666666] w-5 text-right mr-0.5 text-[10px] font-mono">{idx + 1}.</span>
                           
                           {/* White move tag */}
                           {wMove && (
                             <button
                               onClick={() => handleStepTo(wIdx)}
-                              className={`flex-1 text-left px-2 py-1 rounded transition flex justify-between items-center ${activeMoveIdx === wIdx ? 'bg-[#4CAF50]/20 text-white font-bold border border-[#4CAF50]/30' : 'text-gray-300 hover:bg-[#2A2A2A]'}`}
+                              className={`flex-1 text-left px-1.5 py-1 rounded-sm transition flex justify-between items-center ${activeMoveIdx === wIdx ? 'bg-gray-700 text-white font-bold' : 'text-gray-300 hover:bg-[#333]'}`}
                             >
                               <span>{wMove.san}</span>
                               <span className={`text-[10px] font-bold ${
@@ -561,7 +584,7 @@ export const GameReview: React.FC<GameReviewProps> = ({
                           {bMove && (
                             <button
                               onClick={() => handleStepTo(bIdx)}
-                              className={`flex-1 text-left px-2 py-1 rounded transition flex justify-between items-center ${activeMoveIdx === bIdx ? 'bg-cyan-400/20 text-white font-bold border border-cyan-400/30' : 'text-gray-300 hover:bg-[#2A2A2A]'}`}
+                              className={`flex-1 text-left px-1.5 py-1 rounded-sm transition flex justify-between items-center ${activeMoveIdx === bIdx ? 'bg-gray-700 text-white font-bold' : 'text-gray-300 hover:bg-[#333]'}`}
                             >
                               <span>{bMove.san}</span>
                               <span className={`text-[10px] font-bold ${
