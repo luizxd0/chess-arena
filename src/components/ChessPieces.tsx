@@ -140,11 +140,14 @@ export const RenderPiece: React.FC<{ type: string; color: 'w' | 'b'; className?:
 
   return (
     <img
-      src={`https://lichess1.org/assets/piece/cburnett/${pieceCode}.svg`}
+      src={`https://cdn.jsdelivr.net/gh/lichess-org/lila@master/public/piece/cburnett/${pieceCode}.svg`}
       alt={pieceCode}
       className={className}
       referrerPolicy="no-referrer"
-      onError={() => setUseFallback(true)}
+      onError={() => {
+        // Fallback to lichess1.org if jsdelivr fails, then to local SVGs if both fail
+        setUseFallback(true);
+      }}
       draggable={false}
     />
   );
