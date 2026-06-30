@@ -7,9 +7,10 @@ import { StatsTab } from './components/StatsTab';
 import { GameReview } from './components/GameReview';
 import { BoardTheme } from './components/ChessBoard';
 import { AuthPage } from './components/AuthPage';
+import { ProfileSettingsModal } from './components/ProfileSettingsModal';
 import { isFirebaseAvailable, auth, db } from './lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { Trophy, Cpu, BookOpen, User, Flame, Palette, Zap, LogOut, Sparkles } from 'lucide-react';
+import { Trophy, Cpu, BookOpen, User, Flame, Palette, Zap, LogOut, Sparkles, Settings as SettingsIcon } from 'lucide-react';
 
 const LOCAL_STORAGE_KEY = 'chess_applet_user_stats_v1';
 const LOCAL_STORAGE_USERNAME_KEY = 'chess_applet_username_v1';
@@ -39,6 +40,7 @@ export default function App() {
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isGameplayActive, setIsGameplayActive] = useState(false);
   const [reviewGameRecord, setReviewGameRecord] = useState<GameRecord | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const isMenuHidden = isGameplayActive || (activeTab === 'review' && reviewGameRecord !== null);
 
@@ -292,22 +294,15 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Theme custom picker */}
-            <div className="flex items-center gap-1.5">
-              <Palette className="w-3.5 h-3.5 text-[#888888] shrink-0" />
-              <select
-                id="global-board-theme-select"
-                value={boardTheme}
-                onChange={(e) => setBoardTheme(e.target.value as BoardTheme)}
-                className="bg-[#121212] border border-[#2A2A2A] rounded-xl px-2 py-1 text-[11px] text-[#E0E0E0] font-bold focus:outline-hidden cursor-pointer max-w-[80px] sm:max-w-none truncate"
-              >
-                <option value="elegant">Elegant</option>
-                <option value="emerald">Emerald</option>
-                <option value="wood">Maple</option>
-                <option value="cyber">Cyber</option>
-                <option value="royal">Royal</option>
-              </select>
-            </div>
+            {/* Settings Button */}
+            <button
+              id="global-settings-btn"
+              onClick={() => setIsSettingsOpen(true)}
+              title="Settings"
+              className="p-2 rounded-xl border border-[#2A2A2A] hover:bg-[#2A2A2A] text-gray-400 hover:text-white transition cursor-pointer shrink-0"
+            >
+              <SettingsIcon className="w-4 h-4" />
+            </button>
 
             {/* Logout Button */}
             <button
@@ -361,7 +356,7 @@ export default function App() {
         </div>
 
         {/* Tab Panel View */}
-        <div className={`flex-1 flex flex-col min-h-0 overflow-y-auto ${isMenuHidden ? 'p-0 md:p-4 bg-transparent border-none shadow-none' : 'bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl p-4 md:p-6 shadow-md'}`}>
+        <div className={`flex-1 flex flex-col min-h-0 overflow-hidden ${isMenuHidden ? 'p-0 md:p-4 bg-transparent border-none shadow-none' : 'bg-[#1A1A1A] border border-[#2A2A2A] rounded-3xl p-4 md:p-6 shadow-md'}`}>
           {activeTab === 'matchmaking' && (
             <MatchmakingTab 
               stats={stats} 
@@ -433,6 +428,18 @@ export default function App() {
           <span className="text-[10px] font-mono text-[#666666]">GrandMaster Arena • v1.0.2 Stable</span>
         </div>
       </footer>
+
+      {isSettingsOpen && (
+        <ProfileSettingsModal
+          onClose={() => setIsSettingsOpen(false)}
+          boardTheme={boardTheme}
+          onUpdateBoardTheme={setBoardTheme}
+          onSignOut={() => {
+            setIsSettingsOpen(false);
+            handleSignOut();
+          }}
+        />
+      )}
 
     </div>
   );

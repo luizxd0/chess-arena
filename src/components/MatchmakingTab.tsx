@@ -5,6 +5,8 @@ import { getBotMove } from '../utils/chessAI';
 import { chessAudio } from '../utils/audio';
 import { UserStats, ChessMode, ChessColor, RatingTier, GameRecord } from '../types';
 import { Play, Shield, Zap, Search, MessageSquare, Send, Award, Clock, ArrowLeft, RefreshCw, Trophy, Sparkles } from 'lucide-react';
+import { db, auth } from '../lib/firebase';
+import { collection, getCountFromServer, addDoc, query, where, getDocs, updateDoc, doc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
 
 interface MatchmakingTabProps {
   stats: UserStats;
@@ -21,40 +23,21 @@ interface ChatMessage {
   time: string;
 }
 
-const OPPONENT_NAMES = [
-  { name: 'Garry_K', ratingOffset: 45, country: '🇺🇳' },
-  { name: 'BethHarmon_99', ratingOffset: -20, country: '🇺🇸' },
-  { name: 'Hikaru_Fan_1', ratingOffset: -50, country: '🇯🇵' },
-  { name: 'MagnusDisciple', ratingOffset: 85, country: '🇳🇴' },
-  { name: 'ChessMaster4000', ratingOffset: 120, country: '🇩🇪' },
-  { name: 'CheckmatePls', ratingOffset: -80, country: '🇬🇧' },
-  { name: 'PawnPusherX', ratingOffset: 10, country: '🇫🇷' },
-  { name: 'Sicilian_Lover', ratingOffset: 30, country: '🇮🇹' },
-  { name: 'Bobby_F_Legend', ratingOffset: 140, country: '🇺🇸' },
-  { name: 'EnPassant_King', ratingOffset: -10, country: '🇨🇦' }
-];
-
-const OPPONENT_CHAT_TEMPLATES = {
-  greetings: ["Hi, good luck!", "Hello! Let's have a great game", "gl hf!", "gl!", "Hi from across the globe!"],
-  midgame_good: ["Wow, nice move", "Good defense there", "That's tricky...", "Ah, didn't see that coming!"],
-  midgame_blunder: ["Oops...", "Wait, nooo!", "My mouse slipped! Just kidding", "Oh, I messed up"],
-  endgame: ["Intense endgame!", "Good fight!", "GG", "Draw? No, let's fight to the end!"],
-  gg: ["Good game! Well played", "gg wp!", "Wow, you are strong! Thanks for the game", "Thanks for the game! gg"]
-};
-
 export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateStats, boardTheme, onReviewGame, onGameActiveChange, username }) => {
   const [mode, setMode] = useState<ChessMode>('blitz');
   const [isSearching, setIsSearching] = useState(false);
   const [searchTime, setSearchTime] = useState(0);
-  const [onlineCount, setOnlineCount] = useState(1482);
+  const [onlineCount, setOnlineCount] = useState(1);
   const [matchedOpponent, setMatchedOpponent] = useState<any | null>(null);
   
   // Game state
   const [game, setGame] = useState<Chess | null>(null);
+  const [matchId, setMatchId] = useState<string | null>(null);
 
   useEffect(() => {
     onGameActiveChange?.(game !== null);
   }, [game, onGameActiveChange]);
+  
   const [fen, setFen] = useState('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
   const [playerColor, setPlayerColor] = useState<ChessColor>('w');
   const [gameResult, setGameResult] = useState<'win' | 'loss' | 'draw' | null>(null);
@@ -72,32 +55,175 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
   const [showMobileChat, setShowMobileChat] = useState(false);
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
-  // Fluctuating online counter
+  // Fetch real user count
   useEffect(() => {
-    const timer = setInterval(() => {
-      setOnlineCount(prev => prev + Math.floor(Math.random() * 9) - 4);
-    }, 4000);
+    const fetchCount = async () => {
+      try {
+        if (db) {
+          const coll = collection(db, 'users');
+          const snapshot = await getCountFromServer(coll);
+          // Just to make the app feel alive, we add a bit of noise to the registered user count
+          const count = snapshot.data().count;
+          setOnlineCount(Math.max(1, count + Math.floor(Math.random() * 5)));
+        }
+      } catch (e) {
+        console.log("Could not fetch user count", e);
+      }
+    };
+    fetchCount();
+    const timer = setInterval(fetchCount, 30000);
     return () => clearInterval(timer);
   }, []);
 
   // Searching timer
   useEffect(() => {
     let timer: any;
-    if (isSearching) {
-      setSearchTime(0);
+    if (isSearching && !matchId) {
       timer = setInterval(() => {
         setSearchTime(prev => prev + 1);
-
-        // Simulate match find at 4-9 seconds
-        if (searchTime >= Math.floor(Math.random() * 4) + 5) {
-          triggerMatchFound();
-        }
       }, 1000);
-    } else {
-      clearInterval(timer);
     }
     return () => clearInterval(timer);
-  }, [isSearching, searchTime]);
+  }, [isSearching, matchId]);
+
+  // Online Multiplayer Matchmaking Logic
+  useEffect(() => {
+    if (isSearching && !matchId && auth.currentUser) {
+      const findMatch = async () => {
+        try {
+          const q = query(collection(db, 'matches'), where('status', '==', 'waiting'), where('mode', '==', mode));
+          const querySnapshot = await getDocs(q);
+          
+          if (!querySnapshot.empty) {
+            // Join first available match
+            const matchDoc = querySnapshot.docs[0];
+            const data = matchDoc.data();
+            
+            if (data.player1.uid !== auth.currentUser?.uid) {
+              await updateDoc(doc(db, 'matches', matchDoc.id), {
+                status: 'playing',
+                player2: {
+                  uid: auth.currentUser?.uid,
+                  name: username,
+                  rating: stats.elo[mode]
+                }
+              });
+              setPlayerColor('b');
+              setMatchId(matchDoc.id);
+              setupMatch(matchDoc.id, 'b', data.player1);
+              return;
+            }
+          }
+          
+          // No match found, create one
+          const newMatch = await addDoc(collection(db, 'matches'), {
+            status: 'waiting',
+            mode,
+            createdAt: serverTimestamp(),
+            player1: {
+              uid: auth.currentUser?.uid,
+              name: username,
+              rating: stats.elo[mode]
+            },
+            fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+            history: [],
+            lastMoveTime: Date.now()
+          });
+          setPlayerColor('w');
+          setMatchId(newMatch.id);
+          // Wait for opponent in onSnapshot
+        } catch (e) {
+          console.error("Matchmaking error:", e);
+          setIsSearching(false);
+          alert("Matchmaking is currently unavailable (Sandbox mode).");
+        }
+      };
+      
+      findMatch();
+    }
+  }, [isSearching]);
+
+  // Listen to match document
+  useEffect(() => {
+    if (!matchId) return;
+    
+    const unsubscribe = onSnapshot(doc(db, 'matches', matchId), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        
+        // Opponent joined!
+        if (data.status === 'playing' && !game) {
+          const oppData = playerColor === 'w' ? data.player2 : data.player1;
+          if (oppData) {
+            setupMatch(matchId, playerColor, oppData);
+          }
+        }
+        
+        // Sync moves from opponent
+        if (data.status === 'playing' && game && data.fen !== game.fen()) {
+          // If the FEN in DB changed and it's our turn now (meaning opponent just moved)
+          game.load(data.fen);
+          setFen(data.fen);
+          setMoveHistory(data.history || []);
+          
+          // Play audio
+          chessAudio.playMove();
+          if (game.inCheck()) {
+            chessAudio.playCheck();
+          }
+          
+          checkGameStatus();
+        }
+        
+        // Handle opponent leaving or game over synced from DB
+        if (data.status === 'finished' && !gameResult) {
+          if (data.winner === auth.currentUser?.uid) {
+            triggerGameOver('win', data.reason || 'Opponent resigned');
+          } else if (data.winner === 'draw') {
+            triggerGameOver('draw', data.reason || 'Draw agreed');
+          } else {
+            triggerGameOver('loss', data.reason || 'Checkmate');
+          }
+        }
+      }
+    });
+    
+    return () => unsubscribe();
+  }, [matchId, game, playerColor, gameResult]);
+
+  const setupMatch = (mId: string, color: ChessColor, oppData: any) => {
+    setIsSearching(false);
+    setShowMobileChat(false);
+    
+    const matchObj = {
+      name: oppData.name,
+      rating: oppData.rating,
+      country: '🌐',
+      color: color === 'w' ? 'b' : 'w',
+      tier: getRatingTier(oppData.rating)
+    };
+    setMatchedOpponent(matchObj);
+    
+    // Initialize Chess Clock
+    let totalSec = 180;
+    if (mode === 'bullet') totalSec = 60;
+    if (mode === 'rapid') totalSec = 600;
+
+    setPlayerTime(totalSec);
+    setOpponentTime(totalSec);
+
+    const chessGame = new Chess();
+    setGame(chessGame);
+    setFen(chessGame.fen());
+    setMoveHistory([]);
+    setGameResult(null);
+
+    const welcomeMsgs: ChatMessage[] = [
+      { sender: 'system', text: `Match found! You are playing ${color === 'w' ? 'White' : 'Black'}.`, time: formatTime() },
+      { sender: 'system', text: `Time control: ${mode === 'bullet' ? '1m Bullet' : mode === 'blitz' ? '3m Blitz' : '10m Rapid'}.`, time: formatTime() }
+    ];
+    setChatMessages(welcomeMsgs);
+  };
 
   // Clocks countdown
   useEffect(() => {
@@ -107,7 +233,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
           setPlayerTime(prev => {
             if (prev <= 1) {
               clearInterval(clockInterval.current);
-              triggerGameOver('loss', 'Time out');
+              triggerGameOver('loss', 'Time out', true);
               return 0;
             }
             return prev - 1;
@@ -116,7 +242,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
           setOpponentTime(prev => {
             if (prev <= 1) {
               clearInterval(clockInterval.current);
-              triggerGameOver('win', 'Time out');
+              triggerGameOver('win', 'Time out', true);
               return 0;
             }
             return prev - 1;
@@ -127,171 +253,13 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
     return () => clearInterval(clockInterval.current);
   }, [game, gameResult, playerColor]);
 
-  // Opponent AI Response trigger
-  useEffect(() => {
-    if (game && !gameResult && game.turn() !== playerColor) {
-      // Add simulated thinking delay
-      const thinkTime = Math.floor(Math.random() * 1500) + 1200; // 1.2 to 2.7s
-      const timer = setTimeout(() => {
-        makeOpponentMove();
-      }, thinkTime);
-      return () => clearTimeout(timer);
-    }
-  }, [game, fen, gameResult]);
-
   // Scroll chat to bottom
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
 
-  const triggerMatchFound = () => {
-    setIsSearching(false);
-    setShowMobileChat(false);
-    
-    // Choose opponent with similar rating
-    const pRating = stats.elo[mode];
-    const opponentData = OPPONENT_NAMES[Math.floor(Math.random() * OPPONENT_NAMES.length)];
-    const oppRating = Math.max(100, pRating + opponentData.ratingOffset + Math.floor(Math.random() * 21) - 10);
-    
-    const assignedColor: ChessColor = Math.random() > 0.5 ? 'w' : 'b';
-    setPlayerColor(assignedColor);
-
-    const matchObj = {
-      name: opponentData.name,
-      rating: oppRating,
-      country: opponentData.country,
-      color: assignedColor === 'w' ? 'b' : 'w',
-      tier: getRatingTier(oppRating)
-    };
-
-    setMatchedOpponent(matchObj);
-    
-    // Initialize Chess Clock
-    let totalSec = 180; // default 3 min (Blitz)
-    if (mode === 'bullet') totalSec = 60;
-    if (mode === 'rapid') totalSec = 600;
-
-    setPlayerTime(totalSec);
-    setOpponentTime(totalSec);
-
-    // Create chess.js game
-    const chessGame = new Chess();
-    setGame(chessGame);
-    setFen(chessGame.fen());
-    setMoveHistory([]);
-    setGameResult(null);
-
-    // Initial system chats
-    const welcomeMsgs: ChatMessage[] = [
-      { sender: 'system', text: `Match found! You are playing ${assignedColor === 'w' ? 'White' : 'Black'}.`, time: formatTime() },
-      { sender: 'system', text: `Time control: ${mode === 'bullet' ? '1m Bullet' : mode === 'blitz' ? '3m Blitz' : '10m Rapid'}.`, time: formatTime() }
-    ];
-
-    setChatMessages(welcomeMsgs);
-
-    // Trigger greeting chat from opponent
-    setTimeout(() => {
-      const greeting = OPPONENT_CHAT_TEMPLATES.greetings[Math.floor(Math.random() * OPPONENT_CHAT_TEMPLATES.greetings.length)];
-      sendChatMessage('opponent', greeting);
-    }, 1500);
-  };
-
-  const makeOpponentMove = () => {
-    if (!game || gameResult) return;
-
-    try {
-      // Find matching Bot properties to run the bot algorithm
-      // Map opponent strength to bot levels based on their rating
-      const oppRating = matchedOpponent.rating;
-      let depth = 2;
-      let blunderRate = 0.15;
-      if (oppRating < 800) { depth = 1; blunderRate = 0.40; }
-      else if (oppRating < 1300) { depth = 2; blunderRate = 0.18; }
-      else if (oppRating < 1800) { depth = 3; blunderRate = 0.08; }
-      else { depth = 4; blunderRate = 0.01; }
-
-      const dummyBot = {
-        id: 'online-opp',
-        name: matchedOpponent.name,
-        avatar: '👤',
-        rating: oppRating,
-        tier: matchedOpponent.tier,
-        personality: 'Simulated online player',
-        blunderRate,
-        depth,
-        greeting: '',
-        winPhrase: '',
-        lossPhrase: ''
-      };
-
-      const result = getBotMove(game.fen(), dummyBot);
-      
-      const moveResult = game.move({
-        from: result.from,
-        to: result.to,
-        promotion: result.promotion || 'q'
-      });
-
-      if (moveResult) {
-        setFen(game.fen());
-        setMoveHistory(game.history());
-
-        // Play move/capture audio
-        if (moveResult.captured) {
-          chessAudio.playCapture();
-        } else {
-          chessAudio.playMove();
-        }
-
-        // Apply clock increment if mode is Blitz (3+2)
-        if (mode === 'blitz') {
-          setOpponentTime(prev => prev + 2);
-        }
-
-        // If in check
-        if (game.inCheck()) {
-          chessAudio.playCheck();
-        }
-
-        // Random opponent commentary
-        triggerOpponentCommentary(moveResult);
-
-        // Check game over
-        checkGameStatus();
-      }
-    } catch (e) {
-      console.error("Opponent play error: ", e);
-    }
-  };
-
-  const triggerOpponentCommentary = (moveResult: any) => {
-    const r = Math.random();
-    if (r < 0.18) {
-      let phrase = '';
-      if (moveResult.captured && getPieceValue(moveResult.captured) >= 3) {
-        phrase = OPPONENT_CHAT_TEMPLATES.midgame_good[Math.floor(Math.random() * OPPONENT_CHAT_TEMPLATES.midgame_good.length)];
-      } else if (game?.inCheck()) {
-        phrase = "Check! Let's see how you defend this.";
-      }
-      if (phrase) {
-        setTimeout(() => sendChatMessage('opponent', phrase), 800);
-      }
-    }
-  };
-
-  const getPieceValue = (p: string): number => {
-    switch (p.toLowerCase()) {
-      case 'p': return 1;
-      case 'n': return 3;
-      case 'b': return 3;
-      case 'r': return 5;
-      case 'q': return 9;
-      default: return 0;
-    }
-  };
-
-  const handlePlayerMove = (from: string, to: string, promotion?: string) => {
-    if (!game || gameResult) return;
+  const handlePlayerMove = async (from: string, to: string, promotion?: string) => {
+    if (!game || gameResult || game.turn() !== playerColor) return;
 
     try {
       const moveResult = game.move({
@@ -301,65 +269,80 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
       });
 
       if (moveResult) {
-        setFen(game.fen());
-        setMoveHistory(game.history());
+        const newFen = game.fen();
+        const newHistory = game.history();
+        
+        setFen(newFen);
+        setMoveHistory(newHistory);
 
-        // Play audio
+        // Sync to Firestore
+        if (matchId) {
+          updateDoc(doc(db, 'matches', matchId), {
+            fen: newFen,
+            history: newHistory,
+            lastMoveTime: Date.now()
+          }).catch(e => console.error("Failed to sync move", e));
+        }
+
         if (moveResult.captured) {
           chessAudio.playCapture();
         } else {
           chessAudio.playMove();
         }
 
-        // Increment clock if blitz (3+2)
         if (mode === 'blitz') {
           setPlayerTime(prev => prev + 2);
         }
 
-        // Check check audio
         if (game.inCheck()) {
           chessAudio.playCheck();
         }
 
-        // Check game status
-        checkGameStatus();
+        checkGameStatus(true);
       }
     } catch (e) {
       console.log("Invalid move played: ", from, to);
     }
   };
 
-  const checkGameStatus = () => {
+  const checkGameStatus = (isLocalInitiator = false) => {
     if (!game) return;
 
     if (game.isCheckmate()) {
       const winner = game.turn() === playerColor ? 'loss' : 'win';
-      triggerGameOver(winner, 'Checkmate');
+      triggerGameOver(winner, 'Checkmate', isLocalInitiator);
     } else if (game.isDraw()) {
       let reason = 'Draw';
       if (game.isStalemate()) reason = 'Stalemate';
       else if (game.isThreefoldRepetition()) reason = 'Threefold Repetition';
       else if (game.isInsufficientMaterial()) reason = 'Insufficient Material';
-      triggerGameOver('draw', reason);
+      triggerGameOver('draw', reason, isLocalInitiator);
     }
   };
 
-  const triggerGameOver = (result: 'win' | 'loss' | 'draw', reason: string) => {
+  const triggerGameOver = async (result: 'win' | 'loss' | 'draw', reason: string, syncToDb = false) => {
     clearInterval(clockInterval.current);
     setGameResult(result);
     setResultReason(reason);
 
     chessAudio.playGameOver(result === 'win');
-
-    // Calculate Elo delta
-    let eloDelta = 0;
-    if (result === 'win') {
-      eloDelta = Math.floor(Math.random() * 7) + 12; // +12 to +18
-    } else if (result === 'loss') {
-      eloDelta = -(Math.floor(Math.random() * 6) + 10); // -10 to -15
+    
+    if (syncToDb && matchId && auth.currentUser) {
+      let winnerUid = result === 'draw' ? 'draw' : (result === 'win' ? auth.currentUser.uid : 'opponent');
+      updateDoc(doc(db, 'matches', matchId), {
+        status: 'finished',
+        winner: winnerUid,
+        reason: reason
+      }).catch(e => console.error(e));
     }
 
-    // Update global Stats!
+    let eloDelta = 0;
+    if (result === 'win') {
+      eloDelta = Math.floor(Math.random() * 7) + 12;
+    } else if (result === 'loss') {
+      eloDelta = -(Math.floor(Math.random() * 6) + 10);
+    }
+
     onUpdateStats(prev => {
       const currentElo = prev.elo[mode];
       const nextElo = Math.max(100, currentElo + eloDelta);
@@ -388,35 +371,19 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
         gameHistory: [newHistoryRecord, ...prev.gameHistory]
       };
     });
-
-    // Add final GG opponent text
-    setTimeout(() => {
-      if (result === 'win') {
-        const text = OPPONENT_CHAT_TEMPLATES.gg[Math.floor(Math.random() * OPPONENT_CHAT_TEMPLATES.gg.length)];
-        sendChatMessage('opponent', text);
-      } else if (result === 'loss') {
-        sendChatMessage('opponent', "Yes! Good fight. Thanks for the game!");
-      } else {
-        sendChatMessage('opponent', "Draw! GG, that was incredibly close.");
-      }
-    }, 1200);
   };
 
   const handleResign = () => {
     if (window.confirm("Are you sure you want to resign? You will lose ELO.")) {
-      triggerGameOver('loss', 'Resigned');
+      triggerGameOver('loss', 'Resigned', true);
     }
   };
 
   const handleOfferDraw = () => {
-    // 50% chance opponent accepts draw if materials are balanced, otherwise refuses
-    const isAccepted = Math.random() > 0.45;
-    if (isAccepted) {
-      alert(`${matchedOpponent.name} accepted your draw offer!`);
-      triggerGameOver('draw', 'Draw agreed');
-    } else {
-      sendChatMessage('opponent', "No, let's keep playing!");
-      alert(`${matchedOpponent.name} declined the draw offer.`);
+    sendChatMessage('system', `${username} offered a draw.`);
+    // Simplified for now: just trigger draw locally if clicked (in a full app, opponent would need to accept)
+    if (window.confirm("Offer draw to opponent? For this prototype, they will automatically accept.")) {
+      triggerGameOver('draw', 'Draw agreed', true);
     }
   };
 
@@ -426,13 +393,6 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
 
     sendChatMessage('player', inputMessage.trim());
     setInputMessage('');
-
-    // Simulate opponent replies 20% of the time to custom user messages
-    setTimeout(() => {
-      const oppResponses = ["Interesting plan", "Let's see!", "Nice", "Hmm...", "Focusing!", "Good game!"];
-      const reply = oppResponses[Math.floor(Math.random() * oppResponses.length)];
-      sendChatMessage('opponent', reply);
-    }, 1500);
   };
 
   const sendChatMessage = (sender: 'player' | 'opponent' | 'system', text: string) => {
@@ -472,11 +432,16 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
   };
 
   const handleExitGame = () => {
+    if (matchId && !gameResult) {
+      updateDoc(doc(db, 'matches', matchId), { status: 'finished', winner: 'opponent', reason: 'Opponent left' }).catch(e=>e);
+    }
     setGame(null);
     setMatchedOpponent(null);
     setGameResult(null);
+    setMatchId(null);
     setShowMobileChat(false);
   };
+
 
   return (
     <div className="w-full flex flex-col min-h-[500px]">
