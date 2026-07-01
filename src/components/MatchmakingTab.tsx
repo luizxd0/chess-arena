@@ -125,11 +125,14 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
   useEffect(() => {
     let timer: any;
     if (isSearching && !matchId) {
+      setSearchTime(0);
       timer = setInterval(() => {
         setSearchTime(prev => prev + 1);
       }, 1000);
     }
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+    };
   }, [isSearching, matchId]);
 
   // Online Multiplayer Matchmaking Logic

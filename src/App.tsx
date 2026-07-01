@@ -450,7 +450,7 @@ export default function App() {
                 boardTheme={boardTheme}
                 onBackToLobby={() => {
                   setReviewGameRecord(null);
-                  setActiveTab('stats');
+                  setActiveTab(isGuest ? 'matchmaking' : 'stats');
                 }}
                 onSelectGameToReview={(game) => {
                   setReviewGameRecord(game);
