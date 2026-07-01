@@ -71,25 +71,20 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
     return null;
   };
 
-  // Fetch real user count
+  // Fetch real user count in real-time
   useEffect(() => {
-    const fetchCount = async () => {
-      try {
-        if (db) {
-          const twoMinsAgo = Date.now() - 120000;
-          const q = query(collection(db, 'onlineUsers'), where('lastPing', '>=', twoMinsAgo));
-          const snapshot = await getCountFromServer(q);
-          const count = snapshot.data().count;
-          // Set to real count, fallback to 1 so it doesn't show 0
-          setOnlineCount(Math.max(1, count));
-        }
-      } catch (e) {
-        console.log("Could not fetch user count", e);
-      }
-    };
-    fetchCount();
-    const timer = setInterval(fetchCount, 30000);
-    return () => clearInterval(timer);
+    if (!db) return;
+    const twoMinsAgo = Date.now() - 120000;
+    const q = query(collection(db, 'onlineUsers'), where('lastPing', '>=', twoMinsAgo));
+    
+    // Subscribe to real-time online players changes
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setOnlineCount(Math.max(1, snapshot.size));
+    }, (e) => {
+      console.log("Could not listen to online users count", e);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   // Reconnect logic
@@ -270,6 +265,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
     setShowMobileChat(false);
     
     const matchObj = {
+      uid: oppData.uid,
       name: oppData.name,
       rating: oppData.rating,
       country: '🌐',
@@ -506,7 +502,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
       
       const uid = getUserId();
       if (syncToDb && matchId && uid) {
-        let winnerUid = result === 'draw' ? 'draw' : (result === 'win' ? uid : 'opponent');
+        let winnerUid = result === 'draw' ? 'draw' : (result === 'win' ? uid : (matchedOpponent?.uid || 'opponent'));
         updateDoc(doc(db, 'matches', matchId), {
           status: 'finished',
           winner: winnerUid,
@@ -765,10 +761,10 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
         <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-stretch flex-1 min-h-0 overflow-x-hidden overflow-y-auto pb-1 md:pb-2">
           
           {/* Left Column: Board & Clock */}
-          <div className="flex-1 w-full max-w-[min(100vw-24px,100dvh-280px)] md:max-w-[min(100vw-300px,100dvh-240px)] lg:max-w-[min(100vw-420px,80dvh)] mx-auto flex flex-col items-center justify-center min-h-0 shrink-0">
+          <div className="flex-1 w-full max-w-[min(100vw-24px,100dvh-320px)] md:max-w-[min(100vw-320px,100dvh-400px)] lg:max-w-[min(100vw-440px,100dvh-420px)] mx-auto flex flex-col items-center justify-center min-h-0 shrink-0">
             
             {/* Top Player (Opponent) Info */}
-            <div className="w-full flex justify-between items-center bg-[#1A1A1A] max-md:bg-transparent max-md:border-none max-md:shadow-none max-md:p-1.5 p-3 rounded-xl shadow-md mb-1 md:mb-3 select-none">
+            <div className="w-full flex justify-between items-center bg-[#1A1A1A] max-md:bg-transparent max-md:border-none max-md:shadow-none max-md:p-1 p-2 md:p-2.5 rounded-xl shadow-md mb-1 md:mb-2 select-none">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#121212] border border-[#2A2A2A] flex items-center justify-center text-base md:text-xl shadow-xs">
                   👤
@@ -790,7 +786,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
               </div>
 
               {/* Opponent Clock */}
-              <div className={`flex items-center gap-1.5 px-3 py-1 md:px-5 md:py-2 rounded-lg border font-mono font-bold text-lg md:text-2xl shadow-inner ${game.turn() !== playerColor && !gameResult ? 'bg-red-950/20 text-red-400 border-red-900/30 animate-pulse' : 'bg-[#121212] text-[#E0E0E0] border-[#2A2A2A]'}`}>
+              <div className={`flex items-center gap-1.5 px-3 py-1 md:px-4 md:py-1.5 rounded-lg border font-mono font-bold text-base md:text-xl shrink-0 whitespace-nowrap shadow-inner ${game.turn() !== playerColor && !gameResult ? 'bg-red-950/20 text-red-400 border-red-900/30 animate-pulse' : 'bg-[#121212] text-[#E0E0E0] border-[#2A2A2A]'}`}>
                 <Clock className="w-4 h-4 md:w-5 md:h-5 text-[#888888]" />
                 {formatClock(opponentTime)}
               </div>
@@ -813,7 +809,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
             />
 
             {/* Bottom Player (Self) Info */}
-            <div className="w-full flex justify-between items-center bg-[#1A1A1A] max-md:bg-transparent max-md:border-none max-md:shadow-none max-md:p-1.5 p-3 rounded-xl shadow-md mt-1 md:mt-3 select-none">
+            <div className="w-full flex justify-between items-center bg-[#1A1A1A] max-md:bg-transparent max-md:border-none max-md:shadow-none max-md:p-1 p-2 md:p-2.5 rounded-xl shadow-md mt-1 md:mt-2 select-none">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#121212] border border-[#2A2A2A] flex items-center justify-center text-base md:text-xl shadow-xs">
                   👑
@@ -835,7 +831,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
               </div>
 
               {/* Player Clock */}
-              <div className={`flex items-center gap-1.5 px-3 py-1 md:px-5 md:py-2 rounded-lg border font-mono font-bold text-lg md:text-2xl shadow-inner ${game.turn() === playerColor && !gameResult ? 'bg-[#4CAF50]/10 text-[#4CAF50] border-[#388E3C]/30' : 'bg-[#121212] text-[#E0E0E0] border-[#2A2A2A]'}`}>
+              <div className={`flex items-center gap-1.5 px-3 py-1 md:px-4 md:py-1.5 rounded-lg border font-mono font-bold text-base md:text-xl shrink-0 whitespace-nowrap shadow-inner ${game.turn() === playerColor && !gameResult ? 'bg-[#4CAF50]/10 text-[#4CAF50] border-[#388E3C]/30' : 'bg-[#121212] text-[#E0E0E0] border-[#2A2A2A]'}`}>
                 <Clock className="w-4 h-4 md:w-5 md:h-5 text-[#888888]" />
                 {formatClock(playerTime)}
               </div>
@@ -843,7 +839,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
 
             {/* Live Buttons - Desktop & Mobile version */}
             {!gameResult && (
-              <div className="w-full grid grid-cols-3 gap-2 mt-1 md:mt-3">
+              <div className="w-full grid grid-cols-3 gap-2 mt-1 md:mt-2">
                 <button
                   id="offer-draw-btn"
                   onClick={handleOfferDraw}
@@ -1054,11 +1050,15 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
             <div className="text-center space-y-4">
               <Award className="w-12 h-12 text-amber-500 mx-auto" />
               <div>
-                <h3 className="font-sans font-black text-2xl text-white">
-                  {gameResult === 'win' ? 'You Won!' : gameResult === 'loss' ? 'Opponent Won' : "It's a Draw"}
+                <h3 className={`font-sans font-black text-2xl ${
+                  gameResult === 'win' ? 'text-emerald-400' : gameResult === 'loss' ? 'text-red-500' : 'text-white'
+                }`}>
+                  {gameResult === 'win' ? 'Victory!' : gameResult === 'loss' ? 'Defeat' : "It's a Draw"}
                 </h3>
                 <p className="text-sm text-[#888888] mt-1">By {resultReason}</p>
-                <div className="text-sm font-mono font-bold text-[#4CAF50] mt-2">
+                <div className={`text-sm font-mono font-bold mt-2 ${
+                  gameResult === 'win' ? 'text-emerald-400' : gameResult === 'loss' ? 'text-red-500' : 'text-gray-400'
+                }`}>
                   {gameResult === 'win' ? `Rating: +${eloDelta ?? 15} Elo` : gameResult === 'loss' ? `Rating: ${eloDelta ?? -12} Elo` : 'Rating: Unchanged'}
                 </div>
               </div>

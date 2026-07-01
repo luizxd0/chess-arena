@@ -577,7 +577,7 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
         <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-stretch flex-1 min-h-0 overflow-x-hidden overflow-y-auto pb-1 md:pb-2">
           
           {/* Board Frame Column */}
-          <div className="flex-1 w-full max-w-[min(100vw-24px,100dvh-280px)] md:max-w-[min(100vw-300px,100dvh-240px)] lg:max-w-[min(100vw-360px,80dvh)] mx-auto flex flex-col items-center justify-center min-h-0 shrink-0">
+          <div className="flex-1 w-full max-w-[min(100vw-24px,100dvh-320px)] md:max-w-[min(100vw-320px,100dvh-400px)] lg:max-w-[min(100vw-440px,100dvh-420px)] mx-auto flex flex-col items-center justify-center min-h-0 shrink-0">
             
             {/* Top Bot panel / Unified Chat Speech Balloon */}
             <div className="w-full bg-[#1A1A1A] max-md:bg-transparent max-md:border-none max-md:shadow-none max-md:p-1 p-3 border border-[#2A2A2A] rounded-2xl shadow-md flex items-start gap-2 relative overflow-hidden mb-1 md:mb-2 select-none">
