@@ -71,10 +71,20 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
     return null;
   };
 
+  const [onlineQueryTick, setOnlineQueryTick] = useState(Date.now());
+
+  // Periodically refresh query threshold for online users
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setOnlineQueryTick(Date.now());
+    }, 30000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Fetch real user count in real-time
   useEffect(() => {
     if (!db) return;
-    const twoMinsAgo = Date.now() - 120000;
+    const twoMinsAgo = onlineQueryTick - 120000;
     const q = query(collection(db, 'onlineUsers'), where('lastPing', '>=', twoMinsAgo));
     
     // Subscribe to real-time online players changes
@@ -85,7 +95,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [onlineQueryTick]);
 
   // Reconnect logic
   useEffect(() => {
@@ -119,7 +129,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
   // Searching timer
   useEffect(() => {
     let timer: any;
-    if (isSearching && !matchId) {
+    if (isSearching) {
       setSearchTime(0);
       timer = setInterval(() => {
         setSearchTime(prev => prev + 1);
@@ -128,7 +138,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
     return () => {
       clearInterval(timer);
     };
-  }, [isSearching, matchId]);
+  }, [isSearching]);
 
   // Online Multiplayer Matchmaking Logic
   useEffect(() => {
@@ -245,13 +255,18 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
         
         // Handle opponent leaving or game over synced from DB
         if (data.status === 'finished' && !gameResult) {
+          const oppUid = matchedOpponent?.uid;
           const uid = getUserId();
-          if (data.winner === uid) {
-            triggerGameOver('win', data.reason || 'Opponent resigned');
-          } else if (data.winner === 'draw') {
+          if (data.winner === 'draw') {
             triggerGameOver('draw', data.reason || 'Draw agreed');
-          } else {
+          } else if (oppUid && data.winner === oppUid) {
             triggerGameOver('loss', data.reason || 'Checkmate');
+          } else if (uid && data.winner === uid) {
+            triggerGameOver('win', data.reason || 'Opponent resigned');
+          } else {
+            // Fallback: if data.winner matches opponent, we lost, otherwise we won
+            const isWinner = data.winner !== oppUid;
+            triggerGameOver(isWinner ? 'win' : 'loss', data.reason || 'Opponent resigned');
           }
         }
       }
@@ -761,7 +776,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
         <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-stretch flex-1 min-h-0 overflow-x-hidden overflow-y-auto pb-1 md:pb-2">
           
           {/* Left Column: Board & Clock */}
-          <div className="flex-1 w-full max-w-[min(100vw-24px,100dvh-320px)] md:max-w-[min(100vw-320px,100dvh-400px)] lg:max-w-[min(100vw-440px,100dvh-420px)] mx-auto flex flex-col items-center justify-center min-h-0 shrink-0">
+          <div className="flex-1 w-full max-w-[min(100vw-24px,100dvh-200px)] md:max-w-[min(100vw-360px,100dvh-180px)] lg:max-w-[min(100vw-400px,100dvh-180px)] mx-auto flex flex-col items-center justify-center min-h-0 shrink-0">
             
             {/* Top Player (Opponent) Info */}
             <div className="w-full flex justify-between items-center bg-[#1A1A1A] max-md:bg-transparent max-md:border-none max-md:shadow-none max-md:p-1 p-2 md:p-2.5 rounded-xl shadow-md mb-1 md:mb-2 select-none">

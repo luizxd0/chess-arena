@@ -574,10 +574,10 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
 
       {/* 2. GAME BOARD PLAY VS BOT */}
       {game && selectedBot && (
-        <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-stretch flex-1 min-h-0 overflow-x-hidden overflow-y-auto pb-1 md:pb-2">
+        <div className="flex flex-col items-center justify-center flex-1 min-h-0 overflow-hidden pb-1 md:pb-2">
           
           {/* Board Frame Column */}
-          <div className="flex-1 w-full max-w-[min(100vw-24px,100dvh-320px)] md:max-w-[min(100vw-320px,100dvh-400px)] lg:max-w-[min(100vw-440px,100dvh-420px)] mx-auto flex flex-col items-center justify-center min-h-0 shrink-0">
+          <div className="w-full max-w-[min(100vw-24px,100dvh-200px)] md:max-w-[min(100vw-40px,100dvh-180px)] lg:max-w-[min(100vw-40px,100dvh-180px)] mx-auto flex flex-col items-center justify-center min-h-0 shrink-0">
             
             {/* Top Bot panel / Unified Chat Speech Balloon */}
             <div className="w-full bg-[#1A1A1A] max-md:bg-transparent max-md:border-none max-md:shadow-none max-md:p-1 p-3 border border-[#2A2A2A] rounded-2xl shadow-md flex items-start gap-2 relative overflow-hidden mb-1 md:mb-2 select-none">
@@ -652,73 +652,28 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
               </div>
             </div>
 
-            {/* Live Buttons - Mobile version */}
+            {/* Live Buttons - Desktop & Mobile */}
             {!gameResult && (
-              <div className="w-full grid grid-cols-2 gap-2 mt-1 md:hidden">
+              <div className="w-full grid grid-cols-2 gap-2 mt-1 md:mt-2">
                 <button
+                  id="bot-restart-btn"
                   onClick={() => handleStartGame(selectedBot)}
-                  className="py-1.5 rounded-xl border border-[#2A2A2A] hover:bg-[#2A2A2A] text-[10px] font-bold text-[#888888] flex items-center justify-center transition cursor-pointer"
+                  className="py-1.5 md:py-2 rounded-xl border border-[#2A2A2A] hover:bg-[#2A2A2A] text-[10px] md:text-xs font-bold text-[#888888] hover:text-white flex items-center justify-center gap-1.5 transition cursor-pointer"
                 >
-                  Restart
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Restart Game
                 </button>
                 <button
-                  onClick={() => setShowMobileMoves(true)}
-                  className="py-1.5 rounded-xl border border-[#4CAF50]/30 bg-[#4CAF50]/5 text-[10px] font-bold text-[#4CAF50] flex items-center justify-center gap-1 transition cursor-pointer"
+                  id="bot-exit-btn"
+                  onClick={handleExitGame}
+                  className="py-1.5 md:py-2 rounded-xl border border-red-900/30 hover:bg-red-950/20 text-[10px] md:text-xs font-bold text-red-400 flex items-center justify-center gap-1.5 transition cursor-pointer"
                 >
-                  PGN Moves
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  Exit Game
                 </button>
               </div>
             )}
           </div>
-
-          {/* Right Column: PGN (Desktop Only) */}
-          <div className="hidden md:flex w-full md:w-64 flex-col justify-between bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-3 shadow-md h-full min-h-0">
-            <div className="space-y-2 flex flex-col min-h-0 flex-1">
-              <div className="border-b border-[#2A2A2A] pb-1.5 shrink-0">
-                <span className="block font-sans font-extrabold text-xs text-white">Match Status</span>
-              </div>
-
-              <div className="bg-[#121212] border border-[#2A2A2A] rounded-xl p-2 flex-1 overflow-y-auto flex flex-col">
-                <span className="block text-[9px] font-bold text-[#888888] uppercase mb-1 shrink-0">Move Logs</span>
-                <div className="grid grid-cols-2 gap-x-2 gap-y-1 font-mono text-[10px] text-[#888888] overflow-y-auto pr-1">
-                  {Array.from({ length: Math.ceil(moveHistory.length / 2) }).map((_, idx) => (
-                    <div key={idx} className="flex gap-1.5">
-                      <span className="text-[#666666] w-4">{idx + 1}.</span>
-                      <span className="font-semibold text-[#E0E0E0]">{moveHistory[idx * 2]}</span>
-                      {moveHistory[idx * 2 + 1] && (
-                        <span className="text-[#666666]">{moveHistory[idx * 2 + 1]}</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => handleStartGame(selectedBot)}
-              className="w-full mt-2 py-2 rounded-xl bg-[#2A2A2A] hover:bg-[#333333] border border-[#2A2A2A] text-white text-[10px] font-bold flex items-center justify-center gap-1 transition cursor-pointer shrink-0"
-            >
-              <RefreshCw className="w-3.5 h-3.5" /> Restart
-            </button>
-          </div>
-
-          {/* Mobile Overlay for PGN Moves */}
-          {showMobileMoves && (
-            <div className="fixed inset-0 z-50 bg-[#121212]/95 backdrop-blur-md flex flex-col p-4 animate-fade-in lg:hidden">
-              <div className="flex justify-between items-center border-b border-[#2A2A2A] pb-3 mb-4">
-                <span className="font-sans font-bold text-sm text-white">Move Logs ({selectedBot.name})</span>
-                <button
-                  onClick={() => setShowMobileMoves(false)}
-                  className="px-3 py-1 text-xs font-bold bg-[#2A2A2A] border border-[#2A2A2A] text-white rounded-lg"
-                >
-                  Back
-                </button>
-              </div>
-              <div className="flex-1 bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-4 overflow-y-auto font-mono text-xs text-[#888888]">
-                {/* ...same list... */}
-              </div>
-            </div>
-          )}
         </div>
       )}
 
