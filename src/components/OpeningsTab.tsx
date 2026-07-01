@@ -295,7 +295,7 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
         <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-stretch flex-1 min-h-0 overflow-hidden md:overflow-y-auto pb-1 md:pb-2">
           
           {/* Left Side: Coach Speech Bubble & Chessboard Column */}
-          <div className="flex-1 w-full max-w-md mx-auto flex flex-col items-center justify-center gap-1.5 md:gap-3 min-h-0 md:shrink-0">
+          <div className="flex-1 w-full max-w-[min(100vw-24px,100dvh-280px)] md:max-w-[min(100vw-300px,100dvh-240px)] lg:max-w-[min(100vw-360px,80dvh)] mx-auto flex flex-col items-center justify-center gap-1.5 md:gap-3 min-h-0 md:shrink-0">
             
             {/* Top exit and counter bar */}
             <div className="w-full flex justify-between items-center select-none">
@@ -355,10 +355,11 @@ export const OpeningsTab: React.FC<OpeningsTabProps> = ({ stats, onUpdateStats, 
               isInteractive={!isCompleted && game.turn() === selectedOpening.side}
               theme={boardTheme}
               hintMove={hintMove}
+              wrapperClassName="w-full"
             />
 
             {/* Live Buttons - Desktop & Mobile version */}
-            <div className="w-full max-w-md grid grid-cols-3 gap-2 mt-1 md:mt-3">
+            <div className="w-full grid grid-cols-3 gap-2 mt-1 md:mt-3">
               <button
                 onClick={handleShowHint}
                 disabled={isCompleted}

@@ -490,7 +490,7 @@ export const GameReview: React.FC<GameReviewProps> = ({
         <div className="flex flex-col md:flex-row gap-4 items-stretch flex-1 min-h-0 overflow-y-auto pb-2">
           
           {/* LEFT: Chessboard Frame Column */}
-          <div className="flex-1 w-full max-w-md mx-auto flex flex-col items-center min-h-0 shrink-0">
+          <div className="flex-1 w-full max-w-[min(100vw-24px,100dvh-280px)] md:max-w-[min(100vw-360px,100dvh-240px)] lg:max-w-[min(100vw-480px,80dvh)] mx-auto flex flex-col items-center min-h-0 shrink-0">
             
             {/* Evaluation Score Meter */}
             <div className="w-full bg-[#121212] border border-[#2A2A2A] rounded-xl p-2 flex items-center justify-between mb-2 font-mono text-[10px] text-white shrink-0">
@@ -524,6 +524,7 @@ export const GameReview: React.FC<GameReviewProps> = ({
                     ? { square: activeMoveAnalysis.to, type: activeMoveAnalysis.type }
                     : null
                 }
+                wrapperClassName="w-full"
               />
             </div>
           </div>

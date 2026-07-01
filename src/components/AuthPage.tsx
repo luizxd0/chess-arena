@@ -166,8 +166,20 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialStats 
       const randomID = Math.floor(Math.random() * 900) + 100;
       const defaultGuestName = `Guest#${randomID}`;
       
-      const guestUid = `guest_${randomID}_${Date.now()}`;
-      localStorage.setItem('chess_arena_guest_uid', guestUid);
+      if (isFirebaseAvailable && auth) {
+        try {
+          const userCredential = await signInAnonymously(auth);
+          const uid = userCredential.user.uid;
+          localStorage.setItem('chess_arena_guest_uid', uid);
+        } catch (authError) {
+          console.warn("Firebase Anonymous Auth not enabled or failed, using local guest UID fallback:", authError);
+          const guestUid = `guest_${randomID}_${Date.now()}`;
+          localStorage.setItem('chess_arena_guest_uid', guestUid);
+        }
+      } else {
+        const guestUid = `guest_${randomID}_${Date.now()}`;
+        localStorage.setItem('chess_arena_guest_uid', guestUid);
+      }
       
       onAuthSuccess(defaultGuestName, initialStats, true);
     } catch (e: any) {

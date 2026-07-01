@@ -55,6 +55,8 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
   // Clocks
   const [playerTime, setPlayerTime] = useState(180); // seconds
   const [opponentTime, setOpponentTime] = useState(180);
+  const [whiteAutoStartSeconds, setWhiteAutoStartSeconds] = useState(30);
+  const [eloDelta, setEloDelta] = useState<number | null>(null);
   const clockInterval = useRef<any>(null);
 
   // Chat
@@ -212,7 +214,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
         if (data.status === 'playing' && !game) {
           const oppData = playerColor === 'w' ? data.player2 : data.player1;
           if (oppData) {
-            setupMatch(matchId, playerColor, oppData, data.fen, data.history);
+            setupMatch(matchId, playerColor, oppData, data.fen, data.history, data.lastMoveData);
           }
         }
 
@@ -260,7 +262,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
     return () => unsubscribe();
   }, [matchId, game, playerColor, gameResult]);
 
-  const setupMatch = (mId: string, color: ChessColor, oppData: any, existingFen?: string, existingHistory?: any[]) => {
+  const setupMatch = (mId: string, color: ChessColor, oppData: any, existingFen?: string, existingHistory?: any[], lastMoveData?: any) => {
     setIsSearching(false);
     setShowMobileChat(false);
     
@@ -281,6 +283,8 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
 
     setPlayerTime(totalSec);
     setOpponentTime(totalSec);
+    setWhiteAutoStartSeconds(30);
+    setEloDelta(null);
 
     const chessGame = new Chess();
     if (existingFen) {
@@ -289,8 +293,8 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
     setGame(chessGame);
     setFen(chessGame.fen());
     setMoveHistory(existingHistory || []);
-    if (existingData?.lastMoveData) {
-      setLastMove(existingData.lastMoveData);
+    if (lastMoveData) {
+      setLastMove(lastMoveData);
     }
     setGameResult(null);
 
@@ -308,29 +312,61 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
   useEffect(() => {
     if (game && !gameResult) {
       clockInterval.current = setInterval(() => {
-        if (game.turn() === playerColor) {
-          setPlayerTime(prev => {
+        const firstMoveDone = moveHistory.length > 0;
+        
+        if (!firstMoveDone) {
+          setWhiteAutoStartSeconds(prev => {
             if (prev <= 1) {
-              clearInterval(clockInterval.current);
-              triggerGameOver('loss', 'Time out', true);
+              // Time's up! White's clock starts running now.
+              if (playerColor === 'w') {
+                setPlayerTime(p => {
+                  if (p <= 1) {
+                    clearInterval(clockInterval.current);
+                    triggerGameOver('loss', 'Time out', true);
+                    return 0;
+                  }
+                  return p - 1;
+                });
+              } else {
+                setOpponentTime(o => {
+                  if (o <= 1) {
+                    clearInterval(clockInterval.current);
+                    triggerGameOver('win', 'Time out', true);
+                    return 0;
+                  }
+                  return o - 1;
+                });
+              }
               return 0;
             }
             return prev - 1;
           });
         } else {
-          setOpponentTime(prev => {
-            if (prev <= 1) {
-              clearInterval(clockInterval.current);
-              triggerGameOver('win', 'Time out', true);
-              return 0;
-            }
-            return prev - 1;
-          });
+          // Normal clock countdown
+          if (game.turn() === playerColor) {
+            setPlayerTime(prev => {
+              if (prev <= 1) {
+                clearInterval(clockInterval.current);
+                triggerGameOver('loss', 'Time out', true);
+                return 0;
+              }
+              return prev - 1;
+            });
+          } else {
+            setOpponentTime(prev => {
+              if (prev <= 1) {
+                clearInterval(clockInterval.current);
+                triggerGameOver('win', 'Time out', true);
+                return 0;
+              }
+              return prev - 1;
+            });
+          }
         }
       }, 1000);
     }
     return () => clearInterval(clockInterval.current);
-  }, [game, gameResult, playerColor]);
+  }, [game, gameResult, playerColor, moveHistory.length]);
 
   // Ping mechanism to detect abandonment
   useEffect(() => {
@@ -475,12 +511,14 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
         }).catch(e => console.error(e));
       }
 
-      let eloDelta = 0;
+      let calculatedEloDelta = 0;
       if (result === 'win') {
-        eloDelta = Math.floor(Math.random() * 7) + 12;
+        calculatedEloDelta = Math.floor(Math.random() * 7) + 12;
       } else if (result === 'loss') {
-        eloDelta = -(Math.floor(Math.random() * 6) + 10);
+        calculatedEloDelta = -(Math.floor(Math.random() * 6) + 10);
       }
+      setEloDelta(calculatedEloDelta);
+      const eloDelta = calculatedEloDelta;
 
       onUpdateStats(prev => {
         const currentElo = prev.elo[mode];
@@ -724,10 +762,10 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
         <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-stretch flex-1 min-h-0 overflow-x-hidden overflow-y-auto pb-1 md:pb-2">
           
           {/* Left Column: Board & Clock */}
-          <div className="flex-1 w-full max-w-md mx-auto flex flex-col items-center justify-center min-h-0 shrink-0">
+          <div className="flex-1 w-full max-w-[min(100vw-24px,100dvh-280px)] md:max-w-[min(100vw-300px,100dvh-240px)] lg:max-w-[min(100vw-420px,80dvh)] mx-auto flex flex-col items-center justify-center min-h-0 shrink-0">
             
             {/* Top Player (Opponent) Info */}
-            <div className="w-full max-w-md flex justify-between items-center bg-[#1A1A1A] max-md:bg-transparent max-md:border-none max-md:shadow-none max-md:p-1.5 p-3 rounded-xl shadow-md mb-1 md:mb-3 select-none">
+            <div className="w-full flex justify-between items-center bg-[#1A1A1A] max-md:bg-transparent max-md:border-none max-md:shadow-none max-md:p-1.5 p-3 rounded-xl shadow-md mb-1 md:mb-3 select-none">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#121212] border border-[#2A2A2A] flex items-center justify-center text-base md:text-xl shadow-xs">
                   👤
@@ -768,10 +806,11 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
               onClearPremove={() => setPreMove(null)}
               gameResult={gameResult}
               resultReason={resultReason}
+              wrapperClassName="w-full"
             />
 
             {/* Bottom Player (Self) Info */}
-            <div className="w-full max-w-md flex justify-between items-center bg-[#1A1A1A] max-md:bg-transparent max-md:border-none max-md:shadow-none max-md:p-1.5 p-3 rounded-xl shadow-md mt-1 md:mt-3 select-none">
+            <div className="w-full flex justify-between items-center bg-[#1A1A1A] max-md:bg-transparent max-md:border-none max-md:shadow-none max-md:p-1.5 p-3 rounded-xl shadow-md mt-1 md:mt-3 select-none">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#121212] border border-[#2A2A2A] flex items-center justify-center text-base md:text-xl shadow-xs">
                   👑
@@ -801,7 +840,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
 
             {/* Live Buttons - Desktop & Mobile version */}
             {!gameResult && (
-              <div className="w-full max-w-md grid grid-cols-3 gap-2 mt-1 md:mt-3">
+              <div className="w-full grid grid-cols-3 gap-2 mt-1 md:mt-3">
                 <button
                   id="offer-draw-btn"
                   onClick={handleOfferDraw}
@@ -1017,7 +1056,7 @@ export const MatchmakingTab: React.FC<MatchmakingTabProps> = ({ stats, onUpdateS
                 </h3>
                 <p className="text-sm text-[#888888] mt-1">By {resultReason}</p>
                 <div className="text-sm font-mono font-bold text-[#4CAF50] mt-2">
-                  {gameResult === 'win' ? 'Rating: +15 Elo' : gameResult === 'loss' ? 'Rating: -12 Elo' : 'Rating: Unchanged'}
+                  {gameResult === 'win' ? `Rating: +${eloDelta ?? 15} Elo` : gameResult === 'loss' ? `Rating: ${eloDelta ?? -12} Elo` : 'Rating: Unchanged'}
                 </div>
               </div>
 

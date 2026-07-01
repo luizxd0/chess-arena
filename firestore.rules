@@ -1,7 +1,29 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    // Default-deny catch-all to prevent unmapped collection access
     match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Connection validation test path
+    match /test/{document} {
+      allow read: if true;
+    }
+
+    // User profiles: Only owners can read and write their own records
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Active online users ping (guests and authenticated users write their status)
+    match /onlineUsers/{userId} {
+      allow read, write: if true;
+    }
+
+    // Active and historical multiplayer matches
+    match /matches/{matchId} {
       allow read, write: if true;
     }
   }

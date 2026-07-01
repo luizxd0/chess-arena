@@ -20,6 +20,7 @@ interface ChessBoardProps {
   onClearPremove?: () => void;
   gameResult?: 'win' | 'loss' | 'draw' | null;
   resultReason?: string;
+  wrapperClassName?: string;
 }
 
 export const ChessBoard: React.FC<ChessBoardProps> = ({
@@ -35,7 +36,8 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
   onPremove,
   onClearPremove,
   gameResult = null,
-  resultReason = ''
+  resultReason = '',
+  wrapperClassName
 }) => {
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [possibleMoves, setPossibleMoves] = useState<string[]>([]);
@@ -119,12 +121,14 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
   let explicitWinningColor: 'w' | 'b' | null = null;
   let explicitLosingColor: 'w' | 'b' | null = null;
 
+  const pColor: 'w' | 'b' = playerColor === 'b' ? 'b' : 'w';
+
   if (gameResult === 'win') {
-    explicitWinningColor = playerColor;
-    explicitLosingColor = playerColor === 'w' ? 'b' : 'w';
+    explicitWinningColor = pColor;
+    explicitLosingColor = pColor === 'w' ? 'b' : 'w';
   } else if (gameResult === 'loss') {
-    explicitWinningColor = playerColor === 'w' ? 'b' : 'w';
-    explicitLosingColor = playerColor;
+    explicitWinningColor = pColor === 'w' ? 'b' : 'w';
+    explicitLosingColor = pColor;
   }
 
   if (isCheckmate || explicitWinningColor || explicitLosingColor) {
@@ -529,7 +533,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
   };
 
   return (
-    <div id="chess-board-wrapper" style={{ touchAction: 'none' }} className="flex flex-col w-full max-w-[min(100vw-24px,100dvh-280px)] md:max-w-[min(100vw-24px,100dvh-240px)] lg:max-w-md mx-auto select-none">
+    <div id="chess-board-wrapper" style={{ touchAction: 'none' }} className={`flex flex-col w-full mx-auto select-none ${wrapperClassName || 'max-w-[min(100vw-24px,100dvh-280px)] md:max-w-[min(100vw-24px,100dvh-240px)] lg:max-w-[min(100vw-360px,75dvh)]'}`}>
       
       {/* Top Captured Bar: Pieces captured by Opponent */}
       <div className="flex items-center justify-between px-3 py-1.5 mb-2 bg-[#121212]/60 border border-[#2A2A2A] rounded-xl text-xs">

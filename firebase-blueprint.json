@@ -1,0 +1,56 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account info and chess rating stats",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string" },
+        "email": { "type": "string" },
+        "stats": { "type": "object" }
+      },
+      "required": ["username", "email", "stats"]
+    },
+    "OnlineUser": {
+      "title": "Online User Status",
+      "description": "Timestamp tracking active users",
+      "type": "object",
+      "properties": {
+        "lastPing": { "type": "number" }
+      },
+      "required": ["lastPing"]
+    },
+    "Match": {
+      "title": "Matchmaking Game",
+      "description": "Real-time multiplayer chess match record",
+      "type": "object",
+      "properties": {
+        "status": { "type": "string" },
+        "mode": { "type": "string" },
+        "isGuestMatch": { "type": "boolean" },
+        "createdAt": { "type": "object" },
+        "player1": { "type": "object" },
+        "player2": { "type": "object" },
+        "fen": { "type": "string" },
+        "history": { "type": "array" },
+        "lastMoveTime": { "type": "number" },
+        "lastMoveData": { "type": "object" }
+      },
+      "required": ["status", "mode", "isGuestMatch", "player1", "fen", "history"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Individual user profiles and ratings"
+    },
+    "/onlineUsers/{userId}": {
+      "schema": "OnlineUser",
+      "description": "Active users listing for matchmaking"
+    },
+    "/matches/{matchId}": {
+      "schema": "Match",
+      "description": "Active and completed multiplayer chess matches"
+    }
+  }
+}

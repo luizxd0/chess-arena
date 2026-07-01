@@ -45,7 +45,7 @@ export const StatsTab: React.FC<StatsTabProps> = ({
     }
   };
 
-  const maxElo = Math.max(stats.elo.bullet, stats.elo.blitz, stats.elo.rapid, stats.botRating);
+  const maxElo = Math.max(stats.elo.bullet, stats.elo.blitz, stats.elo.rapid);
   const playerTitle = maxElo >= 2200 ? ' GM' : (maxElo >= 1800 ? ' M' : '');
   const displayUsername = username + playerTitle;
 
@@ -78,8 +78,8 @@ export const StatsTab: React.FC<StatsTabProps> = ({
     {
       id: 'bot_slayer',
       title: 'Bot Slayer',
-      desc: 'Climb above 600 ELO vs computer bots.',
-      unlocked: stats.botRating >= 600,
+      desc: 'Defeat at least 3 computer bots in friendly matches.',
+      unlocked: stats.gameHistory.filter(g => g.mode === 'bot' && g.result === 'win').length >= 3,
       icon: CpuIcon,
       color: 'bg-purple-500/10 text-purple-400'
     },
@@ -195,12 +195,11 @@ export const StatsTab: React.FC<StatsTabProps> = ({
       </div>
 
       {/* 2. RATING CARDS GRID */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 shrink-0">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 shrink-0">
         {[
           { label: 'Bullet 1v1', elo: stats.elo.bullet, icon: Zap, color: 'text-amber-400 bg-amber-500/10' },
           { label: 'Blitz 1v1', elo: stats.elo.blitz, icon: Zap, color: 'text-red-400 bg-red-500/10' },
-          { label: 'Rapid 1v1', elo: stats.elo.rapid, icon: Clock, color: 'text-[#4CAF50] bg-[#4CAF50]/10' },
-          { label: 'Bot Rating', elo: stats.botRating, icon: Target, color: 'text-purple-400 bg-purple-500/10' }
+          { label: 'Rapid 1v1', elo: stats.elo.rapid, icon: Clock, color: 'text-[#4CAF50] bg-[#4CAF50]/10' }
         ].map((card, i) => {
           const tier = getRatingTier(card.elo);
           return (

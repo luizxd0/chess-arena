@@ -39,16 +39,25 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
   const [gameResult, setGameResult] = useState<'win' | 'loss' | 'draw' | null>(null);
   const [resultReason, setResultReason] = useState('');
 
+  // Real-time chess clocks & ratings
+  const [playerTime, setPlayerTime] = useState(600); // 10 minutes in seconds
+  const [opponentTime, setOpponentTime] = useState(600);
+  const [whiteAutoStartSeconds, setWhiteAutoStartSeconds] = useState(30);
+  const [eloDelta, setEloDelta] = useState<number | null>(null);
+  const clockInterval = React.useRef<any>(null);
+
+  const formatClock = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const [moveHistory, setMoveHistory] = useState<string[]>([]);
   const [lastMove, setLastMove] = useState<{from: string, to: string} | null>(null);
   const [preMove, setPreMove] = useState<{from: string, to: string} | null>(null);
 
   // Check if a bot is locked based on player's Bot Elo
   const isBotLocked = (bot: Bot): boolean => {
-    if (bot.tier === 'Beginner') return false;
-    if (bot.tier === 'Intermediate') return stats.botRating < 1000;
-    if (bot.tier === 'Advanced') return stats.botRating < 1600;
-    if (bot.tier === 'Master') return stats.botRating < 2200;
     return false;
   };
 
@@ -88,6 +97,12 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
     setLastMove(null);
     setBotPhrase(isOpPractice ? `Let's practice the opening!` : bot.greeting);
 
+    // Initialize/Reset chess clocks
+    setPlayerTime(600);
+    setOpponentTime(600);
+    setWhiteAutoStartSeconds(30);
+    setEloDelta(null);
+
     // If bot plays White, they make the move immediately
     if (playerColor === 'b' && chess.turn() === 'w') {
       triggerBotPlay(chess, bot, openingMoves, isOpPractice);
@@ -98,8 +113,19 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
   const triggerBotPlay = (currentChess: Chess, bot: Bot, openingMovesStack?: string[], isPracticeActiveOverride?: boolean) => {
     if (gameResult) return;
 
-    const startTime = Date.now();
     const isPracticeActive = isPracticeActiveOverride !== undefined ? isPracticeActiveOverride : isOpeningPracticeActive;
+    if (!isPracticeActive) {
+      const thinkingPhrases = [
+        "Hmm, let me think...",
+        "Interesting position here...",
+        "Analyzing the board...",
+        "Let's see what is the best move...",
+        "Checking my options..."
+      ];
+      setBotPhrase(thinkingPhrases[Math.floor(Math.random() * thinkingPhrases.length)]);
+    }
+
+    const startTime = Date.now();
     
     // Define the move handling logic as an async flow
     const executeBotTurn = async () => {
@@ -142,9 +168,10 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
           }
         }
 
-        // Calculate actual elapsed time to make sure the "thinking" indicator has a realistic feel
+        // Simulate human-like thinking delay of 1.5 to 3.5 seconds so bot clock actually goes down
+        const thinkingTime = 1500 + Math.random() * 2000;
         const elapsed = Date.now() - startTime;
-        const remainingDelay = Math.max(50, 700 - elapsed);
+        const remainingDelay = Math.max(50, thinkingTime - elapsed);
 
         setTimeout(() => {
           try {
@@ -188,6 +215,66 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
 
     executeBotTurn();
   };
+
+  // Clocks countdown
+  useEffect(() => {
+    if (game && !gameResult && selectedBot) {
+      clockInterval.current = setInterval(() => {
+        const firstMoveDone = moveHistory.length > 0;
+        
+        if (!firstMoveDone) {
+          setWhiteAutoStartSeconds(prev => {
+            if (prev <= 1) {
+              // Auto-start clock for White
+              if (playerColor === 'w') {
+                setPlayerTime(p => {
+                  if (p <= 1) {
+                    clearInterval(clockInterval.current);
+                    triggerGameOver('loss', 'Time out', selectedBot);
+                    return 0;
+                  }
+                  return p - 1;
+                });
+              } else {
+                setOpponentTime(o => {
+                  if (o <= 1) {
+                    clearInterval(clockInterval.current);
+                    triggerGameOver('win', 'Time out', selectedBot);
+                    return 0;
+                  }
+                  return o - 1;
+                });
+              }
+              return 0;
+            }
+            return prev - 1;
+          });
+        } else {
+          // Normal clock countdown
+          if (game.turn() === playerColor) {
+            setPlayerTime(prev => {
+              if (prev <= 1) {
+                clearInterval(clockInterval.current);
+                triggerGameOver('loss', 'Time out', selectedBot);
+                return 0;
+              }
+              return prev - 1;
+            });
+          } else {
+            setOpponentTime(prev => {
+              if (prev <= 1) {
+                clearInterval(clockInterval.current);
+                triggerGameOver('win', 'Time out', selectedBot);
+                return 0;
+              }
+              return prev - 1;
+            });
+          }
+        }
+      }, 1000);
+    }
+    return () => clearInterval(clockInterval.current);
+  }, [game, gameResult, playerColor, moveHistory.length, selectedBot]);
 
   // Execute preMove automatically if it's our turn
   useEffect(() => {
@@ -311,18 +398,10 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
         setBotPhrase("A balanced game! Let's shake hands on a draw. GG.");
       }
 
-      // Update Player Bot Rating ELO based on difficulty
-      let eloChange = 0;
-      if (result === 'win') {
-        // Defeating stronger bots awards much more Elo
-        const difficultyGap = bot.rating - stats.botRating;
-        eloChange = Math.max(5, Math.floor(15 + (difficultyGap / 10)));
-      } else if (result === 'loss') {
-        eloChange = Math.min(-5, Math.floor(-10 + ((bot.rating - stats.botRating) / 12)));
-      }
+      // Bot games are now unrated / friendly
+      setEloDelta(null);
 
       onUpdateStats(prev => {
-        const nextBotRating = Math.max(100, prev.botRating + eloChange);
         const newHistoryRecord = {
           id: Math.random().toString(36).substr(2, 9),
           opponentName: `${bot.name} (Bot)`,
@@ -337,7 +416,6 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
 
         return {
           ...prev,
-          botRating: nextBotRating,
           wins: prev.wins + (result === 'win' ? 1 : 0),
           losses: prev.losses + (result === 'loss' ? 1 : 0),
           draws: prev.draws + (result === 'draw' ? 1 : 0),
@@ -359,6 +437,7 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
     setSelectedBot(null);
     setGameResult(null);
     setShowMobileMoves(false);
+    clearInterval(clockInterval.current);
   };
 
   const activeOpeningObj = openingsList.find(o => o.id === startingOpeningId);
@@ -378,10 +457,7 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
               <Cpu className="w-7 h-7 text-[#4CAF50]" />
               <div className="text-left">
                 <h2 className="font-sans font-bold text-xl tracking-tight text-white leading-none">Play Versus Bots</h2>
-                <p className="text-[#888888] text-[10px] mt-1">Defeat bots to unlock advanced grandmasters.</p>
-              </div>
-              <div className="ml-auto px-3 py-1 rounded-lg bg-[#121212] border border-[#2A2A2A] font-mono text-xs font-bold text-[#4CAF50]">
-                Elo: {stats.botRating}
+                <p className="text-[#888888] text-[10px] mt-1">Practice and challenge computer personalities of varying difficulties.</p>
               </div>
             </div>
           </div>
@@ -501,7 +577,7 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
         <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-stretch flex-1 min-h-0 overflow-x-hidden overflow-y-auto pb-1 md:pb-2">
           
           {/* Board Frame Column */}
-          <div className="flex-1 w-full max-w-md mx-auto flex flex-col items-center justify-center min-h-0 shrink-0">
+          <div className="flex-1 w-full max-w-[min(100vw-24px,100dvh-280px)] md:max-w-[min(100vw-300px,100dvh-240px)] lg:max-w-[min(100vw-360px,80dvh)] mx-auto flex flex-col items-center justify-center min-h-0 shrink-0">
             
             {/* Top Bot panel / Unified Chat Speech Balloon */}
             <div className="w-full bg-[#1A1A1A] max-md:bg-transparent max-md:border-none max-md:shadow-none max-md:p-1 p-3 border border-[#2A2A2A] rounded-2xl shadow-md flex items-start gap-2 relative overflow-hidden mb-1 md:mb-2 select-none">
@@ -521,10 +597,10 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    {/* Dummy Opponent Clock */}
-                    <div className="hidden md:flex items-center gap-1.5 px-3 py-1 md:px-5 md:py-2 rounded-lg border font-mono font-bold text-lg md:text-2xl bg-[#121212] text-[#E0E0E0] border-[#2A2A2A] shadow-inner">
-                      <Clock className="w-4 h-4 md:w-5 md:h-5 text-[#888888]" />
-                      <span>∞</span>
+                    {/* Real-time Bot Clock */}
+                    <div className="flex items-center gap-1 md:gap-1.5 px-2 py-0.5 md:px-4 md:py-1.5 rounded-lg border font-mono font-bold text-xs md:text-lg bg-[#121212] text-[#E0E0E0] border-[#2A2A2A] shadow-inner">
+                      <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#888888]" />
+                      <span>{formatClock(opponentTime)}</span>
                     </div>
                     <button
                       onClick={handleExitGame}
@@ -554,30 +630,31 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
               onClearPremove={() => setPreMove(null)}
               gameResult={gameResult}
               resultReason={resultReason}
+              wrapperClassName="w-full"
             />
 
             {/* Bottom Self Panel */}
-            <div className="w-full max-w-md flex items-center justify-between bg-[#1A1A1A] max-md:bg-transparent max-md:border-none max-md:shadow-none max-md:p-1 p-2.5 rounded-xl shadow-md mt-1 md:mt-2 select-none">
+            <div className="w-full flex items-center justify-between bg-[#1A1A1A] max-md:bg-transparent max-md:border-none max-md:shadow-none max-md:p-1 p-2.5 rounded-xl shadow-md mt-1 md:mt-2 select-none">
               <div className="flex items-center">
                 <div className="w-8 h-8 rounded-full bg-[#121212] border border-[#2A2A2A] flex items-center justify-center text-base md:text-lg shadow-xs">
                   🏆
                 </div>
                 <div className="ml-2">
                   <span className="block font-bold text-xs text-white leading-none">{username}</span>
-                  <span className="block text-[9px] font-mono text-[#4CAF50] font-bold mt-0.5 md:mt-1">Elo: {stats.botRating}</span>
+                  <span className="block text-[9px] font-mono text-[#888888] font-bold mt-0.5 md:mt-1">Casual Mode</span>
                 </div>
               </div>
 
-              {/* Dummy Player Clock */}
-              <div className="flex items-center gap-1.5 px-3 py-1 md:px-5 md:py-2 rounded-lg border font-mono font-bold text-lg md:text-2xl bg-[#121212] text-[#E0E0E0] border-[#2A2A2A] shadow-inner">
-                <Clock className="w-4 h-4 md:w-5 md:h-5 text-[#888888]" />
-                <span>∞</span>
+              {/* Real-time Player Clock */}
+              <div className="flex items-center gap-1 md:gap-1.5 px-2 py-0.5 md:px-4 md:py-1.5 rounded-lg border font-mono font-bold text-xs md:text-lg bg-[#121212] text-[#E0E0E0] border-[#2A2A2A] shadow-inner">
+                <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#888888]" />
+                <span>{formatClock(playerTime)}</span>
               </div>
             </div>
 
             {/* Live Buttons - Mobile version */}
             {!gameResult && (
-              <div className="w-full max-w-md grid grid-cols-2 gap-2 mt-1 md:hidden">
+              <div className="w-full grid grid-cols-2 gap-2 mt-1 md:hidden">
                 <button
                   onClick={() => handleStartGame(selectedBot)}
                   className="py-1.5 rounded-xl border border-[#2A2A2A] hover:bg-[#2A2A2A] text-[10px] font-bold text-[#888888] flex items-center justify-center transition cursor-pointer"
@@ -660,8 +737,8 @@ export const BotsTab: React.FC<BotsTabProps> = ({ stats, onUpdateStats, boardThe
                   {gameResult === 'win' ? 'Victory!' : gameResult === 'loss' ? 'Defeat' : "Draw"}
                 </h3>
                 <p className="text-sm text-[#888888] mt-1">{resultReason}</p>
-                <div className="text-sm font-mono font-bold text-[#4CAF50] mt-2">
-                  {gameResult === 'win' ? 'Rating: + Elo' : gameResult === 'loss' ? 'Rating: - Elo' : 'No change'}
+                <div className="text-sm font-sans font-semibold text-[#888888] mt-2">
+                  Friendly Game (Unrated)
                 </div>
               </div>
 
